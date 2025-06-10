@@ -26,9 +26,9 @@ type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 const QuestionManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filterDomain, setFilterDomain] = useState('');
-  const [filterType, setFilterType] = useState('');
-  const [filterDifficulty, setFilterDifficulty] = useState('');
+  const [filterDomain, setFilterDomain] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -37,9 +37,9 @@ const QuestionManager = () => {
     queryFn: async () => {
       let query = supabase.from('questions').select('*').order('created_at', { ascending: false });
       
-      if (filterDomain) query = query.eq('domain', filterDomain);
-      if (filterType) query = query.eq('question_type', filterType as QuestionType);
-      if (filterDifficulty) query = query.eq('difficulty', filterDifficulty as DifficultyLevel);
+      if (filterDomain && filterDomain !== 'all') query = query.eq('domain', filterDomain);
+      if (filterType && filterType !== 'all') query = query.eq('question_type', filterType as QuestionType);
+      if (filterDifficulty && filterDifficulty !== 'all') query = query.eq('difficulty', filterDifficulty as DifficultyLevel);
       
       const { data, error } = await query;
       if (error) throw error;
@@ -130,7 +130,7 @@ const QuestionManager = () => {
                   <SelectValue placeholder="All domains" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All domains</SelectItem>
+                  <SelectItem value="all">All domains</SelectItem>
                   {DOMAINS.map(domain => (
                     <SelectItem key={domain} value={domain}>
                       {domain.charAt(0).toUpperCase() + domain.slice(1)}
@@ -147,7 +147,7 @@ const QuestionManager = () => {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   <SelectItem value="mcq">MCQ</SelectItem>
                   <SelectItem value="coding">Coding</SelectItem>
                   <SelectItem value="scenario">Scenario</SelectItem>
@@ -162,7 +162,7 @@ const QuestionManager = () => {
                   <SelectValue placeholder="All levels" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All levels</SelectItem>
+                  <SelectItem value="all">All levels</SelectItem>
                   <SelectItem value="beginner">Beginner</SelectItem>
                   <SelectItem value="intermediate">Intermediate</SelectItem>
                   <SelectItem value="advanced">Advanced</SelectItem>
