@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Code, Cloud, Server, Network, Database, Monitor, FileText, Bot, Shield, BarChart3 } from 'lucide-react';
-import AuthModal from '@/components/AuthModal';
-import AssessmentDashboard from '@/components/AssessmentDashboard';
+import { useNavigate } from 'react-router-dom';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 
 const domains = [
   {
@@ -99,62 +101,163 @@ const domains = [
 ];
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const navigate = useNavigate();
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-    setIsAuthenticated(true);
-    setShowAuthModal(false);
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleDomainClick = (domainId: string) => {
+    if (user) {
+      navigate(`/assessment/${domainId}`);
+    } else {
+      navigate('/auth');
+    }
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-  };
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-6">
+              <div className="flex items-center space-x-3">
+                <Brain className="h-8 w-8 text-blue-600" />
+                <h1 className="text-2xl font-bold text-gray-900">TechAssess Pro</h1>
+              </div>
+              <Button 
+                onClick={() => navigate('/auth')}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Login / Register
+              </Button>
+            </div>
+          </div>
+        </header>
 
-  if (isAuthenticated) {
-    return <AssessmentDashboard user={user} domains={domains} onLogout={handleLogout} />;
+        {/* Hero Section */}
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Comprehensive Technical Assessment Platform
+            </h2>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Evaluate your skills across 11 critical technology domains with interactive coding challenges, 
+              detailed reports, and personalized improvement suggestions.
+            </p>
+            <Button 
+              size="lg" 
+              onClick={() => navigate('/auth')}
+              className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3"
+            >
+              Start Your Assessment
+            </Button>
+          </div>
+        </section>
+
+        {/* Domains Grid */}
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
+              Assessment Domains
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {domains.map((domain) => {
+                const IconComponent = domain.icon;
+                return (
+                  <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300 cursor-pointer" onClick={() => handleDomainClick(domain.id)}>
+                    <CardHeader>
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-3 rounded-lg ${domain.color}`}>
+                          <IconComponent className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{domain.name}</CardTitle>
+                          <Badge variant="secondary">{domain.questions} Questions</Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="text-sm text-gray-600">
+                        {domain.description}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-16 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
+              Platform Features
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Code className="h-8 w-8 text-blue-600" />
+                </div>
+                <h4 className="text-xl font-semibold mb-2">Interactive Coding</h4>
+                <p className="text-gray-600">
+                  Real-time code execution with instant feedback and test case validation
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-green-600" />
+                </div>
+                <h4 className="text-xl font-semibold mb-2">Detailed Reports</h4>
+                <p className="text-gray-600">
+                  Comprehensive assessment reports with performance analytics and insights
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Brain className="h-8 w-8 text-purple-600" />
+                </div>
+                <h4 className="text-xl font-semibold mb-2">Smart Suggestions</h4>
+                <p className="text-gray-600">
+                  Personalized learning recommendations based on your performance
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
-              <Brain className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">TechAssess Pro</h1>
-            </div>
-            <Button 
-              onClick={() => setShowAuthModal(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Login / Register
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <AuthenticatedLayout>
       {/* Hero Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-gray-900 mb-6">
-            Comprehensive Technical Assessment Platform
+            Welcome to Your Assessment Dashboard
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Evaluate your skills across 9 critical technology domains with interactive coding challenges, 
-            detailed reports, and personalized improvement suggestions.
+            Choose from 11 technology domains to test your skills and track your progress.
           </p>
-          <Button 
-            size="lg" 
-            onClick={() => setShowAuthModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3"
-          >
-            Start Your Assessment
-          </Button>
         </div>
       </section>
 
@@ -168,7 +271,7 @@ const Index = () => {
             {domains.map((domain) => {
               const IconComponent = domain.icon;
               return (
-                <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300">
+                <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300 cursor-pointer" onClick={() => handleDomainClick(domain.id)}>
                   <CardHeader>
                     <div className="flex items-center space-x-3">
                       <div className={`p-3 rounded-lg ${domain.color}`}>
@@ -184,6 +287,9 @@ const Index = () => {
                     <CardDescription className="text-sm text-gray-600">
                       {domain.description}
                     </CardDescription>
+                    <Button className="w-full mt-4" onClick={() => handleDomainClick(domain.id)}>
+                      Start Assessment
+                    </Button>
                   </CardContent>
                 </Card>
               );
@@ -191,52 +297,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Features Section */}
-      <section className="py-16 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Platform Features
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Code className="h-8 w-8 text-blue-600" />
-              </div>
-              <h4 className="text-xl font-semibold mb-2">Interactive Coding</h4>
-              <p className="text-gray-600">
-                Real-time code execution with instant feedback and test case validation
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="h-8 w-8 text-green-600" />
-              </div>
-              <h4 className="text-xl font-semibold mb-2">Detailed Reports</h4>
-              <p className="text-gray-600">
-                Comprehensive assessment reports with performance analytics and insights
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Brain className="h-8 w-8 text-purple-600" />
-              </div>
-              <h4 className="text-xl font-semibold mb-2">Smart Suggestions</h4>
-              <p className="text-gray-600">
-                Personalized learning recommendations based on your performance
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onLogin={handleLogin}
-      />
-    </div>
+    </AuthenticatedLayout>
   );
 };
 
