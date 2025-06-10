@@ -9,16 +9,82 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          permissions: string[] | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permissions?: string[] | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permissions?: string[] | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      assessment_configs: {
+        Row: {
+          coding_count: number | null
+          created_at: string | null
+          created_by: string | null
+          difficulty_distribution: Json | null
+          domain: string
+          id: string
+          mcq_count: number | null
+          scenario_count: number | null
+          total_time_minutes: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          coding_count?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          difficulty_distribution?: Json | null
+          domain: string
+          id?: string
+          mcq_count?: number | null
+          scenario_count?: number | null
+          total_time_minutes?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          coding_count?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          difficulty_distribution?: Json | null
+          domain?: string
+          id?: string
+          mcq_count?: number | null
+          scenario_count?: number | null
+          total_time_minutes?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       assessments: {
         Row: {
           answers: Json
           completed_at: string | null
           created_at: string | null
+          detailed_results: Json | null
           difficulty: string
           domain: string
           id: string
+          question_ids: string[] | null
           score: number
           strong_areas: string[] | null
+          time_taken: number | null
           total_questions: number
           user_id: string
           weak_areas: string[] | null
@@ -27,11 +93,14 @@ export type Database = {
           answers: Json
           completed_at?: string | null
           created_at?: string | null
+          detailed_results?: Json | null
           difficulty: string
           domain: string
           id?: string
+          question_ids?: string[] | null
           score: number
           strong_areas?: string[] | null
+          time_taken?: number | null
           total_questions: number
           user_id: string
           weak_areas?: string[] | null
@@ -40,11 +109,14 @@ export type Database = {
           answers?: Json
           completed_at?: string | null
           created_at?: string | null
+          detailed_results?: Json | null
           difficulty?: string
           domain?: string
           id?: string
+          question_ids?: string[] | null
           score?: number
           strong_areas?: string[] | null
+          time_taken?: number | null
           total_questions?: number
           user_id?: string
           weak_areas?: string[] | null
@@ -78,6 +150,63 @@ export type Database = {
         }
         Relationships: []
       }
+      questions: {
+        Row: {
+          code_template: string | null
+          correct_answer: string
+          created_at: string | null
+          difficulty: Database["public"]["Enums"]["difficulty_level"]
+          domain: string
+          explanation: string | null
+          id: string
+          memory_limit: number | null
+          options: Json | null
+          question_text: string
+          question_type: Database["public"]["Enums"]["question_type"]
+          tags: string[] | null
+          test_cases: Json | null
+          time_limit: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          code_template?: string | null
+          correct_answer: string
+          created_at?: string | null
+          difficulty: Database["public"]["Enums"]["difficulty_level"]
+          domain: string
+          explanation?: string | null
+          id?: string
+          memory_limit?: number | null
+          options?: Json | null
+          question_text: string
+          question_type: Database["public"]["Enums"]["question_type"]
+          tags?: string[] | null
+          test_cases?: Json | null
+          time_limit?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          code_template?: string | null
+          correct_answer?: string
+          created_at?: string | null
+          difficulty?: Database["public"]["Enums"]["difficulty_level"]
+          domain?: string
+          explanation?: string | null
+          id?: string
+          memory_limit?: number | null
+          options?: Json | null
+          question_text?: string
+          question_type?: Database["public"]["Enums"]["question_type"]
+          tags?: string[] | null
+          test_cases?: Json | null
+          time_limit?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -86,7 +215,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      difficulty_level: "beginner" | "intermediate" | "advanced"
+      question_type: "mcq" | "coding" | "scenario"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -201,6 +331,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      difficulty_level: ["beginner", "intermediate", "advanced"],
+      question_type: ["mcq", "coding", "scenario"],
+    },
   },
 } as const

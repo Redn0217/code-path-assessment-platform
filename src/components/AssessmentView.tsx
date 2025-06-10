@@ -1,35 +1,150 @@
 
 import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import CodeEditor from './CodeEditor';
+import { Badge } from '@/components/ui/badge';
+import ImprovedCodeEditor from './ImprovedCodeEditor';
 import ResultsView from './ResultsView';
-import { generateMockQuestions } from '@/lib/assessmentData';
+import { useToast } from '@/hooks/use-toast';
 
 const AssessmentView = ({ domain, difficulty, onComplete }) => {
+  const { toast } = useToast();
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isCompleted, setIsCompleted] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(60 * 45); // 45 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(60 * 45); // Will be updated from config
+  const [startTime] = useState(Date.now());
+  
+  // Fetch assessment configuration
+  const { data: config } = useQuery({
+    queryKey: ['assessment-config', domain.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessment_configs')
+        .select('*')
+        .eq('domain', domain.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch questions based on configuration
+  const { data: availableQuestions, isLoading } = useQuery({
+    queryKey: ['assessment-questions', domain.id, config],
+    queryFn: async () => {
+      if (!config) return [];
+      
+      const questions = [];
+      
+      // Fetch MCQ questions
+      if (config.mcq_count > 0) {
+        const { data: mcqQuestions } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('domain', domain.id)
+          .eq('question_type', 'mcq')
+          .limit(config.mcq_count * 2); // Get more than needed for randomization
+        
+        questions.push(...(mcqQuestions || []).slice(0, config.mcq_count));
+      }
+      
+      // Fetch coding questions
+      if (config.coding_count > 0) {
+        const { data: codingQuestions } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('domain', domain.id)
+          .eq('question_type', 'coding')
+          .limit(config.coding_count * 2);
+        
+        questions.push(...(codingQuestions || []).slice(0, config.coding_count));
+      }
+      
+      // Fetch scenario questions
+      if (config.scenario_count > 0) {
+        const { data: scenarioQuestions } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('domain', domain.id)
+          .eq('question_type', 'scenario')
+          .limit(config.scenario_count * 2);
+        
+        questions.push(...(scenarioQuestions || []).slice(0, config.scenario_count));
+      }
+      
+      // Shuffle questions
+      return questions.sort(() => Math.random() - 0.5);
+    },
+    enabled: !!config,
+  });
+
+  // Save assessment result
+  const saveAssessment = useMutation({
+    mutationFn: async (assessmentData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('assessments')
+        .insert([{
+          user_id: user.id,
+          domain: domain.id,
+          difficulty,
+          score: assessmentData.score,
+          total_questions: questions.length,
+          answers: assessmentData.answers,
+          question_ids: questions.map(q => q.id),
+          time_taken: Math.floor((Date.now() - startTime) / 1000),
+          strong_areas: assessmentData.strongAreas,
+          weak_areas: assessmentData.weakAreas,
+          detailed_results: assessmentData.detailedResults,
+        }]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'Assessment saved successfully!' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Error saving assessment', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (availableQuestions?.length > 0) {
+      setQuestions(availableQuestions);
+      
+      // Initialize answers
+      const initialAnswers = {};
+      availableQuestions.forEach(q => {
+        initialAnswers[q.id] = q.question_type === 'coding' ? (q.code_template || '') : null;
+      });
+      setAnswers(initialAnswers);
+      
+      // Set timer from config
+      if (config?.total_time_minutes) {
+        setTimeRemaining(config.total_time_minutes * 60);
+      }
+    }
+  }, [availableQuestions, config]);
   
   useEffect(() => {
-    // Generate mock questions based on domain and difficulty
-    const mockQuestions = generateMockQuestions(domain.id, difficulty);
-    setQuestions(mockQuestions);
+    if (timeRemaining <= 0) {
+      handleSubmit();
+      return;
+    }
     
-    // Initialize answers object
-    const initialAnswers = {};
-    mockQuestions.forEach(q => {
-      initialAnswers[q.id] = q.type === 'code' ? '' : null;
-    });
-    setAnswers(initialAnswers);
-    
-    // Timer setup
     const timer = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
@@ -41,7 +156,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [domain, difficulty]);
+  }, [timeRemaining]);
   
   const handleAnswerChange = (questionId, answer) => {
     setAnswers(prev => ({
@@ -60,12 +175,69 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
     }
   };
   
+  const calculateResults = () => {
+    let correctAnswers = 0;
+    const detailedResults = [];
+    const strongAreas = [];
+    const weakAreas = [];
+    
+    questions.forEach(question => {
+      const userAnswer = answers[question.id];
+      const isCorrect = userAnswer === question.correct_answer;
+      
+      if (isCorrect) correctAnswers++;
+      
+      detailedResults.push({
+        questionId: question.id,
+        question: question.question_text,
+        userAnswer,
+        correctAnswer: question.correct_answer,
+        isCorrect,
+        explanation: question.explanation,
+        tags: question.tags,
+      });
+    });
+    
+    const score = Math.round((correctAnswers / questions.length) * 100);
+    
+    // Analyze strong and weak areas based on tags
+    const tagPerformance = {};
+    detailedResults.forEach(result => {
+      if (result.tags) {
+        result.tags.forEach(tag => {
+          if (!tagPerformance[tag]) tagPerformance[tag] = { correct: 0, total: 0 };
+          tagPerformance[tag].total++;
+          if (result.isCorrect) tagPerformance[tag].correct++;
+        });
+      }
+    });
+    
+    Object.entries(tagPerformance).forEach(([tag, performance]) => {
+      const percentage = (performance.correct / performance.total) * 100;
+      if (percentage >= 80) {
+        strongAreas.push(tag);
+      } else if (percentage < 60) {
+        weakAreas.push(tag);
+      }
+    });
+    
+    return {
+      score,
+      correctAnswers,
+      totalQuestions: questions.length,
+      strongAreas,
+      weakAreas,
+      detailedResults,
+      answers
+    };
+  };
+  
   const handleSubmit = () => {
-    // Calculate results
+    const results = calculateResults();
+    saveAssessment.mutate(results);
     setIsCompleted(true);
   };
   
-  // Format time remaining as mm:ss
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -73,11 +245,16 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
   };
   
   if (isCompleted) {
-    return <ResultsView domain={domain} difficulty={difficulty} answers={answers} questions={questions} onComplete={onComplete} />;
+    const results = calculateResults();
+    return <ResultsView domain={domain} difficulty={difficulty} results={results} onComplete={onComplete} />;
   }
   
-  if (!currentQuestion) {
-    return <div className="flex justify-center items-center h-screen">Loading assessment...</div>;
+  if (isLoading || !currentQuestion) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
@@ -88,7 +265,9 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-xl">{domain.name} Assessment ({difficulty})</CardTitle>
-              <div className="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-sm font-medium">
+              <div className={`py-1 px-3 rounded-full text-sm font-medium ${
+                timeRemaining < 300 ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+              }`}>
                 Time: {formatTime(timeRemaining)}
               </div>
             </div>
@@ -108,81 +287,72 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
         <Card className="mb-6">
           <CardHeader className="pb-0">
             <div className="flex justify-between">
-              <div className="flex items-center">
-                <div className={`w-2 h-2 rounded-full mr-2 ${
+              <div className="flex items-center gap-3">
+                <div className={`w-2 h-2 rounded-full ${
                   answers[currentQuestion.id] ? 'bg-green-500' : 'bg-gray-300'
                 }`}></div>
-                <span className="text-sm text-gray-500">
-                  Question {currentQuestionIndex + 1} • {currentQuestion.type === 'mcq' ? 'Multiple Choice' : 
-                  currentQuestion.type === 'code' ? 'Coding Challenge' : 'Scenario-Based'}
-                </span>
+                <Badge variant="outline">
+                  {currentQuestion.question_type === 'mcq' ? 'Multiple Choice' : 
+                   currentQuestion.question_type === 'coding' ? 'Coding Challenge' : 'Scenario-Based'}
+                </Badge>
+                <Badge className={
+                  currentQuestion.difficulty === 'beginner' ? 'bg-green-100 text-green-800' : 
+                  currentQuestion.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                }>
+                  {currentQuestion.difficulty}
+                </Badge>
               </div>
-              <span className={`text-sm ${
-                currentQuestion.difficulty === 'easy' ? 'text-green-500' : 
-                currentQuestion.difficulty === 'medium' ? 'text-orange-500' : 'text-red-500'
-              }`}>
-                {currentQuestion.difficulty === 'easy' ? 'Easy' : 
-                 currentQuestion.difficulty === 'medium' ? 'Medium' : 'Hard'}
-              </span>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
-            <h3 className="text-lg font-medium mb-4">{currentQuestion.question}</h3>
+            <h3 className="text-lg font-medium mb-4">{currentQuestion.title}</h3>
+            <div className="mb-4">
+              <p className="text-gray-700 whitespace-pre-wrap">{currentQuestion.question_text}</p>
+            </div>
             
-            {currentQuestion.type === 'mcq' && (
+            {currentQuestion.question_type === 'mcq' && (
               <RadioGroup 
-                value={answers[currentQuestion.id]} 
+                value={answers[currentQuestion.id] || ''} 
                 onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                 className="space-y-3"
               >
-                {currentQuestion.options.map((option, idx) => (
+                {currentQuestion.options?.map((option, idx) => (
                   <div key={idx} className="flex items-center space-x-2">
                     <RadioGroupItem value={option} id={`option-${idx}`} />
-                    <Label htmlFor={`option-${idx}`} className="text-base">{option}</Label>
+                    <Label htmlFor={`option-${idx}`} className="text-base cursor-pointer flex-1">
+                      {option}
+                    </Label>
                   </div>
                 ))}
               </RadioGroup>
             )}
             
-            {currentQuestion.type === 'code' && (
-              <div className="mb-4">
-                <div className="bg-slate-100 p-3 rounded-md mb-4">
-                  <p className="text-sm">{currentQuestion.instructions}</p>
-                  {currentQuestion.example && (
-                    <div className="mt-2">
-                      <p className="text-sm font-medium">Example:</p>
-                      <pre className="text-xs bg-slate-200 p-2 rounded mt-1 overflow-x-auto">
-                        {currentQuestion.example}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-                <CodeEditor
-                  language={domain.id === 'python' ? 'python' : domain.id === 'linux' ? 'bash' : 'javascript'}
-                  value={answers[currentQuestion.id] || currentQuestion.template || ''}
-                  onChange={(code) => handleAnswerChange(currentQuestion.id, code)}
-                />
-              </div>
+            {currentQuestion.question_type === 'coding' && (
+              <ImprovedCodeEditor
+                language={domain.id === 'python' ? 'python' : domain.id === 'linux' ? 'bash' : 'javascript'}
+                value={answers[currentQuestion.id] || currentQuestion.code_template || ''}
+                onChange={(code) => handleAnswerChange(currentQuestion.id, code)}
+                testCases={currentQuestion.test_cases || []}
+                timeLimit={currentQuestion.time_limit}
+                memoryLimit={currentQuestion.memory_limit}
+              />
             )}
             
-            {currentQuestion.type === 'scenario' && (
-              <div className="space-y-4">
-                <div className="bg-slate-100 p-4 rounded-md">
-                  <p className="text-sm">{currentQuestion.scenario}</p>
-                </div>
-                <RadioGroup 
-                  value={answers[currentQuestion.id]} 
-                  onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
-                  className="space-y-3"
-                >
-                  {currentQuestion.options.map((option, idx) => (
-                    <div key={idx} className="flex items-start space-x-2 p-3 border rounded-md">
-                      <RadioGroupItem value={option} id={`scenario-${idx}`} className="mt-1" />
-                      <Label htmlFor={`scenario-${idx}`} className="text-base">{option}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
+            {currentQuestion.question_type === 'scenario' && (
+              <RadioGroup 
+                value={answers[currentQuestion.id] || ''} 
+                onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                className="space-y-3"
+              >
+                {currentQuestion.options?.map((option, idx) => (
+                  <div key={idx} className="flex items-start space-x-2 p-3 border rounded-md hover:bg-gray-50">
+                    <RadioGroupItem value={option} id={`scenario-${idx}`} className="mt-1" />
+                    <Label htmlFor={`scenario-${idx}`} className="text-base cursor-pointer flex-1">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             )}
           </CardContent>
           <CardFooter className="border-t pt-4">
@@ -197,7 +367,12 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
               {currentQuestionIndex < questions.length - 1 ? (
                 <Button onClick={() => navigateQuestion('next')}>Next</Button>
               ) : (
-                <Button onClick={handleSubmit}>Submit Assessment</Button>
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={saveAssessment.isPending}
+                >
+                  {saveAssessment.isPending ? 'Submitting...' : 'Submit Assessment'}
+                </Button>
               )}
             </div>
           </CardFooter>
@@ -214,7 +389,9 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
                 <Button 
                   key={q.id}
                   variant={idx === currentQuestionIndex ? "default" : "outline"}
-                  className={`h-10 w-10 p-0 ${answers[q.id] ? 'border-green-500' : ''}`}
+                  className={`h-10 w-10 p-0 ${
+                    answers[q.id] && answers[q.id] !== '' ? 'border-green-500 bg-green-50' : ''
+                  } ${idx === currentQuestionIndex ? 'ring-2 ring-blue-500' : ''}`}
                   onClick={() => setCurrentQuestionIndex(idx)}
                 >
                   {idx + 1}
