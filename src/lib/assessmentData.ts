@@ -1,4 +1,3 @@
-
 // Mock data generation for assessment platform
 
 // Define topic areas for each domain
@@ -11,7 +10,9 @@ const domainTopics = {
   storage: ['SAN', 'NAS', 'RAID', 'Backup Strategies', 'Data Replication'],
   virtualization: ['Hypervisors', 'Virtual Machines', 'Containers', 'Resource Allocation'],
   'object-storage': ['S3', 'Versioning', 'Lifecycle Policies', 'Data Consistency', 'Object Security'],
-  'ai-ml': ['Data Preprocessing', 'Model Training', 'Evaluation Metrics', 'Frameworks', 'Neural Networks']
+  'ai-ml': ['Data Preprocessing', 'Model Training', 'Evaluation Metrics', 'Frameworks', 'Neural Networks'],
+  'data-security': ['Encryption', 'Access Control', 'Network Security', 'Vulnerability Assessment', 'Compliance', 'Incident Response'],
+  'data-science': ['Statistics', 'Data Analysis', 'Data Visualization', 'Machine Learning', 'Big Data', 'Research Methods']
 };
 
 // Mock question templates for each type
@@ -66,6 +67,22 @@ const mockCodeChallenges = {
       instructions: "Write a shell script that finds all files larger than 100MB in the /var/log directory and outputs their names and sizes to a file called large_files.txt.",
       template: "#!/bin/bash\n\n# Your code here\n",
       example: "Output should list files like:\n/var/log/syslog.1 120MB\n/var/log/apache2/access.log 200MB"
+    }
+  ],
+  'data-security': [
+    {
+      question: "Implement a secure password validation function.",
+      instructions: "Write a Python function that validates passwords according to security best practices: minimum 8 characters, contains uppercase, lowercase, numbers, and special characters.",
+      template: "def validate_password(password):\n    # Your code here\n    pass\n\n# Example usage\n# is_valid = validate_password(\"SecureP@ss123\")\n# Should return: True",
+      example: "Input: \"SecureP@ss123\"\nOutput: True\nInput: \"weak\"\nOutput: False"
+    }
+  ],
+  'data-science': [
+    {
+      question: "Implement a data analysis function using Python.",
+      instructions: "Write a Python function that calculates basic statistics (mean, median, mode) for a given dataset and returns them as a dictionary.",
+      template: "def calculate_statistics(data):\n    # Your code here\n    pass\n\n# Example usage\n# stats = calculate_statistics([1, 2, 2, 3, 4, 5])\n# Should return: {'mean': 2.83, 'median': 2.5, 'mode': 2}",
+      example: "Input: [1, 2, 2, 3, 4, 5]\nOutput: {'mean': 2.83, 'median': 2.5, 'mode': 2}"
     }
   ],
   default: [

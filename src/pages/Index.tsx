@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Code, Cloud, Server, Network, Database, Monitor, FileText, Bot } from 'lucide-react';
+import { Brain, Code, Cloud, Server, Network, Database, Monitor, FileText, Bot, Shield, BarChart3 } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 import AssessmentDashboard from '@/components/AssessmentDashboard';
 
@@ -78,6 +78,22 @@ const domains = [
     icon: Bot,
     description: 'Machine learning models, data preprocessing, and frameworks',
     color: 'bg-red-500',
+    questions: 50
+  },
+  {
+    id: 'data-security',
+    name: 'Data Security',
+    icon: Shield,
+    description: 'Encryption, access control, vulnerability assessment, and compliance',
+    color: 'bg-emerald-500',
+    questions: 50
+  },
+  {
+    id: 'data-science',
+    name: 'Data Science',
+    icon: BarChart3,
+    description: 'Statistics, data analysis, visualization, and research methods',
+    color: 'bg-violet-500',
     questions: 50
   }
 ];
