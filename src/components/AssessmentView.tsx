@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -123,6 +122,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
         }]);
 
       if (error) throw error;
+      return assessmentData;
     },
     onSuccess: () => {
       toast({ title: 'Assessment saved successfully!' });
@@ -260,8 +260,15 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
   };
   
   if (isCompleted) {
-    const results = calculateResults();
-    return <ResultsView domain={domain} difficulty={difficulty} results={results} onComplete={onComplete} />;
+    return (
+      <ResultsView 
+        domain={domain} 
+        difficulty={difficulty} 
+        questions={questions} 
+        answers={answers} 
+        onComplete={onComplete} 
+      />
+    );
   }
   
   if (isLoading || !currentQuestion) {
