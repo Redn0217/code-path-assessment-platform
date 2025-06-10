@@ -43,7 +43,7 @@ const ResultsView = ({ domain, difficulty, questions, answers, onComplete }) => 
     const score = Math.round((correctAnswers / questions.length) * 100);
     
     // Analyze strengths and weaknesses based on subtopics
-    const topicResults = {};
+    const topicResults: Record<string, { total: number; correct: number }> = {};
     questions.forEach(question => {
       if (!topicResults[question.topic]) {
         topicResults[question.topic] = { total: 0, correct: 0 };
