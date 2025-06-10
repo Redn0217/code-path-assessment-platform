@@ -12,11 +12,26 @@ import ImprovedCodeEditor from './ImprovedCodeEditor';
 import ResultsView from './ResultsView';
 import { useToast } from '@/hooks/use-toast';
 
-const AssessmentView = ({ domain, difficulty, onComplete }) => {
+interface AssessmentResults {
+  score: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  strongAreas: string[];
+  weakAreas: string[];
+  detailedResults: any[];
+  answers: Record<string, string>;
+}
+
+interface TagPerformance {
+  correct: number;
+  total: number;
+}
+
+const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; difficulty: string; onComplete: () => void }) => {
   const { toast } = useToast();
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isCompleted, setIsCompleted] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(60 * 45); // Will be updated from config
   const [startTime] = useState(Date.now());
@@ -87,7 +102,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
 
   // Save assessment result
   const saveAssessment = useMutation({
-    mutationFn: async (assessmentData) => {
+    mutationFn: async (assessmentData: AssessmentResults) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -100,7 +115,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
           score: assessmentData.score,
           total_questions: questions.length,
           answers: assessmentData.answers,
-          question_ids: questions.map(q => q.id),
+          question_ids: questions.map((q: any) => q.id),
           time_taken: Math.floor((Date.now() - startTime) / 1000),
           strong_areas: assessmentData.strongAreas,
           weak_areas: assessmentData.weakAreas,
@@ -126,9 +141,9 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
       setQuestions(availableQuestions);
       
       // Initialize answers
-      const initialAnswers = {};
-      availableQuestions.forEach(q => {
-        initialAnswers[q.id] = q.question_type === 'coding' ? (q.code_template || '') : null;
+      const initialAnswers: Record<string, string> = {};
+      availableQuestions.forEach((q: any) => {
+        initialAnswers[q.id] = q.question_type === 'coding' ? (q.code_template || '') : '';
       });
       setAnswers(initialAnswers);
       
@@ -158,7 +173,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
     return () => clearInterval(timer);
   }, [timeRemaining]);
   
-  const handleAnswerChange = (questionId, answer) => {
+  const handleAnswerChange = (questionId: string, answer: string) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: answer
@@ -167,7 +182,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
   
   const currentQuestion = questions[currentQuestionIndex];
   
-  const navigateQuestion = (direction) => {
+  const navigateQuestion = (direction: 'next' | 'prev') => {
     if (direction === 'next' && currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else if (direction === 'prev' && currentQuestionIndex > 0) {
@@ -175,13 +190,13 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
     }
   };
   
-  const calculateResults = () => {
+  const calculateResults = (): AssessmentResults => {
     let correctAnswers = 0;
-    const detailedResults = [];
-    const strongAreas = [];
-    const weakAreas = [];
+    const detailedResults: any[] = [];
+    const strongAreas: string[] = [];
+    const weakAreas: string[] = [];
     
-    questions.forEach(question => {
+    questions.forEach((question: any) => {
       const userAnswer = answers[question.id];
       const isCorrect = userAnswer === question.correct_answer;
       
@@ -201,10 +216,10 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
     const score = Math.round((correctAnswers / questions.length) * 100);
     
     // Analyze strong and weak areas based on tags
-    const tagPerformance = {};
+    const tagPerformance: Record<string, TagPerformance> = {};
     detailedResults.forEach(result => {
       if (result.tags) {
-        result.tags.forEach(tag => {
+        result.tags.forEach((tag: string) => {
           if (!tagPerformance[tag]) tagPerformance[tag] = { correct: 0, total: 0 };
           tagPerformance[tag].total++;
           if (result.isCorrect) tagPerformance[tag].correct++;
@@ -238,7 +253,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
     setIsCompleted(true);
   };
   
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -316,7 +331,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
                 onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                 className="space-y-3"
               >
-                {currentQuestion.options?.map((option, idx) => (
+                {currentQuestion.options?.map((option: string, idx: number) => (
                   <div key={idx} className="flex items-center space-x-2">
                     <RadioGroupItem value={option} id={`option-${idx}`} />
                     <Label htmlFor={`option-${idx}`} className="text-base cursor-pointer flex-1">
@@ -344,7 +359,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
                 onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                 className="space-y-3"
               >
-                {currentQuestion.options?.map((option, idx) => (
+                {currentQuestion.options?.map((option: string, idx: number) => (
                   <div key={idx} className="flex items-start space-x-2 p-3 border rounded-md hover:bg-gray-50">
                     <RadioGroupItem value={option} id={`scenario-${idx}`} className="mt-1" />
                     <Label htmlFor={`scenario-${idx}`} className="text-base cursor-pointer flex-1">
@@ -385,7 +400,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }) => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-8 gap-2">
-              {questions.map((q, idx) => (
+              {questions.map((q: any, idx: number) => (
                 <Button 
                   key={q.id}
                   variant={idx === currentQuestionIndex ? "default" : "outline"}

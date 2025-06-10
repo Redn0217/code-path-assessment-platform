@@ -20,6 +20,9 @@ const DOMAINS = [
   'storage', 'virtualization', 'object-storage', 'ai-ml'
 ];
 
+type QuestionType = 'mcq' | 'coding' | 'scenario';
+type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
+
 const QuestionManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -35,8 +38,8 @@ const QuestionManager = () => {
       let query = supabase.from('questions').select('*').order('created_at', { ascending: false });
       
       if (filterDomain) query = query.eq('domain', filterDomain);
-      if (filterType) query = query.eq('question_type', filterType);
-      if (filterDifficulty) query = query.eq('difficulty', filterDifficulty);
+      if (filterType) query = query.eq('question_type', filterType as QuestionType);
+      if (filterDifficulty) query = query.eq('difficulty', filterDifficulty as DifficultyLevel);
       
       const { data, error } = await query;
       if (error) throw error;

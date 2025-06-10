@@ -9,6 +9,26 @@ import { FileQuestion, Users, BookOpen, TrendingUp } from 'lucide-react';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
+interface DomainCount {
+  domain: string;
+  count: number;
+}
+
+interface TypeCount {
+  type: string;
+  count: number;
+}
+
+interface DifficultyCount {
+  difficulty: string;
+  count: number;
+}
+
+interface AverageScore {
+  domain: string;
+  score: number;
+}
+
 const AdminStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-stats'],
@@ -29,19 +49,23 @@ const AdminStats = () => {
         .select('id');
 
       // Process data
-      const questionsByDomain = {};
+      const questionsByDomain: Record<string, number> = {};
       const questionsByType = { mcq: 0, coding: 0, scenario: 0 };
       const questionsByDifficulty = { beginner: 0, intermediate: 0, advanced: 0 };
 
       questions?.forEach(q => {
         if (!questionsByDomain[q.domain]) questionsByDomain[q.domain] = 0;
         questionsByDomain[q.domain]++;
-        questionsByType[q.question_type]++;
-        questionsByDifficulty[q.difficulty]++;
+        if (q.question_type in questionsByType) {
+          questionsByType[q.question_type as keyof typeof questionsByType]++;
+        }
+        if (q.difficulty in questionsByDifficulty) {
+          questionsByDifficulty[q.difficulty as keyof typeof questionsByDifficulty]++;
+        }
       });
 
-      const assessmentsByDomain = {};
-      const averageScores = {};
+      const assessmentsByDomain: Record<string, number> = {};
+      const averageScores: Record<string, { total: number; count: number }> = {};
       let totalAssessments = 0;
 
       assessments?.forEach(a => {
@@ -49,14 +73,15 @@ const AdminStats = () => {
         if (!averageScores[a.domain]) averageScores[a.domain] = { total: 0, count: 0 };
         
         assessmentsByDomain[a.domain]++;
-        averageScores[a.domain].total += a.score;
+        averageScores[a.domain].total += (a.score as number);
         averageScores[a.domain].count++;
         totalAssessments++;
       });
 
       // Calculate average scores
+      const processedAverageScores: Record<string, number> = {};
       Object.keys(averageScores).forEach(domain => {
-        averageScores[domain] = Math.round(averageScores[domain].total / averageScores[domain].count);
+        processedAverageScores[domain] = Math.round(averageScores[domain].total / averageScores[domain].count);
       });
 
       return {
@@ -67,7 +92,7 @@ const AdminStats = () => {
         questionsByType: Object.entries(questionsByType).map(([type, count]) => ({ type, count })),
         questionsByDifficulty: Object.entries(questionsByDifficulty).map(([difficulty, count]) => ({ difficulty, count })),
         assessmentsByDomain: Object.entries(assessmentsByDomain).map(([domain, count]) => ({ domain, count })),
-        averageScores: Object.entries(averageScores).map(([domain, score]) => ({ domain, score })),
+        averageScores: Object.entries(processedAverageScores).map(([domain, score]) => ({ domain, score })),
       };
     },
   });
@@ -122,7 +147,7 @@ const AdminStats = () => {
           <CardContent>
             <div className="text-2xl font-bold">
               {stats?.averageScores?.length ? 
-                Math.round(stats.averageScores.reduce((sum, item) => sum + item.score, 0) / stats.averageScores.length) : 0}%
+                Math.round(stats.averageScores.reduce((sum: number, item: AverageScore) => sum + item.score, 0) / stats.averageScores.length) : 0}%
             </div>
           </CardContent>
         </Card>
@@ -226,12 +251,12 @@ const AdminStats = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {stats?.averageScores?.map(({ domain, score }) => (
+            {stats?.averageScores?.map(({ domain, score }: AverageScore) => (
               <div key={domain} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <Badge variant="outline">{domain}</Badge>
                   <span className="text-sm text-gray-600">
-                    {stats.questionsByDomain.find(q => q.domain === domain)?.count || 0} questions
+                    {stats.questionsByDomain.find((q: DomainCount) => q.domain === domain)?.count || 0} questions
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
