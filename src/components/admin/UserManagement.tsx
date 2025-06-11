@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,7 +30,21 @@ const UserManagement = () => {
     queryFn: async () => {
       console.log('Fetching users for admin panel...');
       
-      // Fetch users from profiles table (this doesn't require admin privileges)
+      // First, get all assessments to find all user IDs who have taken assessments
+      const { data: assessments, error: assessmentsError } = await supabase
+        .from('assessments')
+        .select('user_id, completed_at');
+
+      if (assessmentsError) {
+        console.error('Error fetching assessments:', assessmentsError);
+      }
+
+      // Get unique user IDs from assessments
+      const userIdsFromAssessments = assessments 
+        ? [...new Set(assessments.map(a => a.user_id))]
+        : [];
+
+      // Fetch profiles for all users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -44,34 +57,45 @@ const UserManagement = () => {
 
       console.log('Profiles fetched:', profiles?.length || 0);
 
-      // Get assessment counts for each user
-      const usersWithStats = await Promise.all(
-        profiles.map(async (profile) => {
-          // Get assessment counts
-          const { data: assessments, error: assessmentError } = await supabase
-            .from('assessments')
-            .select('id, completed_at')
-            .eq('user_id', profile.id)
-            .order('completed_at', { ascending: false });
+      // Get user IDs from profiles
+      const userIdsFromProfiles = profiles ? profiles.map(p => p.id) : [];
 
-          if (assessmentError) {
-            console.error('Error fetching assessments for user:', profile.id, assessmentError);
-          }
+      // Combine all unique user IDs
+      const allUserIds = [...new Set([...userIdsFromProfiles, ...userIdsFromAssessments])];
+
+      console.log('Total unique users found:', allUserIds.length);
+
+      // Get assessment counts for each user and build user objects
+      const usersWithStats = await Promise.all(
+        allUserIds.map(async (userId) => {
+          // Find profile for this user
+          const profile = profiles?.find(p => p.id === userId);
+          
+          // Get assessment counts for this user
+          const userAssessments = assessments?.filter(a => a.user_id === userId) || [];
+          const sortedAssessments = userAssessments.sort((a, b) => 
+            new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+          );
 
           return {
-            id: profile.id,
-            email: profile.email || 'No email',
-            full_name: profile.full_name || 'Unknown User',
-            created_at: profile.created_at,
-            avatar_url: profile.avatar_url,
-            assessment_count: assessments?.length || 0,
-            last_assessment: assessments?.[0]?.completed_at || null
+            id: userId,
+            email: profile?.email || 'No email',
+            full_name: profile?.full_name || 'Unknown User',
+            created_at: profile?.created_at || new Date().toISOString(),
+            avatar_url: profile?.avatar_url,
+            assessment_count: userAssessments.length,
+            last_assessment: sortedAssessments[0]?.completed_at || null
           };
         })
       );
 
-      console.log('Users with stats processed:', usersWithStats.length);
-      return usersWithStats;
+      // Sort users by creation date (newest first)
+      const sortedUsers = usersWithStats.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      console.log('Users with stats processed:', sortedUsers.length);
+      return sortedUsers;
     },
   });
 
