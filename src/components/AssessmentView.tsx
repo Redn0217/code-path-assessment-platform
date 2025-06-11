@@ -29,12 +29,6 @@ interface TagPerformance {
   total: number;
 }
 
-interface QuestionCounts {
-  mcq: number;
-  coding: number;
-  scenario: number;
-}
-
 const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; difficulty: string; onComplete: () => void }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -42,11 +36,11 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isCompleted, setIsCompleted] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(60 * 45); // Will be updated from config
+  const [timeRemaining, setTimeRemaining] = useState(60 * 45); // Default 45 minutes
   const [startTime] = useState(Date.now());
   const [insufficientQuestions, setInsufficientQuestions] = useState<string | null>(null);
   
-  // Fetch assessment configuration
+  // Fetch assessment configuration for time settings
   const { data: config } = useQuery({
     queryKey: ['assessment-config', domain.id],
     queryFn: async () => {
@@ -55,150 +49,46 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
         .select('*')
         .eq('domain', domain.id)
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error('No assessment config found, using defaults');
+        return { total_time_minutes: 45 }; // Default config
+      }
       return data;
     },
   });
 
-  // Fetch question counts for validation
-  const { data: questionCounts } = useQuery({
-    queryKey: ['question-counts', domain.id],
-    queryFn: async () => {
-      const counts: QuestionCounts = { mcq: 0, coding: 0, scenario: 0 };
-      
-      // Count MCQ questions
-      const { count: mcqCount } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('domain', domain.id)
-        .eq('question_type', 'mcq');
-      
-      // Count coding questions
-      const { count: codingCount } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('domain', domain.id)
-        .eq('question_type', 'coding');
-      
-      // Count scenario questions
-      const { count: scenarioCount } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('domain', domain.id)
-        .eq('question_type', 'scenario');
-      
-      counts.mcq = mcqCount || 0;
-      counts.coding = codingCount || 0;
-      counts.scenario = scenarioCount || 0;
-      
-      console.log('Question counts for', domain.id, ':', counts);
-      return counts;
-    },
-    enabled: !!domain,
-  });
-
-  // Fetch questions based on configuration with proper validation
+  // Fetch ALL questions from the selected domain
   const { data: availableQuestions, isLoading, error: questionsError } = useQuery({
-    queryKey: ['assessment-questions', domain.id, config?.id],
+    queryKey: ['assessment-questions', domain.id],
     queryFn: async () => {
-      if (!config || !questionCounts) return [];
+      console.log('Fetching ALL questions for domain:', domain.id);
       
-      console.log('Validating question requirements...');
-      console.log('Config requirements:', {
-        mcq: config.mcq_count,
-        coding: config.coding_count,
-        scenario: config.scenario_count
-      });
-      console.log('Available questions:', questionCounts);
+      // Fetch all questions for this domain
+      const { data: allQuestions, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('domain', domain.id)
+        .order('created_at', { ascending: false });
       
-      // Validate if we have enough questions
-      const missingQuestions = [];
-      if (questionCounts.mcq < config.mcq_count) {
-        missingQuestions.push(`${config.mcq_count - questionCounts.mcq} more MCQ questions`);
-      }
-      if (questionCounts.coding < config.coding_count) {
-        missingQuestions.push(`${config.coding_count - questionCounts.coding} more coding questions`);
-      }
-      if (questionCounts.scenario < config.scenario_count) {
-        missingQuestions.push(`${config.scenario_count - questionCounts.scenario} more scenario questions`);
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
       }
       
-      if (missingQuestions.length > 0) {
-        const errorMessage = `Insufficient questions in ${domain.name} domain. Need: ${missingQuestions.join(', ')}.`;
-        console.error(errorMessage);
-        setInsufficientQuestions(errorMessage);
+      console.log('Found questions:', allQuestions?.length || 0);
+      
+      if (!allQuestions || allQuestions.length === 0) {
+        setInsufficientQuestions(`No questions available for ${domain.name} assessment.`);
         return [];
       }
       
-      console.log('Fetching questions for domain:', domain.id);
+      // Shuffle all questions
+      const shuffledQuestions = allQuestions.sort(() => Math.random() - 0.5);
+      console.log('Final assessment questions:', shuffledQuestions.length);
       
-      const allQuestions = [];
-      
-      // Fetch all MCQ questions for this domain
-      if (config.mcq_count > 0) {
-        const { data: mcqQuestions, error: mcqError } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('domain', domain.id)
-          .eq('question_type', 'mcq')
-          .order('created_at', { ascending: false });
-        
-        if (mcqError) {
-          console.error('Error fetching MCQ questions:', mcqError);
-        } else {
-          console.log('Found MCQ questions:', mcqQuestions?.length || 0);
-          const shuffledMcq = (mcqQuestions || []).sort(() => Math.random() - 0.5);
-          allQuestions.push(...shuffledMcq.slice(0, config.mcq_count));
-        }
-      }
-      
-      // Fetch all coding questions for this domain
-      if (config.coding_count > 0) {
-        const { data: codingQuestions, error: codingError } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('domain', domain.id)
-          .eq('question_type', 'coding')
-          .order('created_at', { ascending: false });
-        
-        if (codingError) {
-          console.error('Error fetching coding questions:', codingError);
-        } else {
-          console.log('Found coding questions:', codingQuestions?.length || 0);
-          const shuffledCoding = (codingQuestions || []).sort(() => Math.random() - 0.5);
-          allQuestions.push(...shuffledCoding.slice(0, config.coding_count));
-        }
-      }
-      
-      // Fetch all scenario questions for this domain
-      if (config.scenario_count > 0) {
-        const { data: scenarioQuestions, error: scenarioError } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('domain', domain.id)
-          .eq('question_type', 'scenario')
-          .order('created_at', { ascending: false });
-        
-        if (scenarioError) {
-          console.error('Error fetching scenario questions:', scenarioError);
-        } else {
-          console.log('Found scenario questions:', scenarioQuestions?.length || 0);
-          const shuffledScenario = (scenarioQuestions || []).sort(() => Math.random() - 0.5);
-          allQuestions.push(...shuffledScenario.slice(0, config.scenario_count));
-        }
-      }
-      
-      // Final shuffle of all selected questions
-      const finalQuestions = allQuestions.sort(() => Math.random() - 0.5);
-      console.log('Final assessment questions:', finalQuestions.length);
-      
-      if (finalQuestions.length === 0) {
-        setInsufficientQuestions(`No questions available for ${domain.name} assessment.`);
-      }
-      
-      return finalQuestions;
+      return shuffledQuestions;
     },
-    enabled: !!config && !!questionCounts,
+    enabled: !!domain,
     staleTime: 0,
     gcTime: 0,
   });
@@ -261,7 +151,6 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
   // Invalidate questions cache when component mounts to ensure fresh data
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['assessment-questions'] });
-    queryClient.invalidateQueries({ queryKey: ['question-counts'] });
   }, [queryClient]);
   
   useEffect(() => {
@@ -390,34 +279,9 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
               </Alert>
               <div className="mt-4">
                 <p className="text-gray-600 mb-4">
-                  This assessment cannot be started because there are not enough questions in the database. 
-                  Please contact an administrator to add more questions for the {domain.name} domain.
+                  This assessment cannot be started because there are no questions available in the database. 
+                  Please contact an administrator to add questions for the {domain.name} domain.
                 </p>
-                {config && questionCounts && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Required vs Available Questions:</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>MCQ Questions:</span>
-                        <span className={questionCounts.mcq >= config.mcq_count ? 'text-green-600' : 'text-red-600'}>
-                          {questionCounts.mcq}/{config.mcq_count}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Coding Questions:</span>
-                        <span className={questionCounts.coding >= config.coding_count ? 'text-green-600' : 'text-red-600'}>
-                          {questionCounts.coding}/{config.coding_count}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Scenario Questions:</span>
-                        <span className={questionCounts.scenario >= config.scenario_count ? 'text-green-600' : 'text-red-600'}>
-                          {questionCounts.scenario}/{config.scenario_count}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
             <CardFooter>
