@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +11,7 @@ import AssessmentConfigs from '@/components/admin/AssessmentConfigs';
 import AdminStats from '@/components/admin/AdminStats';
 import ModuleManager from '@/components/admin/ModuleManager';
 import ModuleSelection from '@/components/admin/ModuleSelection';
+import UserManagement from '@/components/admin/UserManagement';
 import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
@@ -162,14 +162,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="users" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">User management features coming soon...</p>
-              </CardContent>
-            </Card>
+            <UserManagement />
           </TabsContent>
         </Tabs>
       </div>
