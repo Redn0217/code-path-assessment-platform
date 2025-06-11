@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ interface TagPerformance {
 
 const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; difficulty: string; onComplete: () => void }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -49,54 +50,81 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
     },
   });
 
-  // Fetch questions based on configuration
+  // Fetch questions based on configuration with proper cache invalidation
   const { data: availableQuestions, isLoading } = useQuery({
-    queryKey: ['assessment-questions', domain.id, config],
+    queryKey: ['assessment-questions', domain.id, config?.id],
     queryFn: async () => {
       if (!config) return [];
       
-      const questions = [];
+      console.log('Fetching questions for domain:', domain.id);
+      console.log('Config:', config);
       
-      // Fetch MCQ questions
+      const allQuestions = [];
+      
+      // Fetch all MCQ questions for this domain
       if (config.mcq_count > 0) {
-        const { data: mcqQuestions } = await supabase
+        const { data: mcqQuestions, error: mcqError } = await supabase
           .from('questions')
           .select('*')
           .eq('domain', domain.id)
           .eq('question_type', 'mcq')
-          .limit(config.mcq_count * 2); // Get more than needed for randomization
+          .order('created_at', { ascending: false }); // Get newest first
         
-        questions.push(...(mcqQuestions || []).slice(0, config.mcq_count));
+        if (mcqError) {
+          console.error('Error fetching MCQ questions:', mcqError);
+        } else {
+          console.log('Found MCQ questions:', mcqQuestions?.length || 0);
+          // Randomize and take required count
+          const shuffledMcq = (mcqQuestions || []).sort(() => Math.random() - 0.5);
+          allQuestions.push(...shuffledMcq.slice(0, config.mcq_count));
+        }
       }
       
-      // Fetch coding questions
+      // Fetch all coding questions for this domain
       if (config.coding_count > 0) {
-        const { data: codingQuestions } = await supabase
+        const { data: codingQuestions, error: codingError } = await supabase
           .from('questions')
           .select('*')
           .eq('domain', domain.id)
           .eq('question_type', 'coding')
-          .limit(config.coding_count * 2);
+          .order('created_at', { ascending: false });
         
-        questions.push(...(codingQuestions || []).slice(0, config.coding_count));
+        if (codingError) {
+          console.error('Error fetching coding questions:', codingError);
+        } else {
+          console.log('Found coding questions:', codingQuestions?.length || 0);
+          const shuffledCoding = (codingQuestions || []).sort(() => Math.random() - 0.5);
+          allQuestions.push(...shuffledCoding.slice(0, config.coding_count));
+        }
       }
       
-      // Fetch scenario questions
+      // Fetch all scenario questions for this domain
       if (config.scenario_count > 0) {
-        const { data: scenarioQuestions } = await supabase
+        const { data: scenarioQuestions, error: scenarioError } = await supabase
           .from('questions')
           .select('*')
           .eq('domain', domain.id)
           .eq('question_type', 'scenario')
-          .limit(config.scenario_count * 2);
+          .order('created_at', { ascending: false });
         
-        questions.push(...(scenarioQuestions || []).slice(0, config.scenario_count));
+        if (scenarioError) {
+          console.error('Error fetching scenario questions:', scenarioError);
+        } else {
+          console.log('Found scenario questions:', scenarioQuestions?.length || 0);
+          const shuffledScenario = (scenarioQuestions || []).sort(() => Math.random() - 0.5);
+          allQuestions.push(...shuffledScenario.slice(0, config.scenario_count));
+        }
       }
       
-      // Shuffle questions
-      return questions.sort(() => Math.random() - 0.5);
+      // Final shuffle of all selected questions
+      const finalQuestions = allQuestions.sort(() => Math.random() - 0.5);
+      console.log('Final assessment questions:', finalQuestions.length);
+      
+      return finalQuestions;
     },
     enabled: !!config,
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache the results
   });
 
   // Save assessment result
@@ -153,6 +181,11 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
       }
     }
   }, [availableQuestions, config]);
+
+  // Invalidate questions cache when component mounts to ensure fresh data
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['assessment-questions'] });
+  }, [queryClient]);
   
   useEffect(() => {
     if (timeRemaining <= 0) {
