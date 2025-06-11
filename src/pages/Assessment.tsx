@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
+import ModuleSelection from '@/components/ModuleSelection';
 
 const domains = {
   python: { name: 'Python', color: 'bg-blue-500' },
@@ -25,9 +26,21 @@ const domains = {
   'data-science': { name: 'Data Science', color: 'bg-violet-500' }
 };
 
+interface Module {
+  id: string;
+  name: string;
+  description: string;
+  domain: string;
+  icon: string;
+  color: string;
+  is_active: boolean;
+  order_index: number;
+}
+
 const Assessment = () => {
   const { domain } = useParams<{ domain: string }>();
   const navigate = useNavigate();
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -36,18 +49,18 @@ const Assessment = () => {
 
   const domainInfo = domain ? domains[domain as keyof typeof domains] : null;
 
-  // Fetch questions from database
+  // Fetch questions from database based on selected module
   const { data: questions = [], isLoading, error } = useQuery({
-    queryKey: ['assessment-questions', domain],
+    queryKey: ['assessment-questions', selectedModule?.id],
     queryFn: async () => {
-      if (!domain) return [];
+      if (!selectedModule) return [];
       
-      console.log('Fetching questions for domain:', domain);
+      console.log('Fetching questions for module:', selectedModule.id);
       
       const { data, error } = await supabase
         .from('questions')
         .select('*')
-        .eq('domain', domain)
+        .eq('module_id', selectedModule.id)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -58,19 +71,19 @@ const Assessment = () => {
       console.log('Fetched questions:', data?.length || 0);
       return data || [];
     },
-    enabled: !!domain,
+    enabled: !!selectedModule,
   });
 
   // Fetch assessment configuration for time settings
   const { data: assessmentConfig } = useQuery({
-    queryKey: ['assessment-config', domain],
+    queryKey: ['assessment-config', selectedModule?.id],
     queryFn: async () => {
-      if (!domain) return null;
+      if (!selectedModule) return null;
       
       const { data, error } = await supabase
         .from('assessment_configs')
         .select('*')
-        .eq('domain', domain)
+        .eq('module_id', selectedModule.id)
         .single();
       
       if (error) {
@@ -80,7 +93,7 @@ const Assessment = () => {
       
       return data;
     },
-    enabled: !!domain,
+    enabled: !!selectedModule,
   });
 
   useEffect(() => {
@@ -107,6 +120,20 @@ const Assessment = () => {
             <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
           </div>
         </div>
+      </AuthenticatedLayout>
+    );
+  }
+
+  // Show module selection if no module is selected
+  if (!selectedModule) {
+    return (
+      <AuthenticatedLayout>
+        <ModuleSelection
+          domain={domain!}
+          domainInfo={domainInfo}
+          onModuleSelect={setSelectedModule}
+          onBack={() => navigate('/')}
+        />
       </AuthenticatedLayout>
     );
   }
@@ -157,6 +184,7 @@ const Assessment = () => {
           .insert({
             user_id: user.id,
             domain: domain || '',
+            module_id: selectedModule.id,
             difficulty: 'beginner',
             score,
             total_questions: questions.length,
@@ -204,7 +232,7 @@ const Assessment = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Error loading assessment</h1>
             <p className="text-gray-600 mb-6">There was an error loading the questions.</p>
-            <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
+            <Button onClick={() => setSelectedModule(null)}>Back to Modules</Button>
           </div>
         </div>
       </AuthenticatedLayout>
@@ -218,9 +246,9 @@ const Assessment = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Assessment Coming Soon</h1>
             <p className="text-gray-600 mb-6">
-              The {domainInfo.name} assessment is currently being prepared. Check back soon!
+              The {selectedModule.name} assessment is currently being prepared. Check back soon!
             </p>
-            <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
+            <Button onClick={() => setSelectedModule(null)}>Back to Modules</Button>
           </div>
         </div>
       </AuthenticatedLayout>
@@ -234,22 +262,22 @@ const Assessment = () => {
           <div className="max-w-2xl mx-auto">
             <Button
               variant="ghost"
-              onClick={() => navigate('/')}
+              onClick={() => setSelectedModule(null)}
               className="mb-6 flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Back to Dashboard</span>
+              <span>Back to Modules</span>
             </Button>
 
             <Card>
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className={`p-3 rounded-lg ${domainInfo.color}`}>
+                  <div className={`p-3 rounded-lg ${selectedModule.color}`}>
                     <div className="h-6 w-6 bg-white rounded"></div>
                   </div>
                   <div>
-                    <CardTitle className="text-2xl">{domainInfo.name} Assessment</CardTitle>
-                    <CardDescription>Test your knowledge in {domainInfo.name}</CardDescription>
+                    <CardTitle className="text-2xl">{selectedModule.name} Assessment</CardTitle>
+                    <CardDescription>Test your knowledge in {selectedModule.name}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -323,7 +351,7 @@ const Assessment = () => {
                   )}
                 </div>
                 <CardTitle className="text-2xl">Assessment Completed!</CardTitle>
-                <CardDescription>Here are your results for {domainInfo.name}</CardDescription>
+                <CardDescription>Here are your results for {selectedModule.name}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="text-center">
@@ -354,11 +382,11 @@ const Assessment = () => {
 
                 <div className="flex space-x-4">
                   <Button 
-                    onClick={() => navigate('/')}
+                    onClick={() => setSelectedModule(null)}
                     variant="outline"
                     className="flex-1"
                   >
-                    Back to Dashboard
+                    Back to Modules
                   </Button>
                   <Button 
                     onClick={() => {
@@ -405,7 +433,7 @@ const Assessment = () => {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <Badge variant="secondary">{domainInfo.name}</Badge>
+                <Badge variant="secondary">{selectedModule.name}</Badge>
                 <Badge variant="outline">{currentQ?.difficulty}</Badge>
               </div>
             </CardHeader>
@@ -433,7 +461,7 @@ const Assessment = () => {
               <div className="flex justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => navigate('/')}
+                  onClick={() => setSelectedModule(null)}
                 >
                   Exit Assessment
                 </Button>

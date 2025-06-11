@@ -42,6 +42,7 @@ export type Database = {
           domain: string
           id: string
           mcq_count: number | null
+          module_id: string | null
           scenario_count: number | null
           total_time_minutes: number | null
           updated_at: string | null
@@ -54,6 +55,7 @@ export type Database = {
           domain: string
           id?: string
           mcq_count?: number | null
+          module_id?: string | null
           scenario_count?: number | null
           total_time_minutes?: number | null
           updated_at?: string | null
@@ -66,11 +68,20 @@ export type Database = {
           domain?: string
           id?: string
           mcq_count?: number | null
+          module_id?: string | null
           scenario_count?: number | null
           total_time_minutes?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "assessment_configs_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       assessments: {
         Row: {
@@ -81,6 +92,7 @@ export type Database = {
           difficulty: string
           domain: string
           id: string
+          module_id: string | null
           question_ids: string[] | null
           score: number
           strong_areas: string[] | null
@@ -97,6 +109,7 @@ export type Database = {
           difficulty: string
           domain: string
           id?: string
+          module_id?: string | null
           question_ids?: string[] | null
           score: number
           strong_areas?: string[] | null
@@ -113,6 +126,7 @@ export type Database = {
           difficulty?: string
           domain?: string
           id?: string
+          module_id?: string | null
           question_ids?: string[] | null
           score?: number
           strong_areas?: string[] | null
@@ -120,6 +134,48 @@ export type Database = {
           total_questions?: number
           user_id?: string
           weak_areas?: string[] | null
+        }
+        Relationships: []
+      }
+      modules: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          domain: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          order_index: number | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          order_index?: number | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          order_index?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -160,6 +216,7 @@ export type Database = {
           explanation: string | null
           id: string
           memory_limit: number | null
+          module_id: string | null
           options: Json | null
           question_text: string
           question_type: Database["public"]["Enums"]["question_type"]
@@ -178,6 +235,7 @@ export type Database = {
           explanation?: string | null
           id?: string
           memory_limit?: number | null
+          module_id?: string | null
           options?: Json | null
           question_text: string
           question_type: Database["public"]["Enums"]["question_type"]
@@ -196,6 +254,7 @@ export type Database = {
           explanation?: string | null
           id?: string
           memory_limit?: number | null
+          module_id?: string | null
           options?: Json | null
           question_text?: string
           question_type?: Database["public"]["Enums"]["question_type"]
@@ -205,7 +264,15 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

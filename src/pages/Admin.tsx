@@ -6,15 +6,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileQuestion, Settings, BarChart3, Plus } from 'lucide-react';
+import { Users, FileQuestion, Settings, BarChart3, Plus, Layout } from 'lucide-react';
 import QuestionManager from '@/components/admin/QuestionManager';
 import AssessmentConfigs from '@/components/admin/AssessmentConfigs';
 import AdminStats from '@/components/admin/AdminStats';
+import ModuleManager from '@/components/admin/ModuleManager';
 import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('questions');
+  const [activeTab, setActiveTab] = useState('modules');
 
   // Check if user is admin
   const { data: isAdmin, isLoading } = useQuery({
@@ -71,10 +72,14 @@ const Admin = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="modules" className="flex items-center gap-2">
+              <Layout className="h-4 w-4" />
+              Modules
+            </TabsTrigger>
             <TabsTrigger value="questions" className="flex items-center gap-2">
               <FileQuestion className="h-4 w-4" />
-              Question Bank
+              Questions
             </TabsTrigger>
             <TabsTrigger value="configs" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -86,9 +91,13 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              User Management
+              Users
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="modules" className="mt-6">
+            <ModuleManager />
+          </TabsContent>
 
           <TabsContent value="questions" className="mt-6">
             <QuestionManager />
