@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,6 +88,25 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
       case 'advanced': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handleAssessmentClick = (assessment: any) => {
+    // Transform the Supabase assessment data to match our Assessment interface
+    const transformedAssessment: Assessment = {
+      id: assessment.id,
+      domain: assessment.domain,
+      module_id: assessment.module_id,
+      difficulty: assessment.difficulty,
+      score: assessment.score,
+      total_questions: assessment.total_questions,
+      completed_at: assessment.completed_at,
+      time_taken: assessment.time_taken,
+      strong_areas: assessment.strong_areas || [],
+      weak_areas: assessment.weak_areas || [],
+      answers: Array.isArray(assessment.answers) ? assessment.answers : [],
+      question_ids: assessment.question_ids || []
+    };
+    setSelectedAssessment(transformedAssessment);
   };
 
   if (selectedAssessment) {
@@ -191,7 +211,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
                 <Card 
                   key={assessment.id} 
                   className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSelectedAssessment(assessment)}
+                  onClick={() => handleAssessmentClick(assessment)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
