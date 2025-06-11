@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,11 +28,33 @@ const UserManagement = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['all-users'],
     queryFn: async () => {
+      console.log('=== DEBUGGING USER COUNT ===');
+      
+      // Check what's in auth.users (this might require admin permissions)
+      console.log('Checking auth.users count...');
+      try {
+        // We can't directly query auth.users, but we can see if there are any orphaned assessments
+        const { data: allAssessments, error: assessmentsError } = await supabase
+          .from('assessments')
+          .select('user_id');
+        
+        if (allAssessments) {
+          const uniqueUserIds = [...new Set(allAssessments.map(a => a.user_id))];
+          console.log('Unique user IDs from assessments:', uniqueUserIds.length);
+          console.log('User IDs:', uniqueUserIds);
+        }
+      } catch (e) {
+        console.log('Could not fetch assessment user IDs:', e);
+      }
+
       // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
+
+      console.log('Profiles found:', profiles?.length || 0);
+      console.log('Profile details:', profiles?.map(p => ({ email: p.email, id: p.id })));
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
@@ -77,6 +98,7 @@ const UserManagement = () => {
         };
       });
 
+      console.log('=== END DEBUGGING ===');
       return usersWithStats;
     },
   });
