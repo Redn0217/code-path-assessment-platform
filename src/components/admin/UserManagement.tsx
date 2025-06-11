@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,27 +25,13 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // Fetch all users with their assessment statistics
+  // Fetch ALL users (not just admins) with their assessment statistics
   const { data: users = [], isLoading, error } = useQuery({
-    queryKey: ['admin-users'],
+    queryKey: ['all-users'],
     queryFn: async () => {
-      console.log('Fetching users for admin panel...');
+      console.log('Fetching ALL users for admin panel...');
       
-      // First, get all assessments to find all user IDs who have taken assessments
-      const { data: assessments, error: assessmentsError } = await supabase
-        .from('assessments')
-        .select('user_id, completed_at');
-
-      if (assessmentsError) {
-        console.error('Error fetching assessments:', assessmentsError);
-      }
-
-      // Get unique user IDs from assessments
-      const userIdsFromAssessments = assessments 
-        ? [...new Set(assessments.map(a => a.user_id))]
-        : [];
-
-      // Fetch profiles for all users
+      // First, get all profiles (this should include ALL users)
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -55,47 +42,71 @@ const UserManagement = () => {
         throw profilesError;
       }
 
-      console.log('Profiles fetched:', profiles?.length || 0);
+      console.log('All profiles fetched:', profiles?.length || 0);
+      console.log('Profile data sample:', profiles?.slice(0, 2));
 
-      // Get user IDs from profiles
-      const userIdsFromProfiles = profiles ? profiles.map(p => p.id) : [];
+      // Get all assessments to calculate stats
+      const { data: assessments, error: assessmentsError } = await supabase
+        .from('assessments')
+        .select('user_id, completed_at');
 
-      // Combine all unique user IDs
-      const allUserIds = [...new Set([...userIdsFromProfiles, ...userIdsFromAssessments])];
+      if (assessmentsError) {
+        console.error('Error fetching assessments:', assessmentsError);
+      }
 
-      console.log('Total unique users found:', allUserIds.length);
+      console.log('All assessments fetched:', assessments?.length || 0);
 
-      // Get assessment counts for each user and build user objects
-      const usersWithStats = await Promise.all(
-        allUserIds.map(async (userId) => {
-          // Find profile for this user
-          const profile = profiles?.find(p => p.id === userId);
-          
-          // Get assessment counts for this user
-          const userAssessments = assessments?.filter(a => a.user_id === userId) || [];
+      // If we have profiles, process them with assessment stats
+      if (profiles && profiles.length > 0) {
+        const usersWithStats = profiles.map(profile => {
+          const userAssessments = assessments?.filter(a => a.user_id === profile.id) || [];
+          const sortedAssessments = userAssessments.sort((a, b) => 
+            new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+          );
+
+          return {
+            id: profile.id,
+            email: profile.email || 'No email',
+            full_name: profile.full_name || 'Unknown User',
+            created_at: profile.created_at || new Date().toISOString(),
+            avatar_url: profile.avatar_url,
+            assessment_count: userAssessments.length,
+            last_assessment: sortedAssessments[0]?.completed_at || null
+          };
+        });
+
+        console.log('Users with stats processed:', usersWithStats.length);
+        console.log('Users sample:', usersWithStats.slice(0, 2));
+        return usersWithStats;
+      }
+
+      // If no profiles, check if there are users in assessments without profiles
+      if (assessments && assessments.length > 0) {
+        const uniqueUserIds = [...new Set(assessments.map(a => a.user_id))];
+        console.log('Found users in assessments without profiles:', uniqueUserIds.length);
+        
+        // Create user objects for users who have assessments but no profiles
+        const usersFromAssessments = uniqueUserIds.map(userId => {
+          const userAssessments = assessments.filter(a => a.user_id === userId);
           const sortedAssessments = userAssessments.sort((a, b) => 
             new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
           );
 
           return {
             id: userId,
-            email: profile?.email || 'No email',
-            full_name: profile?.full_name || 'Unknown User',
-            created_at: profile?.created_at || new Date().toISOString(),
-            avatar_url: profile?.avatar_url,
+            email: 'No profile found',
+            full_name: `User ${userId.slice(0, 8)}`,
+            created_at: sortedAssessments[0]?.completed_at || new Date().toISOString(),
             assessment_count: userAssessments.length,
             last_assessment: sortedAssessments[0]?.completed_at || null
           };
-        })
-      );
+        });
 
-      // Sort users by creation date (newest first)
-      const sortedUsers = usersWithStats.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+        return usersFromAssessments;
+      }
 
-      console.log('Users with stats processed:', sortedUsers.length);
-      return sortedUsers;
+      console.log('No users found in profiles or assessments');
+      return [];
     },
   });
 
@@ -213,8 +224,13 @@ const UserManagement = () => {
         <Card>
           <CardContent className="p-6 text-center">
             <p className="text-gray-600">
-              {searchTerm ? 'No users found matching your search criteria.' : 'No users found.'}
+              {searchTerm ? 'No users found matching your search criteria.' : 'No users found in the system.'}
             </p>
+            {!searchTerm && (
+              <p className="text-sm text-gray-500 mt-2">
+                Users will appear here once they register and create profiles.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
