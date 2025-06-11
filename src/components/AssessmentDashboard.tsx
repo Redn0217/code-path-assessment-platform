@@ -1,5 +1,6 @@
-
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,35 @@ const AssessmentDashboard = ({ user, domains, onLogout }) => {
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState('intermediate');
   const [isAssessmentStarted, setIsAssessmentStarted] = useState(false);
+  
+  // Fetch assessment configuration for the selected domain
+  const { data: assessmentConfig } = useQuery({
+    queryKey: ['assessment-config', selectedDomain?.id],
+    queryFn: async () => {
+      if (!selectedDomain) return null;
+      
+      const { data, error } = await supabase
+        .from('assessment_configs')
+        .select('*')
+        .eq('domain', selectedDomain.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching assessment config:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!selectedDomain,
+  });
+
+  // Calculate total questions from config
+  const totalQuestions = assessmentConfig 
+    ? (assessmentConfig.mcq_count || 0) + (assessmentConfig.coding_count || 0) + (assessmentConfig.scenario_count || 0)
+    : 0;
+
+  const totalTimeMinutes = assessmentConfig?.total_time_minutes || 60;
   
   // Mock data for previous assessments
   const previousAssessments = [
@@ -170,14 +200,40 @@ const AssessmentDashboard = ({ user, domains, onLogout }) => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Dynamic assessment preview */}
+                {selectedDomain && assessmentConfig && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                    <h4 className="font-medium text-blue-800">Assessment Details</h4>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div className="text-center">
+                        <div className="font-bold text-blue-600">{totalQuestions}</div>
+                        <div className="text-blue-700">Questions</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-blue-600">{totalTimeMinutes}</div>
+                        <div className="text-blue-700">Minutes</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-blue-600">Mixed</div>
+                        <div className="text-blue-700">Types</div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-blue-600 space-y-1">
+                      <div>• MCQ: {assessmentConfig.mcq_count}</div>
+                      <div>• Coding: {assessmentConfig.coding_count}</div>
+                      <div>• Scenario: {assessmentConfig.scenario_count}</div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
               <CardFooter>
                 <Button 
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={!selectedDomain}
+                  disabled={!selectedDomain || totalQuestions === 0}
                   onClick={handleStartAssessment}
                 >
-                  Start Assessment
+                  {selectedDomain && totalQuestions === 0 ? 'No Questions Available' : 'Start Assessment'}
                 </Button>
               </CardFooter>
             </Card>
