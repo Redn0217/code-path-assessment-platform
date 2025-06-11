@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,42 +10,6 @@ import { ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
-
-// Sample questions for different domains
-const sampleQuestions = {
-  python: [
-    {
-      id: 1,
-      question: "What is the output of: print(type([]))?",
-      options: ["<class 'list'>", "<class 'array'>", "<class 'tuple'>", "<class 'dict'>"],
-      correct: 0,
-      difficulty: "beginner"
-    },
-    {
-      id: 2,
-      question: "Which method is used to add an element to a list?",
-      options: ["add()", "append()", "insert()", "push()"],
-      correct: 1,
-      difficulty: "beginner"
-    }
-  ],
-  devops: [
-    {
-      id: 1,
-      question: "What does CI/CD stand for?",
-      options: ["Continuous Integration/Continuous Deployment", "Central Integration/Central Deployment", "Code Integration/Code Deployment", "Custom Integration/Custom Deployment"],
-      correct: 0,
-      difficulty: "beginner"
-    },
-    {
-      id: 2,
-      question: "Which tool is commonly used for containerization?",
-      options: ["Vagrant", "Docker", "VirtualBox", "VMware"],
-      correct: 1,
-      difficulty: "beginner"
-    }
-  ]
-};
 
 const domains = {
   python: { name: 'Python', color: 'bg-blue-500' },
@@ -66,11 +31,63 @@ const Assessment = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes
+  const [timeLeft, setTimeLeft] = useState(1800); // Default 30 minutes
   const [isStarted, setIsStarted] = useState(false);
 
   const domainInfo = domain ? domains[domain as keyof typeof domains] : null;
-  const questions = domain && sampleQuestions[domain as keyof typeof sampleQuestions] ? sampleQuestions[domain as keyof typeof sampleQuestions] : [];
+
+  // Fetch questions from database
+  const { data: questions = [], isLoading, error } = useQuery({
+    queryKey: ['assessment-questions', domain],
+    queryFn: async () => {
+      if (!domain) return [];
+      
+      console.log('Fetching questions for domain:', domain);
+      
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('domain', domain)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
+      
+      console.log('Fetched questions:', data?.length || 0);
+      return data || [];
+    },
+    enabled: !!domain,
+  });
+
+  // Fetch assessment configuration for time settings
+  const { data: assessmentConfig } = useQuery({
+    queryKey: ['assessment-config', domain],
+    queryFn: async () => {
+      if (!domain) return null;
+      
+      const { data, error } = await supabase
+        .from('assessment_configs')
+        .select('*')
+        .eq('domain', domain)
+        .single();
+      
+      if (error) {
+        console.error('No assessment config found, using defaults');
+        return { total_time_minutes: 30 }; // Default config
+      }
+      
+      return data;
+    },
+    enabled: !!domain,
+  });
+
+  useEffect(() => {
+    if (assessmentConfig?.total_time_minutes) {
+      setTimeLeft(assessmentConfig.total_time_minutes * 60);
+    }
+  }, [assessmentConfig]);
 
   useEffect(() => {
     if (isStarted && timeLeft > 0 && !isCompleted) {
@@ -119,7 +136,11 @@ const Assessment = () => {
     
     // Calculate score
     const score = answers.reduce((total, answer, index) => {
-      return total + (answer === questions[index]?.correct ? 1 : 0);
+      const question = questions[index];
+      if (question?.question_type === 'mcq') {
+        return total + (answer === question.options?.indexOf(question.correct_answer) ? 1 : 0);
+      }
+      return total + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
 
     try {
@@ -135,6 +156,7 @@ const Assessment = () => {
             score,
             total_questions: questions.length,
             answers: answers,
+            question_ids: questions.map(q => q.id),
             strong_areas: score > questions.length * 0.7 ? [domain || ''] : [],
             weak_areas: score <= questions.length * 0.5 ? [domain || ''] : []
           });
@@ -157,6 +179,32 @@ const Assessment = () => {
       console.error('Error submitting assessment:', error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <AuthenticatedLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AuthenticatedLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Error loading assessment</h1>
+            <p className="text-gray-600 mb-6">There was an error loading the questions.</p>
+            <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
 
   if (questions.length === 0) {
     return (
@@ -207,7 +255,7 @@ const Assessment = () => {
                     <div className="text-sm text-gray-600">Questions</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">30</div>
+                    <div className="text-2xl font-bold text-green-600">{Math.floor(timeLeft / 60)}</div>
                     <div className="text-sm text-gray-600">Minutes</div>
                   </div>
                   <div className="text-center">
@@ -220,7 +268,7 @@ const Assessment = () => {
                   <h3 className="font-semibold text-yellow-800 mb-2">Instructions:</h3>
                   <ul className="text-sm text-yellow-700 space-y-1">
                     <li>• Choose the best answer for each question</li>
-                    <li>• You have 30 minutes to complete the assessment</li>
+                    <li>• You have {Math.floor(timeLeft / 60)} minutes to complete the assessment</li>
                     <li>• You cannot go back to previous questions</li>
                     <li>• Your progress will be saved automatically</li>
                   </ul>
@@ -243,7 +291,11 @@ const Assessment = () => {
 
   if (isCompleted) {
     const score = answers.reduce((total, answer, index) => {
-      return total + (answer === questions[index]?.correct ? 1 : 0);
+      const question = questions[index];
+      if (question?.question_type === 'mcq') {
+        return total + (answer === question.options?.indexOf(question.correct_answer) ? 1 : 0);
+      }
+      return total + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
     const percentage = Math.round((score / questions.length) * 100);
 
@@ -303,7 +355,7 @@ const Assessment = () => {
                       setCurrentQuestion(0);
                       setAnswers([]);
                       setIsCompleted(false);
-                      setTimeLeft(1800);
+                      setTimeLeft(assessmentConfig?.total_time_minutes ? assessmentConfig.total_time_minutes * 60 : 1800);
                       setIsStarted(false);
                     }}
                     className="flex-1"
@@ -348,10 +400,10 @@ const Assessment = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <h2 className="text-xl font-semibold">{currentQ?.question}</h2>
+              <h2 className="text-xl font-semibold">{currentQ?.title || currentQ?.question_text}</h2>
               
               <div className="space-y-3">
-                {currentQ?.options.map((option, index) => (
+                {currentQ?.question_type === 'mcq' && currentQ?.options?.map((option: string, index: number) => (
                   <Button
                     key={index}
                     variant={answers[currentQuestion] === index ? "default" : "outline"}
