@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +30,8 @@ interface Assessment {
   time_taken: number;
   strong_areas: string[];
   weak_areas: string[];
+  answers: any[];
+  question_ids: string[];
 }
 
 interface UserDetailsProps {
