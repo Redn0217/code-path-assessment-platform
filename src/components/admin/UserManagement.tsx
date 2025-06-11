@@ -29,49 +29,76 @@ const UserManagement = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['all-users'],
     queryFn: async () => {
-      // Get all profiles
+      console.log('=== DEBUGGING USER FETCH ===');
+      
+      // Get all profiles with detailed logging
+      console.log('Fetching profiles...');
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('Profiles query result:');
+      console.log('- Error:', profilesError);
+      console.log('- Data:', profiles);
+      console.log('- Number of profiles:', profiles?.length || 0);
+      
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
         throw profilesError;
       }
 
+      if (!profiles || profiles.length === 0) {
+        console.log('No profiles found in database');
+        return [];
+      }
+
+      console.log('All profiles found:', profiles.map(p => ({
+        id: p.id,
+        email: p.email,
+        full_name: p.full_name,
+        created_at: p.created_at
+      })));
+
       // Get all assessments to calculate stats
+      console.log('Fetching assessments...');
       const { data: assessments, error: assessmentsError } = await supabase
         .from('assessments')
         .select('user_id, completed_at');
+
+      console.log('Assessments query result:');
+      console.log('- Error:', assessmentsError);
+      console.log('- Number of assessments:', assessments?.length || 0);
 
       if (assessmentsError) {
         console.error('Error fetching assessments:', assessmentsError);
       }
 
       // Process profiles with assessment stats
-      if (profiles && profiles.length > 0) {
-        const usersWithStats = profiles.map(profile => {
-          const userAssessments = assessments?.filter(a => a.user_id === profile.id) || [];
-          const sortedAssessments = userAssessments.sort((a, b) => 
-            new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
-          );
+      const usersWithStats = profiles.map(profile => {
+        const userAssessments = assessments?.filter(a => a.user_id === profile.id) || [];
+        const sortedAssessments = userAssessments.sort((a, b) => 
+          new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+        );
 
-          return {
-            id: profile.id,
-            email: profile.email || 'No email',
-            full_name: profile.full_name || 'Unknown User',
-            created_at: profile.created_at || new Date().toISOString(),
-            avatar_url: profile.avatar_url,
-            assessment_count: userAssessments.length,
-            last_assessment: sortedAssessments[0]?.completed_at || null
-          };
-        });
+        console.log(`User ${profile.email}: ${userAssessments.length} assessments`);
 
-        return usersWithStats;
-      }
+        return {
+          id: profile.id,
+          email: profile.email || 'No email',
+          full_name: profile.full_name || 'Unknown User',
+          created_at: profile.created_at || new Date().toISOString(),
+          avatar_url: profile.avatar_url,
+          assessment_count: userAssessments.length,
+          last_assessment: sortedAssessments[0]?.completed_at || null
+        };
+      });
 
-      return [];
+      console.log('Final users with stats:', usersWithStats);
+      console.log('Total users to return:', usersWithStats.length);
+      console.log('=== END DEBUGGING ===');
+
+      return usersWithStats;
     },
   });
 
