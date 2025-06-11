@@ -31,43 +31,39 @@ const UserManagement = () => {
     queryFn: async () => {
       console.log('Fetching users for admin panel...');
       
-      // Fetch all users from auth.users table via admin API
-      const { data: authResponse, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error('Error fetching auth users:', authError);
-        throw authError;
+      // Fetch users from profiles table (this doesn't require admin privileges)
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
       }
 
-      console.log('Auth users fetched:', authResponse.users?.length || 0);
+      console.log('Profiles fetched:', profiles?.length || 0);
 
-      // Get profile data and assessment counts for each user
+      // Get assessment counts for each user
       const usersWithStats = await Promise.all(
-        authResponse.users.map(async (authUser) => {
-          // Try to get profile data
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, avatar_url')
-            .eq('id', authUser.id)
-            .single();
-
+        profiles.map(async (profile) => {
           // Get assessment counts
           const { data: assessments, error: assessmentError } = await supabase
             .from('assessments')
             .select('id, completed_at')
-            .eq('user_id', authUser.id)
+            .eq('user_id', profile.id)
             .order('completed_at', { ascending: false });
 
           if (assessmentError) {
-            console.error('Error fetching assessments for user:', authUser.id, assessmentError);
+            console.error('Error fetching assessments for user:', profile.id, assessmentError);
           }
 
           return {
-            id: authUser.id,
-            email: authUser.email || 'No email',
-            full_name: profile?.full_name || authUser.user_metadata?.full_name || 'Unknown User',
-            created_at: authUser.created_at,
-            avatar_url: profile?.avatar_url || authUser.user_metadata?.avatar_url,
+            id: profile.id,
+            email: profile.email || 'No email',
+            full_name: profile.full_name || 'Unknown User',
+            created_at: profile.created_at,
+            avatar_url: profile.avatar_url,
             assessment_count: assessments?.length || 0,
             last_assessment: assessments?.[0]?.completed_at || null
           };
@@ -99,7 +95,7 @@ const UserManagement = () => {
         <CardContent className="p-6">
           <div className="text-center text-red-600">
             <p>Error loading users: {error.message}</p>
-            <p className="text-sm mt-2">Make sure you have admin privileges to view user data.</p>
+            <p className="text-sm mt-2">Please check your permissions and try again.</p>
           </div>
         </CardContent>
       </Card>
