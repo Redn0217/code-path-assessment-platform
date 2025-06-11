@@ -31,39 +31,50 @@ const UserManagement = () => {
     queryFn: async () => {
       console.log('Fetching users for admin panel...');
       
-      // First get all profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
+      // Fetch all users from auth.users table via admin API
+      const { data: authResponse, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        throw authError;
       }
 
-      // Then get assessment counts for each user
+      console.log('Auth users fetched:', authResponse.users?.length || 0);
+
+      // Get profile data and assessment counts for each user
       const usersWithStats = await Promise.all(
-        profiles.map(async (profile) => {
+        authResponse.users.map(async (authUser) => {
+          // Try to get profile data
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', authUser.id)
+            .single();
+
+          // Get assessment counts
           const { data: assessments, error: assessmentError } = await supabase
             .from('assessments')
             .select('id, completed_at')
-            .eq('user_id', profile.id)
+            .eq('user_id', authUser.id)
             .order('completed_at', { ascending: false });
 
           if (assessmentError) {
-            console.error('Error fetching assessments for user:', profile.id, assessmentError);
+            console.error('Error fetching assessments for user:', authUser.id, assessmentError);
           }
 
           return {
-            ...profile,
+            id: authUser.id,
+            email: authUser.email || 'No email',
+            full_name: profile?.full_name || authUser.user_metadata?.full_name || 'Unknown User',
+            created_at: authUser.created_at,
+            avatar_url: profile?.avatar_url || authUser.user_metadata?.avatar_url,
             assessment_count: assessments?.length || 0,
             last_assessment: assessments?.[0]?.completed_at || null
           };
         })
       );
 
-      console.log('Fetched users with stats:', usersWithStats.length);
+      console.log('Users with stats processed:', usersWithStats.length);
       return usersWithStats;
     },
   });
@@ -82,11 +93,13 @@ const UserManagement = () => {
   }
 
   if (error) {
+    console.error('Error in UserManagement:', error);
     return (
       <Card>
         <CardContent className="p-6">
           <div className="text-center text-red-600">
-            <p>Error loading users. Please try again.</p>
+            <p>Error loading users: {error.message}</p>
+            <p className="text-sm mt-2">Make sure you have admin privileges to view user data.</p>
           </div>
         </CardContent>
       </Card>
@@ -176,10 +189,12 @@ const UserManagement = () => {
         ))}
       </div>
 
-      {filteredUsers.length === 0 && (
+      {filteredUsers.length === 0 && !isLoading && (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-gray-600">No users found matching your search criteria.</p>
+            <p className="text-gray-600">
+              {searchTerm ? 'No users found matching your search criteria.' : 'No users found.'}
+            </p>
           </CardContent>
         </Card>
       )}
