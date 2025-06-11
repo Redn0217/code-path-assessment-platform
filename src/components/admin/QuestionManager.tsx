@@ -14,21 +14,27 @@ import QuestionTable from './QuestionTable';
 type QuestionType = 'mcq' | 'coding' | 'scenario';
 type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 
-const QuestionManager = () => {
+interface QuestionManagerProps {
+  selectedModule: any;
+}
+
+const QuestionManager: React.FC<QuestionManagerProps> = ({ selectedModule }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filterDomain, setFilterDomain] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['questions', filterDomain, filterType, filterDifficulty],
+    queryKey: ['module-questions', selectedModule?.id, filterType, filterDifficulty],
     queryFn: async () => {
-      let query = supabase.from('questions').select('*').order('created_at', { ascending: false });
+      let query = supabase
+        .from('questions')
+        .select('*')
+        .eq('module_id', selectedModule.id)
+        .order('created_at', { ascending: false });
       
-      if (filterDomain && filterDomain !== 'all') query = query.eq('domain', filterDomain);
       if (filterType && filterType !== 'all') query = query.eq('question_type', filterType as QuestionType);
       if (filterDifficulty && filterDifficulty !== 'all') query = query.eq('difficulty', filterDifficulty as DifficultyLevel);
       
@@ -36,6 +42,7 @@ const QuestionManager = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!selectedModule?.id,
   });
 
   const deleteQuestion = useMutation({
@@ -44,7 +51,7 @@ const QuestionManager = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      queryClient.invalidateQueries({ queryKey: ['module-questions'] });
       toast({ title: 'Question deleted successfully' });
     },
     onError: () => {
@@ -68,7 +75,12 @@ const QuestionManager = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Question Bank Management</CardTitle>
+            <div>
+              <CardTitle>Questions for {selectedModule?.name}</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage questions specific to this module
+              </p>
+            </div>
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingQuestion(null)}>
@@ -84,6 +96,7 @@ const QuestionManager = () => {
                 </DialogHeader>
                 <QuestionForm 
                   question={editingQuestion} 
+                  selectedModule={selectedModule}
                   onClose={() => {
                     setIsFormOpen(false);
                     setEditingQuestion(null);
@@ -95,12 +108,11 @@ const QuestionManager = () => {
         </CardHeader>
         <CardContent>
           <QuestionFilters
-            filterDomain={filterDomain}
             filterType={filterType}
             filterDifficulty={filterDifficulty}
-            onDomainChange={setFilterDomain}
             onTypeChange={setFilterType}
             onDifficultyChange={setFilterDifficulty}
+            hideModuleFilter={true}
           />
 
           <QuestionTable

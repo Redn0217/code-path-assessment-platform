@@ -11,7 +11,11 @@ import AssessmentConfigForm from './AssessmentConfigForm';
 import AssessmentConfigTable from './AssessmentConfigTable';
 import { getDefaultFormData, validateDifficultyDistribution } from './AssessmentConfigUtils';
 
-const AssessmentConfigs = () => {
+interface AssessmentConfigsProps {
+  selectedModule: any;
+}
+
+const AssessmentConfigs: React.FC<AssessmentConfigsProps> = ({ selectedModule }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -19,55 +23,63 @@ const AssessmentConfigs = () => {
   const [formData, setFormData] = useState(getDefaultFormData());
 
   const { data: configs, isLoading } = useQuery({
-    queryKey: ['assessment-configs'],
+    queryKey: ['module-assessment-configs', selectedModule?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('assessment_configs')
         .select('*')
+        .eq('module_id', selectedModule.id)
         .order('domain');
       if (error) throw error;
       return data;
     },
+    enabled: !!selectedModule?.id,
   });
 
   const { data: questionCounts } = useQuery({
-    queryKey: ['question-counts'],
+    queryKey: ['module-question-counts', selectedModule?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('domain, question_type, difficulty')
-        .order('domain');
+        .select('question_type, difficulty')
+        .eq('module_id', selectedModule.id);
       if (error) throw error;
       
-      // Group by domain and type
-      const counts = {};
+      // Count questions by type for this module
+      const counts = { mcq: 0, coding: 0, scenario: 0, total: 0 };
       data.forEach(q => {
-        if (!counts[q.domain]) counts[q.domain] = { mcq: 0, coding: 0, scenario: 0, total: 0 };
-        counts[q.domain][q.question_type]++;
-        counts[q.domain].total++;
+        counts[q.question_type]++;
+        counts.total++;
       });
       
-      return counts;
+      return { [selectedModule.domain]: counts };
     },
+    enabled: !!selectedModule?.id,
   });
 
   const saveConfig = useMutation({
     mutationFn: async (data: any) => {
+      const payload = {
+        ...data,
+        module_id: selectedModule.id,
+        domain: selectedModule.domain,
+      };
+
       if (editingConfig) {
         const { error } = await supabase
           .from('assessment_configs')
-          .update(data)
+          .update(payload)
           .eq('id', editingConfig.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('assessment_configs')
-          .insert([data]);
+          .insert([payload]);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assessment-configs'] });
+      queryClient.invalidateQueries({ queryKey: ['module-assessment-configs'] });
       toast({ title: `Configuration ${editingConfig ? 'updated' : 'created'} successfully` });
       setIsFormOpen(false);
       resetForm();
@@ -106,11 +118,6 @@ const AssessmentConfigs = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.domain) {
-      toast({ title: 'Please select a domain', variant: 'destructive' });
-      return;
-    }
-
     if (!validateDifficultyDistribution(formData.difficulty_distribution)) {
       toast({ title: 'Difficulty distribution must sum to 100%', variant: 'destructive' });
       return;
@@ -124,12 +131,17 @@ const AssessmentConfigs = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Assessment Configurations</CardTitle>
+            <div>
+              <CardTitle>Assessment Configuration for {selectedModule?.name}</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Configure how assessments are generated for this module
+              </p>
+            </div>
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
                 <Button onClick={resetForm}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Configuration
+                  {configs?.length ? 'Edit Configuration' : 'Add Configuration'}
                 </Button>
               </DialogTrigger>
               <AssessmentConfigForm
@@ -140,6 +152,7 @@ const AssessmentConfigs = () => {
                 editingConfig={editingConfig}
                 onSubmit={handleSubmit}
                 isPending={saveConfig.isPending}
+                selectedModule={selectedModule}
               />
             </Dialog>
           </div>

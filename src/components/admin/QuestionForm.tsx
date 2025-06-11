@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,22 +12,19 @@ import { Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import CodeEditor from '@/components/CodeEditor';
 
-const DOMAINS = [
-  'python', 'devops', 'cloud', 'linux', 'networking', 
-  'storage', 'virtualization', 'object-storage', 'ai-ml'
-];
-
 interface QuestionFormProps {
   question?: any;
+  selectedModule: any;
   onClose: () => void;
 }
 
-const QuestionForm: React.FC<QuestionFormProps> = ({ question, onClose }) => {
+const QuestionForm: React.FC<QuestionFormProps> = ({ question, selectedModule, onClose }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
-    domain: '',
+    domain: selectedModule?.domain || '',
+    module_id: selectedModule?.id || '',
     question_type: 'mcq',
     difficulty: 'beginner',
     title: '',
@@ -48,7 +44,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, onClose }) => {
   useEffect(() => {
     if (question) {
       setFormData({
-        domain: question.domain || '',
+        domain: question.domain || selectedModule?.domain || '',
+        module_id: question.module_id || selectedModule?.id || '',
         question_type: question.question_type || 'mcq',
         difficulty: question.difficulty || 'beginner',
         title: question.title || '',
@@ -62,8 +59,15 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, onClose }) => {
         memory_limit: question.memory_limit || 128,
         tags: question.tags || [],
       });
+    } else {
+      // For new questions, set the module info
+      setFormData(prev => ({
+        ...prev,
+        domain: selectedModule?.domain || '',
+        module_id: selectedModule?.id || '',
+      }));
     }
-  }, [question]);
+  }, [question, selectedModule]);
 
   const saveQuestion = useMutation({
     mutationFn: async (data: any) => {
@@ -88,7 +92,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, onClose }) => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      queryClient.invalidateQueries({ queryKey: ['module-questions'] });
       toast({ title: `Question ${question ? 'updated' : 'created'} successfully` });
       onClose();
     },
@@ -104,7 +108,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, onClose }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.domain || !formData.title || !formData.question_text || !formData.correct_answer) {
+    if (!formData.title || !formData.question_text || !formData.correct_answer) {
       toast({
         title: 'Please fill in all required fields',
         variant: 'destructive',
@@ -169,24 +173,18 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, onClose }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Module Information */}
+      <Card className="bg-blue-50">
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-4">
+            <Badge variant="outline">Module: {selectedModule?.name}</Badge>
+            <Badge variant="outline">Domain: {selectedModule?.domain}</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Basic Information */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="domain">Domain *</Label>
-          <Select value={formData.domain} onValueChange={(value) => setFormData({ ...formData, domain: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select domain" />
-            </SelectTrigger>
-            <SelectContent>
-              {DOMAINS.map(domain => (
-                <SelectItem key={domain} value={domain}>
-                  {domain.charAt(0).toUpperCase() + domain.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         <div>
           <Label htmlFor="question_type">Question Type *</Label>
           <Select value={formData.question_type} onValueChange={(value) => setFormData({ ...formData, question_type: value })}>
@@ -200,9 +198,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, onClose }) => {
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="difficulty">Difficulty *</Label>
           <Select value={formData.difficulty} onValueChange={(value) => setFormData({ ...formData, difficulty: value })}>
@@ -216,16 +212,16 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, onClose }) => {
             </SelectContent>
           </Select>
         </div>
+      </div>
 
-        <div>
-          <Label htmlFor="title">Title *</Label>
-          <Input
-            id="title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Question title"
-          />
-        </div>
+      <div>
+        <Label htmlFor="title">Title *</Label>
+        <Input
+          id="title"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          placeholder="Question title"
+        />
       </div>
 
       <div>

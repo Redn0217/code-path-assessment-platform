@@ -3,9 +3,9 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DOMAINS } from './AssessmentConfigUtils';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface AssessmentConfigFormProps {
   isOpen: boolean;
@@ -15,6 +15,7 @@ interface AssessmentConfigFormProps {
   editingConfig: any;
   onSubmit: (e: React.FormEvent) => void;
   isPending: boolean;
+  selectedModule: any;
 }
 
 const AssessmentConfigForm: React.FC<AssessmentConfigFormProps> = ({
@@ -25,6 +26,7 @@ const AssessmentConfigForm: React.FC<AssessmentConfigFormProps> = ({
   editingConfig,
   onSubmit,
   isPending,
+  selectedModule,
 }) => {
   const updateDifficultyDistribution = (level: string, value: number) => {
     setFormData({
@@ -44,27 +46,17 @@ const AssessmentConfigForm: React.FC<AssessmentConfigFormProps> = ({
             {editingConfig ? 'Edit Configuration' : 'Add Assessment Configuration'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <Label>Domain</Label>
-            <Select 
-              value={formData.domain} 
-              onValueChange={(value) => setFormData({ ...formData, domain: value })}
-              disabled={!!editingConfig}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select domain" />
-              </SelectTrigger>
-              <SelectContent>
-                {DOMAINS.map(domain => (
-                  <SelectItem key={domain} value={domain}>
-                    {domain.charAt(0).toUpperCase() + domain.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        
+        <Card className="bg-blue-50 mb-4">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-4">
+              <Badge variant="outline">Module: {selectedModule?.name}</Badge>
+              <Badge variant="outline">Domain: {selectedModule?.domain}</Badge>
+            </div>
+          </CardContent>
+        </Card>
 
+        <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>MCQ Count</Label>
