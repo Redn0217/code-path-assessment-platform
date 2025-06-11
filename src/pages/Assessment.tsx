@@ -134,11 +134,16 @@ const Assessment = () => {
   const handleSubmitAssessment = async () => {
     setIsCompleted(true);
     
-    // Calculate score
+    // Calculate score with proper type checking
     const score = answers.reduce((total, answer, index) => {
       const question = questions[index];
       if (question?.question_type === 'mcq') {
-        return total + (answer === question.options?.indexOf(question.correct_answer) ? 1 : 0);
+        // Type guard to ensure options is an array of strings
+        const options = question.options;
+        if (Array.isArray(options) && options.every(opt => typeof opt === 'string')) {
+          const correctIndex = options.indexOf(question.correct_answer);
+          return total + (answer === correctIndex ? 1 : 0);
+        }
       }
       return total + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
@@ -290,10 +295,15 @@ const Assessment = () => {
   }
 
   if (isCompleted) {
+    // Calculate score with proper type checking for results page
     const score = answers.reduce((total, answer, index) => {
       const question = questions[index];
       if (question?.question_type === 'mcq') {
-        return total + (answer === question.options?.indexOf(question.correct_answer) ? 1 : 0);
+        const options = question.options;
+        if (Array.isArray(options) && options.every(opt => typeof opt === 'string')) {
+          const correctIndex = options.indexOf(question.correct_answer);
+          return total + (answer === correctIndex ? 1 : 0);
+        }
       }
       return total + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
@@ -403,7 +413,9 @@ const Assessment = () => {
               <h2 className="text-xl font-semibold">{currentQ?.title || currentQ?.question_text}</h2>
               
               <div className="space-y-3">
-                {currentQ?.question_type === 'mcq' && currentQ?.options?.map((option: string, index: number) => (
+                {currentQ?.question_type === 'mcq' && Array.isArray(currentQ?.options) && 
+                 currentQ.options.every((opt: any) => typeof opt === 'string') && 
+                 (currentQ.options as string[]).map((option: string, index: number) => (
                   <Button
                     key={index}
                     variant={answers[currentQuestion] === index ? "default" : "outline"}
