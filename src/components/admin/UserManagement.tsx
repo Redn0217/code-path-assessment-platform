@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,27 +29,11 @@ const UserManagement = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['all-users'],
     queryFn: async () => {
-      console.log('=== USER MANAGEMENT DEBUG ===');
-      console.log('Starting to fetch ALL users for admin panel...');
-      
-      // First, let's check what tables we have access to
-      console.log('Checking database access...');
-      
-      // Get current user for context
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      console.log('Current logged-in user:', currentUser?.id, currentUser?.email);
-      
-      // First, get all profiles (this should include ALL users)
-      console.log('Fetching from profiles table...');
+      // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
-
-      console.log('Profiles query result:');
-      console.log('- Error:', profilesError);
-      console.log('- Number of profiles found:', profiles?.length || 0);
-      console.log('- First few profiles:', profiles?.slice(0, 3));
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
@@ -56,42 +41,23 @@ const UserManagement = () => {
       }
 
       // Get all assessments to calculate stats
-      console.log('Fetching from assessments table...');
       const { data: assessments, error: assessmentsError } = await supabase
         .from('assessments')
         .select('user_id, completed_at');
-
-      console.log('Assessments query result:');
-      console.log('- Error:', assessmentsError);
-      console.log('- Number of assessments found:', assessments?.length || 0);
-      console.log('- Unique users in assessments:', assessments ? [...new Set(assessments.map(a => a.user_id))].length : 0);
 
       if (assessmentsError) {
         console.error('Error fetching assessments:', assessmentsError);
       }
 
-      // Let's also check the admin_users table for context
-      console.log('Checking admin_users table for context...');
-      const { data: adminUsers, error: adminError } = await supabase
-        .from('admin_users')
-        .select('user_id');
-      
-      console.log('Admin users query result:');
-      console.log('- Error:', adminError);
-      console.log('- Number of admin users:', adminUsers?.length || 0);
-      console.log('- Admin user IDs:', adminUsers?.map(a => a.user_id));
-
       // Process profiles with assessment stats
       if (profiles && profiles.length > 0) {
-        console.log('Processing profiles with assessment statistics...');
-        
         const usersWithStats = profiles.map(profile => {
           const userAssessments = assessments?.filter(a => a.user_id === profile.id) || [];
           const sortedAssessments = userAssessments.sort((a, b) => 
             new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
           );
 
-          const userWithStats = {
+          return {
             id: profile.id,
             email: profile.email || 'No email',
             full_name: profile.full_name || 'Unknown User',
@@ -100,52 +66,11 @@ const UserManagement = () => {
             assessment_count: userAssessments.length,
             last_assessment: sortedAssessments[0]?.completed_at || null
           };
-
-          console.log(`User ${profile.id} (${profile.email}):`, {
-            assessments: userAssessments.length,
-            lastAssessment: sortedAssessments[0]?.completed_at
-          });
-
-          return userWithStats;
         });
 
-        console.log('Final processed users:', usersWithStats.length);
-        console.log('Users summary:', usersWithStats.map(u => ({ id: u.id, email: u.email, assessments: u.assessment_count })));
-        console.log('=== END DEBUG ===');
         return usersWithStats;
       }
 
-      // If no profiles, check if there are users in assessments without profiles
-      if (assessments && assessments.length > 0) {
-        console.log('No profiles found, but assessments exist. Creating users from assessment data...');
-        const uniqueUserIds = [...new Set(assessments.map(a => a.user_id))];
-        console.log('Found users in assessments without profiles:', uniqueUserIds.length);
-        console.log('User IDs:', uniqueUserIds);
-        
-        // Create user objects for users who have assessments but no profiles
-        const usersFromAssessments = uniqueUserIds.map(userId => {
-          const userAssessments = assessments.filter(a => a.user_id === userId);
-          const sortedAssessments = userAssessments.sort((a, b) => 
-            new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
-          );
-
-          return {
-            id: userId,
-            email: 'No profile found',
-            full_name: `User ${userId.slice(0, 8)}`,
-            created_at: sortedAssessments[0]?.completed_at || new Date().toISOString(),
-            assessment_count: userAssessments.length,
-            last_assessment: sortedAssessments[0]?.completed_at || null
-          };
-        });
-
-        console.log('Created users from assessments:', usersFromAssessments.length);
-        console.log('=== END DEBUG ===');
-        return usersFromAssessments;
-      }
-
-      console.log('No users found in profiles or assessments tables');
-      console.log('=== END DEBUG ===');
       return [];
     },
   });
