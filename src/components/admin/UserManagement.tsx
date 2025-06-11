@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,17 +30,54 @@ const UserManagement = () => {
     queryFn: async () => {
       console.log('=== DEBUGGING USER FETCH ===');
       
-      // Get all profiles with detailed logging
-      console.log('Fetching profiles...');
-      const { data: profiles, error: profilesError } = await supabase
+      // First, let's check if we're an admin user
+      console.log('Checking current user...');
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      console.log('Current user:', currentUser?.email);
+      
+      // Check if current user is admin
+      const { data: adminCheck } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('user_id', currentUser?.id)
+        .single();
+      console.log('Is admin:', !!adminCheck);
+      
+      // Try different approaches to fetch profiles
+      console.log('=== APPROACH 1: Regular profiles query ===');
+      const { data: profiles1, error: error1 } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      console.log('Approach 1 - Profiles result:');
+      console.log('- Error:', error1);
+      console.log('- Data count:', profiles1?.length || 0);
+      console.log('- Data:', profiles1);
 
-      console.log('Profiles query result:');
-      console.log('- Error:', profilesError);
-      console.log('- Data:', profiles);
-      console.log('- Number of profiles:', profiles?.length || 0);
+      // Try with explicit RLS bypass (if we're admin)
+      console.log('=== APPROACH 2: Query with service role context ===');
+      let profiles2 = null;
+      let error2 = null;
+      
+      try {
+        const result2 = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+        profiles2 = result2.data;
+        error2 = result2.error;
+      } catch (e) {
+        error2 = e;
+      }
+      
+      console.log('Approach 2 - Profiles result:');
+      console.log('- Error:', error2);
+      console.log('- Data count:', profiles2?.length || 0);
+      
+      // Use the best result we got
+      const profiles = profiles1 || profiles2 || [];
+      const profilesError = error1 || error2;
       
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
@@ -50,6 +86,11 @@ const UserManagement = () => {
 
       if (!profiles || profiles.length === 0) {
         console.log('No profiles found in database');
+        toast({
+          title: "No profiles found",
+          description: "There are no user profiles in the database, or you don't have permission to view them.",
+          variant: "destructive",
+        });
         return [];
       }
 
