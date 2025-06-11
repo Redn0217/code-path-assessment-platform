@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,57 +29,12 @@ const UserManagement = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['all-users'],
     queryFn: async () => {
-      console.log('=== DEBUGGING USER FETCH ===');
-      
-      // First, let's check if we're an admin user
-      console.log('Checking current user...');
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      console.log('Current user:', currentUser?.email);
-      
-      // Check if current user is admin
-      const { data: adminCheck } = await supabase
-        .from('admin_users')
-        .select('id')
-        .eq('user_id', currentUser?.id)
-        .single();
-      console.log('Is admin:', !!adminCheck);
-      
-      // Try different approaches to fetch profiles
-      console.log('=== APPROACH 1: Regular profiles query ===');
-      const { data: profiles1, error: error1 } = await supabase
+      // Get all profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
-      
-      console.log('Approach 1 - Profiles result:');
-      console.log('- Error:', error1);
-      console.log('- Data count:', profiles1?.length || 0);
-      console.log('- Data:', profiles1);
 
-      // Try with explicit RLS bypass (if we're admin)
-      console.log('=== APPROACH 2: Query with service role context ===');
-      let profiles2 = null;
-      let error2 = null;
-      
-      try {
-        const result2 = await supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
-        profiles2 = result2.data;
-        error2 = result2.error;
-      } catch (e) {
-        error2 = e;
-      }
-      
-      console.log('Approach 2 - Profiles result:');
-      console.log('- Error:', error2);
-      console.log('- Data count:', profiles2?.length || 0);
-      
-      // Use the best result we got
-      const profiles = profiles1 || profiles2 || [];
-      const profilesError = error1 || error2;
-      
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
         throw profilesError;
@@ -88,28 +44,16 @@ const UserManagement = () => {
         console.log('No profiles found in database');
         toast({
           title: "No profiles found",
-          description: "There are no user profiles in the database, or you don't have permission to view them.",
+          description: "There are no user profiles in the database.",
           variant: "destructive",
         });
         return [];
       }
 
-      console.log('All profiles found:', profiles.map(p => ({
-        id: p.id,
-        email: p.email,
-        full_name: p.full_name,
-        created_at: p.created_at
-      })));
-
       // Get all assessments to calculate stats
-      console.log('Fetching assessments...');
       const { data: assessments, error: assessmentsError } = await supabase
         .from('assessments')
         .select('user_id, completed_at');
-
-      console.log('Assessments query result:');
-      console.log('- Error:', assessmentsError);
-      console.log('- Number of assessments:', assessments?.length || 0);
 
       if (assessmentsError) {
         console.error('Error fetching assessments:', assessmentsError);
@@ -122,8 +66,6 @@ const UserManagement = () => {
           new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
         );
 
-        console.log(`User ${profile.email}: ${userAssessments.length} assessments`);
-
         return {
           id: profile.id,
           email: profile.email || 'No email',
@@ -134,10 +76,6 @@ const UserManagement = () => {
           last_assessment: sortedAssessments[0]?.completed_at || null
         };
       });
-
-      console.log('Final users with stats:', usersWithStats);
-      console.log('Total users to return:', usersWithStats.length);
-      console.log('=== END DEBUGGING ===');
 
       return usersWithStats;
     },
