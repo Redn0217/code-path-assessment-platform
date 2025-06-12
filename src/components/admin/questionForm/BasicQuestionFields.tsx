@@ -8,9 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface BasicQuestionFieldsProps {
   formData: any;
   setFormData: (data: any) => void;
+  availableDomains?: string[];
 }
 
-const BasicQuestionFields: React.FC<BasicQuestionFieldsProps> = ({ formData, setFormData }) => {
+const BasicQuestionFields: React.FC<BasicQuestionFieldsProps> = ({ 
+  formData, 
+  setFormData, 
+  availableDomains 
+}) => {
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
@@ -42,6 +47,24 @@ const BasicQuestionFields: React.FC<BasicQuestionFieldsProps> = ({ formData, set
           </Select>
         </div>
       </div>
+
+      {availableDomains && availableDomains.length > 0 && (
+        <div>
+          <Label htmlFor="domain">Domain *</Label>
+          <Select value={formData.domain} onValueChange={(value) => setFormData({ ...formData, domain: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a domain" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableDomains.map((domain) => (
+                <SelectItem key={domain} value={domain}>
+                  {domain}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div>
         <Label htmlFor="title">Title *</Label>

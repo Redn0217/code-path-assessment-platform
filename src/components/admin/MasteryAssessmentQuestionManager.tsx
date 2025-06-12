@@ -11,6 +11,9 @@ import QuestionForm from './QuestionForm';
 import QuestionFilters from './QuestionFilters';
 import QuestionTable from './QuestionTable';
 
+type QuestionType = 'mcq' | 'coding' | 'scenario';
+type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
+
 interface MasteryAssessmentQuestionManagerProps {
   assessment: any;
   onBack: () => void;
@@ -40,9 +43,15 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
         .in('domain', assessment.domains)
         .order('created_at', { ascending: false });
       
-      if (filterType && filterType !== 'all') query = query.eq('question_type', filterType);
-      if (filterDifficulty && filterDifficulty !== 'all') query = query.eq('difficulty', filterDifficulty);
-      if (filterDomain && filterDomain !== 'all') query = query.eq('domain', filterDomain);
+      if (filterType && filterType !== 'all') {
+        query = query.eq('question_type', filterType as QuestionType);
+      }
+      if (filterDifficulty && filterDifficulty !== 'all') {
+        query = query.eq('difficulty', filterDifficulty as DifficultyLevel);
+      }
+      if (filterDomain && filterDomain !== 'all') {
+        query = query.eq('domain', filterDomain);
+      }
       
       const { data, error } = await query;
       if (error) throw error;
@@ -132,7 +141,6 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
             onDifficultyChange={setFilterDifficulty}
             onDomainChange={setFilterDomain}
             hideModuleFilter={true}
-            showDomainFilter={true}
             availableDomains={assessment?.domains || []}
           />
 

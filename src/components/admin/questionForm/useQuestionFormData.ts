@@ -24,9 +24,9 @@ interface QuestionFormData {
   tags: string[];
 }
 
-export const useQuestionFormData = (question: any, selectedModule: any) => {
+export const useQuestionFormData = (question: any, selectedModule: any, assessmentDomains?: string[]) => {
   const [formData, setFormData] = useState<QuestionFormData>({
-    domain: selectedModule?.domain || '',
+    domain: selectedModule?.domain || (assessmentDomains && assessmentDomains.length > 0 ? assessmentDomains[0] : ''),
     module_id: selectedModule?.id || '',
     question_type: 'mcq',
     difficulty: 'beginner',
@@ -47,7 +47,7 @@ export const useQuestionFormData = (question: any, selectedModule: any) => {
   useEffect(() => {
     if (question) {
       setFormData({
-        domain: question.domain || selectedModule?.domain || '',
+        domain: question.domain || selectedModule?.domain || (assessmentDomains && assessmentDomains.length > 0 ? assessmentDomains[0] : ''),
         module_id: question.module_id || selectedModule?.id || '',
         question_type: question.question_type || 'mcq',
         difficulty: question.difficulty || 'beginner',
@@ -65,11 +65,11 @@ export const useQuestionFormData = (question: any, selectedModule: any) => {
     } else {
       setFormData(prev => ({
         ...prev,
-        domain: selectedModule?.domain || '',
+        domain: selectedModule?.domain || (assessmentDomains && assessmentDomains.length > 0 ? assessmentDomains[0] : ''),
         module_id: selectedModule?.id || '',
       }));
     }
-  }, [question, selectedModule]);
+  }, [question, selectedModule, assessmentDomains]);
 
   return {
     formData,

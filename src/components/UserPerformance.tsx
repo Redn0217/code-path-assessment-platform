@@ -7,6 +7,22 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy, Target, Clock, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 
+interface AssessmentData {
+  id: string;
+  assessment_type: 'practice' | 'mastery';
+  assessment_title: string;
+  percentage: number;
+  score: number;
+  total_questions: number;
+  completed_at: string;
+  time_taken?: number;
+  difficulty?: string;
+  domain?: string;
+  domains?: string[];
+  strong_areas?: string[];
+  weak_areas?: string[];
+}
+
 const UserPerformance = () => {
   const { data: performanceData = [], isLoading } = useQuery({
     queryKey: ['user-performance'],
@@ -39,20 +55,32 @@ const UserPerformance = () => {
           .order('completed_at', { ascending: false })
       ]);
 
-      const practice = practiceAttempts.data?.map(attempt => ({
-        ...attempt,
-        assessment_type: 'practice',
+      const practice: AssessmentData[] = practiceAttempts.data?.map(attempt => ({
+        id: attempt.id,
+        assessment_type: 'practice' as const,
         assessment_title: `${attempt.domain} Assessment`,
-        percentage: Math.round((attempt.score / attempt.total_questions) * 100)
+        percentage: Math.round((attempt.score / attempt.total_questions) * 100),
+        score: attempt.score,
+        total_questions: attempt.total_questions,
+        completed_at: attempt.completed_at,
+        time_taken: attempt.time_taken,
+        difficulty: attempt.difficulty,
+        domain: attempt.domain,
+        strong_areas: attempt.strong_areas,
+        weak_areas: attempt.weak_areas
       })) || [];
 
-      const mastery = masteryAttempts.data?.map(attempt => ({
-        ...attempt,
-        assessment_type: 'mastery',
-        assessment_title: attempt.mastery_assessments?.title || 'Unknown Assessment',
+      const mastery: AssessmentData[] = masteryAttempts.data?.map(attempt => ({
+        id: attempt.id,
+        assessment_type: 'mastery' as const,
+        assessment_title: (attempt.mastery_assessments as any)?.title || 'Unknown Assessment',
         percentage: attempt.score ? Math.round((attempt.score / attempt.total_questions) * 100) : 0,
-        domains: attempt.mastery_assessments?.domains,
-        difficulty: attempt.mastery_assessments?.difficulty
+        score: attempt.score || 0,
+        total_questions: attempt.total_questions,
+        completed_at: attempt.completed_at,
+        time_taken: attempt.time_taken,
+        domains: (attempt.mastery_assessments as any)?.domains,
+        difficulty: (attempt.mastery_assessments as any)?.difficulty
       })) || [];
 
       return [...practice, ...mastery].sort((a, b) => 
@@ -133,7 +161,7 @@ const UserPerformance = () => {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Score:</span>
                     <span className="font-medium">
-                      {assessment.score || assessment.percentage} / {assessment.total_questions}
+                      {assessment.score} / {assessment.total_questions}
                     </span>
                   </div>
                   
