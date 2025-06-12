@@ -10,6 +10,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PracticeHub from '@/components/PracticeHub';
 import MasteryAssessments from '@/components/MasteryAssessments';
+import UserPerformance from '@/components/UserPerformance';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -118,7 +119,7 @@ const Index = () => {
             Welcome to Your Assessment Dashboard
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Choose between practice sessions for specific domains or comprehensive mastery assessments.
+            Choose between practice sessions for specific domains, comprehensive mastery assessments, or check your performance history.
           </p>
         </div>
       </section>
@@ -127,9 +128,10 @@ const Index = () => {
       <section className="py-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="practice" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-8">
+            <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-8">
               <TabsTrigger value="practice">Practice Hub</TabsTrigger>
               <TabsTrigger value="mastery">Mastery Assessments</TabsTrigger>
+              <TabsTrigger value="performance">Check Your Performance</TabsTrigger>
             </TabsList>
             
             <TabsContent value="practice">
@@ -138,6 +140,10 @@ const Index = () => {
             
             <TabsContent value="mastery">
               <MasteryAssessments />
+            </TabsContent>
+
+            <TabsContent value="performance">
+              <UserPerformance />
             </TabsContent>
           </Tabs>
         </div>

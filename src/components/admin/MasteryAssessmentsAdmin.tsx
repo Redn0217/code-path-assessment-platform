@@ -5,13 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Clock, Target } from 'lucide-react';
+import { Plus, Edit, Trash2, Clock, Target, Settings } from 'lucide-react';
 import MasteryAssessmentForm from '@/components/MasteryAssessmentForm';
+import MasteryAssessmentQuestionManager from './MasteryAssessmentQuestionManager';
 import { useToast } from '@/hooks/use-toast';
 
 const MasteryAssessmentsAdmin = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState(null);
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
   const { toast } = useToast();
 
   // Fetch mastery assessments
@@ -71,6 +73,16 @@ const MasteryAssessmentsAdmin = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // If an assessment is selected for question management, show the question manager
+  if (selectedAssessment) {
+    return (
+      <MasteryAssessmentQuestionManager
+        assessment={selectedAssessment}
+        onBack={() => setSelectedAssessment(null)}
+      />
+    );
+  }
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading mastery assessments...</div>;
@@ -139,10 +151,19 @@ const MasteryAssessmentsAdmin = () => {
                 </div>
               </div>
 
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 mb-4">
                 <p><strong>Order:</strong> {assessment.order_index}</p>
                 <p><strong>Domains:</strong> {Array.isArray(assessment.domains) ? assessment.domains.join(', ') : 'None'}</p>
               </div>
+
+              <Button 
+                onClick={() => setSelectedAssessment(assessment)}
+                className="w-full"
+                size="sm"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Manage Questions
+              </Button>
             </CardContent>
           </Card>
         ))}

@@ -15,11 +15,17 @@ import AnswerAndTagsSection from './questionForm/AnswerAndTagsSection';
 
 interface QuestionFormProps {
   question?: any;
-  selectedModule: any;
+  selectedModule?: any;
   onClose: () => void;
+  assessmentDomains?: string[];
 }
 
-const QuestionForm: React.FC<QuestionFormProps> = ({ question, selectedModule, onClose }) => {
+const QuestionForm: React.FC<QuestionFormProps> = ({ 
+  question, 
+  selectedModule, 
+  onClose,
+  assessmentDomains 
+}) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { validateForm } = useQuestionFormValidation();
@@ -29,7 +35,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, selectedModule, o
     setFormData,
     newTag,
     setNewTag,
-  } = useQuestionFormData(question, selectedModule);
+  } = useQuestionFormData(question, selectedModule, assessmentDomains);
 
   const saveQuestion = useMutation({
     mutationFn: async (data: any) => {
@@ -55,6 +61,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, selectedModule, o
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['module-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['mastery-assessment-questions'] });
       toast({ title: `Question ${question ? 'updated' : 'created'} successfully` });
       onClose();
     },
@@ -79,17 +86,29 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ question, selectedModule, o
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Module Information */}
+      {/* Module or Assessment Information */}
       <Card className="bg-blue-50">
         <CardContent className="pt-4">
           <div className="flex items-center gap-4">
-            <Badge variant="outline">Module: {selectedModule?.name}</Badge>
-            <Badge variant="outline">Domain: {selectedModule?.domain}</Badge>
+            {selectedModule ? (
+              <>
+                <Badge variant="outline">Module: {selectedModule.name}</Badge>
+                <Badge variant="outline">Domain: {selectedModule.domain}</Badge>
+              </>
+            ) : assessmentDomains && (
+              <Badge variant="outline">
+                Assessment Domains: {assessmentDomains.join(', ')}
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      <BasicQuestionFields formData={formData} setFormData={setFormData} />
+      <BasicQuestionFields 
+        formData={formData} 
+        setFormData={setFormData}
+        availableDomains={assessmentDomains}
+      />
 
       <McqOptionsSection formData={formData} setFormData={setFormData} />
 
