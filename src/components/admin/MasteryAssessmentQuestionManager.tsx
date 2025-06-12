@@ -33,21 +33,45 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
 
   console.log('MasteryAssessmentQuestionManager - assessment:', assessment);
 
+  // Parse domains from JSON string to array
+  const parsedDomains = React.useMemo(() => {
+    if (!assessment?.domains) return [];
+    
+    try {
+      // If it's already an array, return it
+      if (Array.isArray(assessment.domains)) {
+        return assessment.domains;
+      }
+      
+      // If it's a string, parse it
+      if (typeof assessment.domains === 'string') {
+        return JSON.parse(assessment.domains);
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error parsing domains:', error);
+      return [];
+    }
+  }, [assessment?.domains]);
+
+  console.log('Parsed domains:', parsedDomains);
+
   // Get questions for domains included in this mastery assessment
   const { data: questions, isLoading } = useQuery({
     queryKey: ['mastery-assessment-questions', assessment?.id, filterType, filterDifficulty, filterDomain],
     queryFn: async () => {
-      if (!assessment?.domains || !Array.isArray(assessment.domains)) {
+      if (!parsedDomains || parsedDomains.length === 0) {
         console.log('No domains found in assessment:', assessment);
         return [];
       }
       
-      console.log('Fetching questions for domains:', assessment.domains);
+      console.log('Fetching questions for domains:', parsedDomains);
       
       let query = supabase
         .from('questions')
         .select('*')
-        .in('domain', assessment.domains)
+        .in('domain', parsedDomains)
         .order('created_at', { ascending: false });
       
       if (filterType && filterType !== 'all') {
@@ -69,7 +93,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
       console.log('Fetched questions:', data?.length || 0);
       return data || [];
     },
-    enabled: !!assessment?.id,
+    enabled: !!assessment?.id && parsedDomains.length > 0,
   });
 
   const deleteQuestion = useMutation({
@@ -132,7 +156,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
               <div>
                 <CardTitle>Questions for {assessment?.title}</CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
-                  Manage questions for domains: {assessment?.domains?.join(', ')}
+                  Manage questions for domains: {parsedDomains.join(', ')}
                 </p>
               </div>
             </div>
@@ -153,7 +177,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
                   question={editingQuestion} 
                   selectedModule={null}
                   onClose={handleCloseForm}
-                  assessmentDomains={assessment?.domains}
+                  assessmentDomains={parsedDomains}
                 />
               </DialogContent>
             </Dialog>
@@ -168,7 +192,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
             onDifficultyChange={setFilterDifficulty}
             onDomainChange={setFilterDomain}
             hideModuleFilter={true}
-            availableDomains={assessment?.domains || []}
+            availableDomains={parsedDomains}
           />
 
           <QuestionTable
