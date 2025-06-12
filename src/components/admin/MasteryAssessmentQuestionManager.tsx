@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,6 +71,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
         .from('questions')
         .select('*')
         .in('domain', parsedDomains)
+        .is('module_id', null) // Only get questions that are not assigned to specific modules
         .order('created_at', { ascending: false });
       
       if (filterType && filterType !== 'all') {
@@ -126,9 +126,11 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingQuestion(null);
+    // Refresh the questions list after form closes
+    queryClient.invalidateQueries({ queryKey: ['mastery-assessment-questions'] });
   };
 
   if (!assessment) {
@@ -176,7 +178,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
                 <QuestionForm 
                   question={editingQuestion} 
                   selectedModule={null}
-                  onClose={handleCloseForm}
+                  onClose={handleFormClose}
                   assessmentDomains={parsedDomains}
                 />
               </DialogContent>
