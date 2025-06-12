@@ -5,13 +5,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Layout, ArrowLeft } from 'lucide-react';
 import DomainForm from '@/components/DomainForm';
+import ModuleManager from '@/components/admin/ModuleManager';
 import { useToast } from '@/hooks/use-toast';
 
-const PracticeHubAdmin = () => {
+interface PracticeHubAdminProps {
+  onModuleSelect?: (module: any) => void;
+}
+
+const PracticeHubAdmin: React.FC<PracticeHubAdminProps> = ({ onModuleSelect }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState(null);
+  const [selectedDomainForModules, setSelectedDomainForModules] = useState(null);
   const { toast } = useToast();
 
   // Fetch domains (modules)
@@ -63,10 +69,44 @@ const PracticeHubAdmin = () => {
     refetch();
   };
 
+  const handleViewModules = (domain: any) => {
+    setSelectedDomainForModules(domain);
+  };
+
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading domains...</div>;
   }
 
+  // If viewing modules for a specific domain
+  if (selectedDomainForModules) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => setSelectedDomainForModules(null)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Domains
+          </Button>
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900">
+              Modules in {selectedDomainForModules.name}
+            </h3>
+            <p className="text-gray-600">Manage modules for this domain</p>
+          </div>
+        </div>
+        
+        <ModuleManager 
+          selectedDomain={selectedDomainForModules.domain}
+          onModuleSelect={onModuleSelect}
+        />
+      </div>
+    );
+  }
+
+  // Default domain management view
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -121,9 +161,18 @@ const PracticeHubAdmin = () => {
               <p className="text-sm text-gray-600 mb-2">
                 <strong>Order:</strong> {domain.order_index}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mb-4">
                 {domain.description || 'No description available'}
               </p>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleViewModules(domain)}
+              >
+                <Layout className="h-4 w-4 mr-2" />
+                All Modules
+              </Button>
             </CardContent>
           </Card>
         ))}

@@ -4,14 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileQuestion, Settings, BarChart3, Plus, Layout, ArrowLeft, Target, Dumbbell } from 'lucide-react';
+import { Users, Target, Dumbbell, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import QuestionManager from '@/components/admin/QuestionManager';
 import AssessmentConfigs from '@/components/admin/AssessmentConfigs';
 import AdminStats from '@/components/admin/AdminStats';
-import ModuleManager from '@/components/admin/ModuleManager';
-import ModuleSelection from '@/components/admin/ModuleSelection';
 import UserManagement from '@/components/admin/UserManagement';
 import PracticeHubAdmin from '@/components/admin/PracticeHubAdmin';
 import MasteryAssessmentsAdmin from '@/components/admin/MasteryAssessmentsAdmin';
@@ -19,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('modules');
+  const [activeTab, setActiveTab] = useState('practice-hub');
   const [selectedModule, setSelectedModule] = useState(null);
   const [moduleManagementTab, setModuleManagementTab] = useState('questions');
 
@@ -77,7 +75,7 @@ const Admin = () => {
                   className="flex items-center gap-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Back to Modules
+                  Back to Practice Hub
                 </Button>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">{selectedModule.name}</h1>
@@ -95,15 +93,12 @@ const Admin = () => {
           <Tabs value={moduleManagementTab} onValueChange={setModuleManagementTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="questions" className="flex items-center gap-2">
-                <FileQuestion className="h-4 w-4" />
                 Questions
               </TabsTrigger>
               <TabsTrigger value="config" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
                 Assessment Config
               </TabsTrigger>
               <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
                 Analytics
               </TabsTrigger>
             </TabsList>
@@ -125,7 +120,7 @@ const Admin = () => {
     );
   }
 
-  // Default admin panel showing modules and general management
+  // Default admin panel
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-white shadow-sm border-b">
@@ -141,15 +136,7 @@ const Admin = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="modules" className="flex items-center gap-2">
-              <Layout className="h-4 w-4" />
-              Modules
-            </TabsTrigger>
-            <TabsTrigger value="module-content" className="flex items-center gap-2">
-              <FileQuestion className="h-4 w-4" />
-              Module Content
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="practice-hub" className="flex items-center gap-2">
               <Dumbbell className="h-4 w-4" />
               Practice Hub
@@ -164,16 +151,8 @@ const Admin = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="modules" className="mt-6">
-            <ModuleManager />
-          </TabsContent>
-
-          <TabsContent value="module-content" className="mt-6">
-            <ModuleSelection onModuleSelect={setSelectedModule} />
-          </TabsContent>
-
           <TabsContent value="practice-hub" className="mt-6">
-            <PracticeHubAdmin />
+            <PracticeHubAdmin onModuleSelect={setSelectedModule} />
           </TabsContent>
 
           <TabsContent value="mastery-assessments" className="mt-6">

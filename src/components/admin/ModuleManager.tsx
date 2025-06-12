@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Plus } from 'lucide-react';
 import ModuleCard from './moduleManager/ModuleCard';
 import ModuleForm from './moduleManager/ModuleForm';
-import DomainFilter from './moduleManager/DomainFilter';
 import { useModuleMutations } from './moduleManager/useModuleMutations';
 
 interface Module {
@@ -23,14 +22,18 @@ interface Module {
   created_at: string;
 }
 
-const ModuleManager = () => {
-  const [selectedDomain, setSelectedDomain] = useState('python');
+interface ModuleManagerProps {
+  selectedDomain?: string;
+  onModuleSelect?: (module: any) => void;
+}
+
+const ModuleManager: React.FC<ModuleManagerProps> = ({ selectedDomain = 'python', onModuleSelect }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    domain: 'python',
+    domain: selectedDomain,
     icon: 'card',
     color: 'bg-blue-500',
     is_active: true,
@@ -39,7 +42,7 @@ const ModuleManager = () => {
 
   const { createModule, updateModule, deleteModule } = useModuleMutations();
 
-  // Fetch modules
+  // Fetch modules for the selected domain
   const { data: modules = [], isLoading } = useQuery({
     queryKey: ['modules', selectedDomain],
     queryFn: async () => {
@@ -107,6 +110,12 @@ const ModuleManager = () => {
     }
   };
 
+  const handleModuleClick = (module: Module) => {
+    if (onModuleSelect) {
+      onModuleSelect(module);
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading modules...</div>;
   }
@@ -148,29 +157,26 @@ const ModuleManager = () => {
         </Dialog>
       </div>
 
-      <div className="space-y-4">
-        <DomainFilter selectedDomain={selectedDomain} onDomainChange={setSelectedDomain} />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {modules.map((module) => (
-            <ModuleCard
-              key={module.id}
-              module={module}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-
-        {modules.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-gray-500">No modules found for {selectedDomain}.</p>
-              <p className="text-sm text-gray-400 mt-2">Create your first module to get started.</p>
-            </CardContent>
-          </Card>
-        )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {modules.map((module) => (
+          <ModuleCard
+            key={module.id}
+            module={module}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onModuleClick={handleModuleClick}
+          />
+        ))}
       </div>
+
+      {modules.length === 0 && (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-gray-500">No modules found for {selectedDomain}.</p>
+            <p className="text-sm text-gray-400 mt-2">Create your first module to get started.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
