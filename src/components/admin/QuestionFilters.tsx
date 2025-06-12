@@ -11,6 +11,7 @@ interface QuestionFiltersProps {
   onTypeChange: (type: string) => void;
   onDifficultyChange: (difficulty: string) => void;
   hideModuleFilter?: boolean;
+  availableDomains?: string[];
 }
 
 const QuestionFilters: React.FC<QuestionFiltersProps> = ({
@@ -21,10 +22,14 @@ const QuestionFilters: React.FC<QuestionFiltersProps> = ({
   onTypeChange,
   onDifficultyChange,
   hideModuleFilter = false,
+  availableDomains,
 }) => {
+  const showDomainFilter = !hideModuleFilter && onDomainChange;
+  const showAvailableDomains = availableDomains && availableDomains.length > 0;
+
   return (
     <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-      {!hideModuleFilter && onDomainChange && (
+      {showDomainFilter && (
         <div className="flex items-center gap-2">
           <Label className="text-sm font-medium">Domain:</Label>
           <Select value={filterDomain} onValueChange={onDomainChange}>
@@ -33,15 +38,25 @@ const QuestionFilters: React.FC<QuestionFiltersProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Domains</SelectItem>
-              <SelectItem value="python">Python</SelectItem>
-              <SelectItem value="devops">DevOps</SelectItem>
-              <SelectItem value="cloud">Cloud</SelectItem>
-              <SelectItem value="linux">Linux</SelectItem>
-              <SelectItem value="networking">Networking</SelectItem>
-              <SelectItem value="storage">Storage</SelectItem>
-              <SelectItem value="virtualization">Virtualization</SelectItem>
-              <SelectItem value="object-storage">Object Storage</SelectItem>
-              <SelectItem value="ai-ml">AI & ML</SelectItem>
+              {showAvailableDomains ? (
+                availableDomains.map((domain) => (
+                  <SelectItem key={domain} value={domain}>
+                    {domain}
+                  </SelectItem>
+                ))
+              ) : (
+                <>
+                  <SelectItem value="python">Python</SelectItem>
+                  <SelectItem value="devops">DevOps</SelectItem>
+                  <SelectItem value="cloud">Cloud</SelectItem>
+                  <SelectItem value="linux">Linux</SelectItem>
+                  <SelectItem value="networking">Networking</SelectItem>
+                  <SelectItem value="storage">Storage</SelectItem>
+                  <SelectItem value="virtualization">Virtualization</SelectItem>
+                  <SelectItem value="object-storage">Object Storage</SelectItem>
+                  <SelectItem value="ai-ml">AI & ML</SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
         </div>
