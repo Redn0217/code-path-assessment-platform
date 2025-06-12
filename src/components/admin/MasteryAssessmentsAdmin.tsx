@@ -65,6 +65,13 @@ const MasteryAssessmentsAdmin = () => {
     refetch();
   };
 
+  const handleManageQuestions = (e: React.MouseEvent, assessment: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Managing questions for assessment:', assessment);
+    setSelectedAssessment(assessment);
+  };
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner': return 'bg-green-100 text-green-800';
@@ -157,9 +164,10 @@ const MasteryAssessmentsAdmin = () => {
               </div>
 
               <Button 
-                onClick={() => setSelectedAssessment(assessment)}
+                onClick={(e) => handleManageQuestions(e, assessment)}
                 className="w-full"
                 size="sm"
+                type="button"
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Manage Questions

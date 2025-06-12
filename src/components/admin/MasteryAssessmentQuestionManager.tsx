@@ -31,11 +31,18 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  console.log('MasteryAssessmentQuestionManager - assessment:', assessment);
+
   // Get questions for domains included in this mastery assessment
   const { data: questions, isLoading } = useQuery({
     queryKey: ['mastery-assessment-questions', assessment?.id, filterType, filterDifficulty, filterDomain],
     queryFn: async () => {
-      if (!assessment?.domains || !Array.isArray(assessment.domains)) return [];
+      if (!assessment?.domains || !Array.isArray(assessment.domains)) {
+        console.log('No domains found in assessment:', assessment);
+        return [];
+      }
+      
+      console.log('Fetching questions for domains:', assessment.domains);
       
       let query = supabase
         .from('questions')
@@ -54,8 +61,13 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
       }
       
       const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
+      
+      console.log('Fetched questions:', data?.length || 0);
+      return data || [];
     },
     enabled: !!assessment?.id,
   });
@@ -85,6 +97,24 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
     }
   };
 
+  const handleAddQuestion = () => {
+    setEditingQuestion(null);
+    setIsFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setEditingQuestion(null);
+  };
+
+  if (!assessment) {
+    return (
+      <div className="flex justify-center p-8">
+        <p>No assessment selected</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -108,7 +138,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
             </div>
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => setEditingQuestion(null)}>
+                <Button onClick={handleAddQuestion}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Question
                 </Button>
@@ -122,10 +152,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
                 <QuestionForm 
                   question={editingQuestion} 
                   selectedModule={null}
-                  onClose={() => {
-                    setIsFormOpen(false);
-                    setEditingQuestion(null);
-                  }}
+                  onClose={handleCloseForm}
                   assessmentDomains={assessment?.domains}
                 />
               </DialogContent>
