@@ -1,41 +1,18 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Clock, Target, Trophy } from 'lucide-react';
-import MasteryAssessmentForm from '@/components/MasteryAssessmentForm';
+import { Clock, Target, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const MasteryAssessments = () => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingAssessment, setEditingAssessment] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
-  // Check if user is admin
-  const { data: adminStatus } = useQuery({
-    queryKey: ['admin-status'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-      
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error || !data) return false;
-      setIsAdmin(true);
-      return true;
-    },
-  });
-
   // Fetch mastery assessments
-  const { data: assessments = [], isLoading, refetch } = useQuery({
+  const { data: assessments = [], isLoading } = useQuery({
     queryKey: ['mastery-assessments'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -87,41 +64,6 @@ const MasteryAssessments = () => {
     });
   };
 
-  const handleEdit = (assessment: any) => {
-    setEditingAssessment(assessment);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = async (assessmentId: string) => {
-    try {
-      const { error } = await supabase
-        .from('mastery_assessments')
-        .delete()
-        .eq('id', assessmentId);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Mastery assessment deleted successfully",
-      });
-      refetch();
-    } catch (error) {
-      console.error('Error deleting assessment:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete assessment",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-    setEditingAssessment(null);
-    refetch();
-  };
-
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner': return 'bg-green-100 text-green-800';
@@ -137,17 +79,9 @@ const MasteryAssessments = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-2xl font-bold text-gray-900">Mastery Assessments</h3>
-          <p className="text-gray-600">One-time comprehensive assessments for certification</p>
-        </div>
-        {isAdmin && (
-          <Button onClick={() => setIsFormOpen(true)} className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>Add Assessment</span>
-          </Button>
-        )}
+      <div>
+        <h3 className="text-2xl font-bold text-gray-900">Mastery Assessments</h3>
+        <p className="text-gray-600">One-time comprehensive assessments for certification</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -160,39 +94,19 @@ const MasteryAssessments = () => {
           return (
             <Card key={assessment.id} className="hover:shadow-lg transition-shadow duration-300">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg mb-2">{assessment.title}</CardTitle>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className={getDifficultyColor(assessment.difficulty)}>
-                        {assessment.difficulty}
+                <div className="flex-1">
+                  <CardTitle className="text-lg mb-2">{assessment.title}</CardTitle>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className={getDifficultyColor(assessment.difficulty)}>
+                      {assessment.difficulty}
+                    </Badge>
+                    {isCompleted && (
+                      <Badge variant="default" className="bg-green-500">
+                        <Trophy className="h-3 w-3 mr-1" />
+                        Completed
                       </Badge>
-                      {isCompleted && (
-                        <Badge variant="default" className="bg-green-500">
-                          <Trophy className="h-3 w-3 mr-1" />
-                          Completed
-                        </Badge>
-                      )}
-                    </div>
+                    )}
                   </div>
-                  {isAdmin && (
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(assessment)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(assessment.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -241,18 +155,8 @@ const MasteryAssessments = () => {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-gray-500">No mastery assessments available.</p>
-            {isAdmin && (
-              <p className="text-sm text-gray-400 mt-2">Add some assessments to get started.</p>
-            )}
           </CardContent>
         </Card>
-      )}
-
-      {isFormOpen && (
-        <MasteryAssessmentForm
-          assessment={editingAssessment}
-          onClose={handleFormClose}
-        />
       )}
     </div>
   );

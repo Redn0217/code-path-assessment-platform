@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,13 +6,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileQuestion, Settings, BarChart3, Plus, Layout, ArrowLeft } from 'lucide-react';
+import { Users, FileQuestion, Settings, BarChart3, Plus, Layout, ArrowLeft, Target, Dumbbell } from 'lucide-react';
 import QuestionManager from '@/components/admin/QuestionManager';
 import AssessmentConfigs from '@/components/admin/AssessmentConfigs';
 import AdminStats from '@/components/admin/AdminStats';
 import ModuleManager from '@/components/admin/ModuleManager';
 import ModuleSelection from '@/components/admin/ModuleSelection';
 import UserManagement from '@/components/admin/UserManagement';
+import PracticeHubAdmin from '@/components/admin/PracticeHubAdmin';
+import MasteryAssessmentsAdmin from '@/components/admin/MasteryAssessmentsAdmin';
 import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
@@ -138,7 +141,7 @@ const Admin = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="modules" className="flex items-center gap-2">
               <Layout className="h-4 w-4" />
               Modules
@@ -146,6 +149,14 @@ const Admin = () => {
             <TabsTrigger value="module-content" className="flex items-center gap-2">
               <FileQuestion className="h-4 w-4" />
               Module Content
+            </TabsTrigger>
+            <TabsTrigger value="practice-hub" className="flex items-center gap-2">
+              <Dumbbell className="h-4 w-4" />
+              Practice Hub
+            </TabsTrigger>
+            <TabsTrigger value="mastery-assessments" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Mastery Assessments
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -159,6 +170,14 @@ const Admin = () => {
 
           <TabsContent value="module-content" className="mt-6">
             <ModuleSelection onModuleSelect={setSelectedModule} />
+          </TabsContent>
+
+          <TabsContent value="practice-hub" className="mt-6">
+            <PracticeHubAdmin />
+          </TabsContent>
+
+          <TabsContent value="mastery-assessments" className="mt-6">
+            <MasteryAssessmentsAdmin />
           </TabsContent>
 
           <TabsContent value="users" className="mt-6">
