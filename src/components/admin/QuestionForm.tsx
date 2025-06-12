@@ -18,13 +18,15 @@ interface QuestionFormProps {
   selectedModule?: any;
   onClose: () => void;
   assessmentDomains?: string[];
+  masteryAssessmentId?: string;
 }
 
 const QuestionForm: React.FC<QuestionFormProps> = ({ 
   question, 
   selectedModule, 
   onClose,
-  assessmentDomains 
+  assessmentDomains,
+  masteryAssessmentId
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -46,17 +48,40 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         code_template: data.question_type === 'coding' ? data.code_template : null,
       };
 
-      if (question) {
-        const { error } = await supabase
-          .from('questions')
-          .update(payload)
-          .eq('id', question.id);
-        if (error) throw error;
+      // If this is for a mastery assessment, use the mastery_assessment_questions table
+      if (masteryAssessmentId) {
+        const masteryPayload = {
+          ...payload,
+          mastery_assessment_id: masteryAssessmentId,
+          module_id: undefined, // Remove module_id for mastery assessment questions
+        };
+
+        if (question) {
+          const { error } = await supabase
+            .from('mastery_assessment_questions')
+            .update(masteryPayload)
+            .eq('id', question.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('mastery_assessment_questions')
+            .insert([masteryPayload]);
+          if (error) throw error;
+        }
       } else {
-        const { error } = await supabase
-          .from('questions')
-          .insert([payload]);
-        if (error) throw error;
+        // Regular question for modules
+        if (question) {
+          const { error } = await supabase
+            .from('questions')
+            .update(payload)
+            .eq('id', question.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('questions')
+            .insert([payload]);
+          if (error) throw error;
+        }
       }
     },
     onSuccess: () => {

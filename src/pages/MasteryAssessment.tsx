@@ -41,41 +41,19 @@ const MasteryAssessment = () => {
     enabled: !!assessmentId,
   });
 
-  // Fetch questions for this mastery assessment
+  // Fetch questions for this mastery assessment from the new table
   const { data: questions = [], isLoading } = useQuery({
     queryKey: ['mastery-assessment-questions', assessmentId],
     queryFn: async () => {
-      if (!assessment?.domains) return [];
+      if (!assessmentId) return [];
       
-      // Parse domains properly to ensure it's a string array
-      let domains: string[] = [];
-      
-      try {
-        if (Array.isArray(assessment.domains)) {
-          domains = assessment.domains as string[];
-        } else if (typeof assessment.domains === 'string') {
-          domains = JSON.parse(assessment.domains);
-        } else {
-          console.error('Unexpected domains format:', assessment.domains);
-          return [];
-        }
-      } catch (error) {
-        console.error('Error parsing domains:', error);
-        return [];
-      }
-      
-      if (domains.length === 0) {
-        console.log('No domains found for mastery assessment');
-        return [];
-      }
-      
-      console.log('Fetching questions for mastery assessment domains:', domains);
+      console.log('Fetching questions for mastery assessment:', assessmentId);
       
       const { data, error } = await supabase
-        .from('questions')
+        .from('mastery_assessment_questions')
         .select('*')
-        .in('domain', domains)
-        .limit(assessment.total_questions || 50)
+        .eq('mastery_assessment_id', assessmentId)
+        .limit(assessment?.total_questions || 50)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -83,7 +61,7 @@ const MasteryAssessment = () => {
       console.log('Fetched mastery assessment questions:', data?.length || 0);
       return data || [];
     },
-    enabled: !!assessment && !!assessmentId,
+    enabled: !!assessmentId && !!assessment,
   });
 
   // Fetch user attempt

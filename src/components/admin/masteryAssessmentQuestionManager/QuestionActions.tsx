@@ -12,6 +12,7 @@ interface QuestionActionsProps {
   setEditingQuestion: (question: any) => void;
   parsedDomains: string[];
   onFormClose: () => void;
+  masteryAssessmentId: string;
 }
 
 const QuestionActions: React.FC<QuestionActionsProps> = ({
@@ -20,7 +21,8 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
   editingQuestion,
   setEditingQuestion,
   parsedDomains,
-  onFormClose
+  onFormClose,
+  masteryAssessmentId
 }) => {
   const handleAddQuestion = () => {
     setEditingQuestion(null);
@@ -46,6 +48,7 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
           selectedModule={null}
           onClose={onFormClose}
           assessmentDomains={parsedDomains}
+          masteryAssessmentId={masteryAssessmentId}
         />
       </DialogContent>
     </Dialog>

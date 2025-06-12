@@ -137,6 +137,74 @@ export type Database = {
         }
         Relationships: []
       }
+      mastery_assessment_questions: {
+        Row: {
+          code_template: string | null
+          correct_answer: string
+          created_at: string | null
+          difficulty: Database["public"]["Enums"]["difficulty_level"]
+          domain: string
+          explanation: string | null
+          id: string
+          mastery_assessment_id: string
+          memory_limit: number | null
+          options: Json | null
+          question_text: string
+          question_type: Database["public"]["Enums"]["question_type"]
+          tags: string[] | null
+          test_cases: Json | null
+          time_limit: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          code_template?: string | null
+          correct_answer: string
+          created_at?: string | null
+          difficulty: Database["public"]["Enums"]["difficulty_level"]
+          domain: string
+          explanation?: string | null
+          id?: string
+          mastery_assessment_id: string
+          memory_limit?: number | null
+          options?: Json | null
+          question_text: string
+          question_type: Database["public"]["Enums"]["question_type"]
+          tags?: string[] | null
+          test_cases?: Json | null
+          time_limit?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          code_template?: string | null
+          correct_answer?: string
+          created_at?: string | null
+          difficulty?: Database["public"]["Enums"]["difficulty_level"]
+          domain?: string
+          explanation?: string | null
+          id?: string
+          mastery_assessment_id?: string
+          memory_limit?: number | null
+          options?: Json | null
+          question_text?: string
+          question_type?: Database["public"]["Enums"]["question_type"]
+          tags?: string[] | null
+          test_cases?: Json | null
+          time_limit?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mastery_assessment_questions_mastery_assessment_id_fkey"
+            columns: ["mastery_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "mastery_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mastery_assessments: {
         Row: {
           created_at: string

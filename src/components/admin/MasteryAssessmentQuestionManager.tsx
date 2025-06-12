@@ -71,6 +71,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
             setEditingQuestion={setEditingQuestion}
             parsedDomains={parsedDomains}
             onFormClose={handleFormClose}
+            masteryAssessmentId={assessment.id}
           />
         </div>
         <CardContent>
