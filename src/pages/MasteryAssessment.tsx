@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -48,9 +47,26 @@ const MasteryAssessment = () => {
     queryFn: async () => {
       if (!assessment?.domains) return [];
       
-      let domains = assessment.domains;
-      if (typeof domains === 'string') {
-        domains = JSON.parse(domains);
+      // Parse domains properly to ensure it's a string array
+      let domains: string[] = [];
+      
+      try {
+        if (Array.isArray(assessment.domains)) {
+          domains = assessment.domains as string[];
+        } else if (typeof assessment.domains === 'string') {
+          domains = JSON.parse(assessment.domains);
+        } else {
+          console.error('Unexpected domains format:', assessment.domains);
+          return [];
+        }
+      } catch (error) {
+        console.error('Error parsing domains:', error);
+        return [];
+      }
+      
+      if (domains.length === 0) {
+        console.log('No domains found for mastery assessment');
+        return [];
       }
       
       console.log('Fetching questions for mastery assessment domains:', domains);
