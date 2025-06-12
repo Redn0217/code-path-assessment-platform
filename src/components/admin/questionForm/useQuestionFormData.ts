@@ -9,7 +9,7 @@ interface TestCase {
 
 interface QuestionFormData {
   domain: string;
-  module_id: string;
+  module_id: string | null;
   question_type: string;
   difficulty: string;
   title: string;
@@ -27,7 +27,7 @@ interface QuestionFormData {
 export const useQuestionFormData = (question: any, selectedModule: any, assessmentDomains?: string[]) => {
   const [formData, setFormData] = useState<QuestionFormData>({
     domain: selectedModule?.domain || (assessmentDomains && assessmentDomains.length > 0 ? assessmentDomains[0] : ''),
-    module_id: selectedModule?.id || '',
+    module_id: selectedModule?.id || null,
     question_type: 'mcq',
     difficulty: 'beginner',
     title: '',
@@ -48,7 +48,7 @@ export const useQuestionFormData = (question: any, selectedModule: any, assessme
     if (question) {
       setFormData({
         domain: question.domain || selectedModule?.domain || (assessmentDomains && assessmentDomains.length > 0 ? assessmentDomains[0] : ''),
-        module_id: question.module_id || selectedModule?.id || '',
+        module_id: question.module_id || selectedModule?.id || null,
         question_type: question.question_type || 'mcq',
         difficulty: question.difficulty || 'beginner',
         title: question.title || '',
@@ -66,7 +66,7 @@ export const useQuestionFormData = (question: any, selectedModule: any, assessme
       setFormData(prev => ({
         ...prev,
         domain: selectedModule?.domain || (assessmentDomains && assessmentDomains.length > 0 ? assessmentDomains[0] : ''),
-        module_id: selectedModule?.id || '',
+        module_id: selectedModule?.id || null,
       }));
     }
   }, [question, selectedModule, assessmentDomains]);
