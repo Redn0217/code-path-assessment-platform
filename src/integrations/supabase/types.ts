@@ -137,6 +137,51 @@ export type Database = {
         }
         Relationships: []
       }
+      mastery_assessments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty: string
+          domains: Json
+          id: string
+          is_active: boolean | null
+          order_index: number | null
+          time_limit_minutes: number
+          title: string
+          total_questions: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty: string
+          domains?: Json
+          id?: string
+          is_active?: boolean | null
+          order_index?: number | null
+          time_limit_minutes?: number
+          title: string
+          total_questions?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string
+          domains?: Json
+          id?: string
+          is_active?: boolean | null
+          order_index?: number | null
+          time_limit_minutes?: number
+          title?: string
+          total_questions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       modules: {
         Row: {
           color: string | null
@@ -270,6 +315,50 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_mastery_attempts: {
+        Row: {
+          answers: Json
+          completed_at: string | null
+          id: string
+          mastery_assessment_id: string
+          score: number | null
+          started_at: string
+          time_taken: number | null
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string | null
+          id?: string
+          mastery_assessment_id: string
+          score?: number | null
+          started_at?: string
+          time_taken?: number | null
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string | null
+          id?: string
+          mastery_assessment_id?: string
+          score?: number | null
+          started_at?: string
+          time_taken?: number | null
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mastery_attempts_mastery_assessment_id_fkey"
+            columns: ["mastery_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "mastery_assessments"
             referencedColumns: ["id"]
           },
         ]
