@@ -57,9 +57,9 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
@@ -67,11 +67,11 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
             </div>
             <div className="flex items-center space-x-4">
               {user && (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Welcome, {user.email}
                 </span>
               )}
-              <Button 
+              <Button
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"

@@ -27,14 +27,14 @@ export const icons = [
 ];
 
 export const colors = [
+  { value: 'bg-primary', label: 'Brand Green' },
+  { value: 'bg-brand-navy', label: 'Brand Navy' },
+  { value: 'bg-brand-navy-dark', label: 'Dark Navy' },
   { value: 'bg-blue-500', label: 'Blue' },
-  { value: 'bg-green-500', label: 'Green' },
   { value: 'bg-purple-500', label: 'Purple' },
   { value: 'bg-orange-500', label: 'Orange' },
   { value: 'bg-red-500', label: 'Red' },
   { value: 'bg-cyan-500', label: 'Cyan' },
   { value: 'bg-pink-500', label: 'Pink' },
-  { value: 'bg-indigo-500', label: 'Indigo' },
-  { value: 'bg-emerald-500', label: 'Emerald' },
-  { value: 'bg-violet-500', label: 'Violet' }
+  { value: 'bg-indigo-500', label: 'Indigo' }
 ];

@@ -37,17 +37,17 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-card shadow-sm border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-6">
               <div className="flex items-center space-x-3">
                 <img src="/logo.png" alt="evalu8 Logo" className="h-12 w-50" />
               </div>
-              <Button 
+              <Button
                 onClick={() => navigate('/auth')}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-brand-navy hover:bg-brand-navy-dark text-primary-foreground"
               >
                 Login / Register
               </Button>
@@ -68,7 +68,7 @@ const Index = () => {
             <Button 
               size="lg" 
               onClick={() => navigate('/auth')}
-              className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3"
+              className="bg-primary/90 hover:bg-primary text-lg px-8 py-3"
             >
               Start Your Assessment
             </Button>
@@ -124,7 +124,7 @@ const Index = () => {
       </section>
 
       {/* Tabs Section */}
-      <section className="py-8 bg-white">
+      <section className="py-8 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="practice" className="w-full">
             <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-8">

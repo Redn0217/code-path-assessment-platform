@@ -155,7 +155,7 @@ const Auth = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-brand-navy hover:bg-brand-navy-dark"
                     disabled={isLoading}
                   >
                     {isLoading ? "Logging in..." : "Login"}
@@ -218,7 +218,7 @@ const Auth = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-brand-navy hover:bg-brand-navy-dark"
                     disabled={isLoading}
                   >
                     {isLoading ? "Creating account..." : "Create Account"}
