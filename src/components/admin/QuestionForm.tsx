@@ -50,11 +50,15 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
       // If this is for a mastery assessment, use the mastery_assessment_questions table
       if (masteryAssessmentId) {
+        // Create a clean payload for mastery assessment questions table
+        // Remove module_id completely as it doesn't exist in mastery_assessment_questions table
+        const { module_id, ...cleanPayload } = payload;
         const masteryPayload = {
-          ...payload,
+          ...cleanPayload,
           mastery_assessment_id: masteryAssessmentId,
-          module_id: undefined, // Remove module_id for mastery assessment questions
         };
+
+        console.log('Mastery assessment payload:', masteryPayload);
 
         if (question) {
           const { error } = await supabase
@@ -91,10 +95,11 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
       onClose();
     },
     onError: (error: any) => {
-      toast({ 
-        title: `Error ${question ? 'updating' : 'creating'} question`, 
-        description: error.message,
-        variant: 'destructive' 
+      console.error('Error saving question:', error);
+      toast({
+        title: `Error ${question ? 'updating' : 'creating'} question`,
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
       });
     },
   });

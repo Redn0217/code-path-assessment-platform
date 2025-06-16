@@ -71,19 +71,37 @@ const UserManagement = () => {
         return [];
       }
 
-      // Get all assessments to calculate stats
-      const { data: assessments, error: assessmentsError } = await supabase
-        .from('assessments')
-        .select('user_id, completed_at');
+      // Get all assessments (both regular and mastery) to calculate stats
+      const [regularAssessments, masteryAttempts] = await Promise.all([
+        supabase
+          .from('assessments')
+          .select('user_id, completed_at'),
+        supabase
+          .from('user_mastery_attempts')
+          .select('user_id, completed_at')
+          .not('completed_at', 'is', null)
+      ]);
 
-      if (assessmentsError) {
-        console.error('Error fetching assessments:', assessmentsError);
+      if (regularAssessments.error) {
+        console.error('Error fetching regular assessments:', regularAssessments.error);
       }
 
-      // Process profiles with assessment stats
+      if (masteryAttempts.error) {
+        console.error('Error fetching mastery attempts:', masteryAttempts.error);
+      }
+
+      // Process profiles with combined assessment stats
       const usersWithStats = profiles.map(profile => {
-        const userAssessments = assessments?.filter(a => a.user_id === profile.id) || [];
-        const sortedAssessments = userAssessments.sort((a, b) => 
+        const userRegularAssessments = regularAssessments.data?.filter(a => a.user_id === profile.id) || [];
+        const userMasteryAttempts = masteryAttempts.data?.filter(a => a.user_id === profile.id) || [];
+
+        // Combine all assessments for sorting
+        const allUserAssessments = [
+          ...userRegularAssessments,
+          ...userMasteryAttempts
+        ];
+
+        const sortedAssessments = allUserAssessments.sort((a, b) =>
           new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
         );
 
@@ -93,7 +111,7 @@ const UserManagement = () => {
           full_name: profile.full_name || 'Unknown User',
           created_at: profile.created_at || new Date().toISOString(),
           avatar_url: profile.avatar_url,
-          assessment_count: userAssessments.length,
+          assessment_count: allUserAssessments.length,
           last_assessment: sortedAssessments[0]?.completed_at || null
         };
       });

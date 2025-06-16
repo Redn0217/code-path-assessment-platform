@@ -5,9 +5,9 @@ export const useQuestionFormValidation = () => {
   const { toast } = useToast();
 
   const validateForm = (formData: any) => {
-    if (!formData.title || !formData.question_text || !formData.correct_answer) {
+    if (!formData.title || !formData.question_text || !formData.correct_answer || !formData.domain) {
       toast({
-        title: 'Please fill in all required fields',
+        title: 'Please fill in all required fields (title, question text, correct answer, and domain)',
         variant: 'destructive',
       });
       return false;

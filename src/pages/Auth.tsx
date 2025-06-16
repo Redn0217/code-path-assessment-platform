@@ -111,8 +111,7 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <Brain className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">TechAssess Pro</h1>
+            <img src="/logo.png" alt="evalu8 Logo" className="h-12 w-auto" />
           </div>
           <p className="text-gray-600">Sign in to access your assessments</p>
         </div>

@@ -23,7 +23,7 @@ interface User {
 interface Assessment {
   id: string;
   domain: string;
-  module_id: string;
+  module_id: string | null;
   difficulty: string;
   score: number;
   total_questions: number;
@@ -33,6 +33,8 @@ interface Assessment {
   weak_areas: string[];
   answers: any[];
   question_ids: string[];
+  assessment_type?: string;
+  assessment_title?: string;
 }
 
 interface UserDetailsProps {
@@ -43,25 +45,78 @@ interface UserDetailsProps {
 const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
 
-  // Fetch user's assessments
+  // Fetch user's assessments (both regular and mastery)
   const { data: assessments = [], isLoading } = useQuery({
     queryKey: ['user-assessments', user.id],
     queryFn: async () => {
       console.log('Fetching assessments for user:', user.id);
-      
-      const { data, error } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('completed_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching user assessments:', error);
-        throw error;
+      // Fetch both regular assessments and mastery assessment attempts
+      const [regularAssessments, masteryAttempts] = await Promise.all([
+        supabase
+          .from('assessments')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('completed_at', { ascending: false }),
+        supabase
+          .from('user_mastery_attempts')
+          .select(`
+            *,
+            mastery_assessments (
+              title,
+              difficulty,
+              domains,
+              total_questions,
+              time_limit_minutes
+            )
+          `)
+          .eq('user_id', user.id)
+          .not('completed_at', 'is', null)
+          .order('completed_at', { ascending: false })
+      ]);
+
+      if (regularAssessments.error) {
+        console.error('Error fetching regular assessments:', regularAssessments.error);
+        throw regularAssessments.error;
       }
 
-      console.log('Fetched assessments:', data?.length || 0);
-      return data || [];
+      if (masteryAttempts.error) {
+        console.error('Error fetching mastery attempts:', masteryAttempts.error);
+        throw masteryAttempts.error;
+      }
+
+      // Combine and transform both types of assessments
+      const combinedAssessments = [
+        // Regular assessments
+        ...(regularAssessments.data || []).map(assessment => ({
+          ...assessment,
+          assessment_type: 'regular',
+          assessment_title: `${assessment.domain} Assessment`,
+        })),
+        // Mastery assessments
+        ...(masteryAttempts.data || []).map(attempt => ({
+          ...attempt,
+          assessment_type: 'mastery',
+          assessment_title: attempt.mastery_assessments?.title || 'Mastery Assessment',
+          domain: Array.isArray(attempt.mastery_assessments?.domains)
+            ? attempt.mastery_assessments.domains.join(', ')
+            : typeof attempt.mastery_assessments?.domains === 'string'
+            ? JSON.parse(attempt.mastery_assessments.domains).join(', ')
+            : 'Multiple Domains',
+          difficulty: attempt.mastery_assessments?.difficulty || 'intermediate',
+        }))
+      ];
+
+      // Sort by completion date
+      combinedAssessments.sort((a, b) =>
+        new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+      );
+
+      console.log('Fetched combined assessments:', combinedAssessments.length);
+      console.log('Regular assessments:', regularAssessments.data?.length || 0);
+      console.log('Mastery attempts:', masteryAttempts.data?.length || 0);
+
+      return combinedAssessments;
     },
   });
 
@@ -91,11 +146,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
   };
 
   const handleAssessmentClick = (assessment: any) => {
-    // Transform the Supabase assessment data to match our Assessment interface
+    // Transform the assessment data to match our Assessment interface
+    // Handle both regular and mastery assessments
     const transformedAssessment: Assessment = {
       id: assessment.id,
-      domain: assessment.domain,
-      module_id: assessment.module_id,
+      domain: assessment.assessment_type === 'mastery'
+        ? assessment.domain // Already formatted as comma-separated string
+        : assessment.domain,
+      module_id: assessment.module_id || null,
       difficulty: assessment.difficulty,
       score: assessment.score,
       total_questions: assessment.total_questions,
@@ -104,7 +162,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
       strong_areas: assessment.strong_areas || [],
       weak_areas: assessment.weak_areas || [],
       answers: Array.isArray(assessment.answers) ? assessment.answers : [],
-      question_ids: assessment.question_ids || []
+      question_ids: assessment.question_ids || [],
+      assessment_type: assessment.assessment_type,
+      assessment_title: assessment.assessment_title
     };
     setSelectedAssessment(transformedAssessment);
   };
@@ -217,7 +277,15 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="font-semibold capitalize">{assessment.domain}</h3>
+                          <h3 className="font-semibold">
+                            {assessment.assessment_type === 'mastery'
+                              ? assessment.assessment_title
+                              : `${assessment.domain} Assessment`
+                            }
+                          </h3>
+                          <Badge variant={assessment.assessment_type === 'mastery' ? 'default' : 'secondary'}>
+                            {assessment.assessment_type === 'mastery' ? 'Mastery' : 'Practice'}
+                          </Badge>
                           <Badge className={getDifficultyColor(assessment.difficulty)}>
                             {assessment.difficulty}
                           </Badge>
@@ -227,8 +295,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
                             </span>
                           </Badge>
                         </div>
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-1">
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-3 w-3" />
                             <span>{formatDistanceToNow(new Date(assessment.completed_at), { addSuffix: true })}</span>
@@ -240,8 +308,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
                             </div>
                           )}
                         </div>
+
+                        {assessment.assessment_type === 'mastery' && (
+                          <div className="text-sm text-gray-500">
+                            Domains: {assessment.domain}
+                          </div>
+                        )}
                       </div>
-                      
+
                       <Button variant="ghost" size="sm">
                         View Details
                       </Button>

@@ -48,9 +48,9 @@ const BasicQuestionFields: React.FC<BasicQuestionFieldsProps> = ({
         </div>
       </div>
 
-      {availableDomains && availableDomains.length > 0 && (
-        <div>
-          <Label htmlFor="domain">Domain *</Label>
+      <div>
+        <Label htmlFor="domain">Domain *</Label>
+        {availableDomains && availableDomains.length > 0 ? (
           <Select value={formData.domain} onValueChange={(value) => setFormData({ ...formData, domain: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Select a domain" />
@@ -63,8 +63,15 @@ const BasicQuestionFields: React.FC<BasicQuestionFieldsProps> = ({
               ))}
             </SelectContent>
           </Select>
-        </div>
-      )}
+        ) : (
+          <Input
+            id="domain"
+            value={formData.domain}
+            onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+            placeholder="Enter domain (e.g., python, devops, cloud)"
+          />
+        )}
+      </div>
 
       <div>
         <Label htmlFor="title">Title *</Label>
