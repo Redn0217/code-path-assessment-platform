@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
 }
@@ -13,6 +19,7 @@ interface AuthenticatedLayoutProps {
 const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     // Set up auth state listener
@@ -20,6 +27,11 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchUserProfile(session.user.id);
+        } else {
+          setUserProfile(null);
+        }
       }
     );
 
@@ -27,10 +39,32 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -68,14 +102,14 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
             <div className="flex items-center space-x-4">
               {user && (
                 <span className="text-sm text-muted-foreground">
-                  Welcome, {user.email}
+                  Welcome, {userProfile?.full_name || user.email}
                 </span>
               )}
               <Button
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 hover:bg-brand-navy hover:text-red-500"
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>
