@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { icons } from '@/components/admin/moduleManager/moduleData';
 
 const domains = [
   'python', 'devops', 'cloud', 'linux', 'networking', 
@@ -149,23 +150,47 @@ const DomainForm: React.FC<DomainFormProps> = ({ domain, onClose }) => {
             />
           </div>
 
-          <div>
-            <Label htmlFor="color">Color</Label>
-            <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {colors.map((color) => (
-                  <SelectItem key={color} value={color}>
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-4 h-4 rounded ${color}`}></div>
-                      <span>{color}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="icon">Icon</Label>
+              <Select value={formData.icon} onValueChange={(value) => setFormData({ ...formData, icon: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {icons.map((icon) => {
+                    const IconComponent = icon.component;
+                    return (
+                      <SelectItem key={icon.value} value={icon.value}>
+                        <div className="flex items-center space-x-2">
+                          <IconComponent className="h-4 w-4" />
+                          <span>{icon.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="color">Color</Label>
+              <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {colors.map((color) => (
+                    <SelectItem key={color} value={color}>
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-4 h-4 rounded ${color}`}></div>
+                        <span>{color}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>

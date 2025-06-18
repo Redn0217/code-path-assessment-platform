@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Settings } from 'lucide-react';
+import { getIconComponent } from './moduleData';
 
 interface Module {
   id: string;
@@ -25,13 +26,15 @@ interface ModuleCardProps {
 }
 
 const ModuleCard: React.FC<ModuleCardProps> = ({ module, onEdit, onDelete, onModuleClick }) => {
+  const IconComponent = getIconComponent(module.icon);
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className={`p-2 rounded-lg ${module.color}`}>
-              <div className="h-4 w-4 bg-white rounded"></div>
+              <IconComponent className="h-4 w-4 text-white" />
             </div>
             <div className="flex-1">
               <CardTitle className="text-lg">{module.name}</CardTitle>
@@ -49,7 +52,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onEdit, onDelete, onMod
               <Edit className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="destructive"
               size="sm"
               onClick={() => onDelete(module.id)}
             >

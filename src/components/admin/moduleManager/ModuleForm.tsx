@@ -77,11 +77,17 @@ const ModuleForm: React.FC<ModuleFormProps> = ({ formData, setFormData }) => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {icons.map((icon) => (
-                <SelectItem key={icon.value} value={icon.value}>
-                  {icon.label}
-                </SelectItem>
-              ))}
+              {icons.map((icon) => {
+                const IconComponent = icon.component;
+                return (
+                  <SelectItem key={icon.value} value={icon.value}>
+                    <div className="flex items-center space-x-2">
+                      <IconComponent className="h-4 w-4" />
+                      <span>{icon.label}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

@@ -13,18 +13,78 @@ export const domains = [
   { id: 'data-science', name: 'Data Science' }
 ];
 
+import {
+  CreditCard,
+  LayoutGrid,
+  LayoutList,
+  Edit,
+  Code,
+  Database,
+  Server,
+  Cloud,
+  Shield,
+  BarChart,
+  Brain,
+  Cpu,
+  Network,
+  HardDrive,
+  Monitor,
+  Lock,
+  TrendingUp,
+  Settings,
+  Zap,
+  Globe
+} from 'lucide-react';
+
+export const iconComponents = {
+  'card': CreditCard,
+  'layout-grid': LayoutGrid,
+  'layout-list': LayoutList,
+  'edit': Edit,
+  'code': Code,
+  'database': Database,
+  'server': Server,
+  'cloud': Cloud,
+  'shield': Shield,
+  'bar-chart': BarChart,
+  'brain': Brain,
+  'cpu': Cpu,
+  'network': Network,
+  'hard-drive': HardDrive,
+  'monitor': Monitor,
+  'lock': Lock,
+  'trending-up': TrendingUp,
+  'settings': Settings,
+  'zap': Zap,
+  'globe': Globe
+};
+
 export const icons = [
-  { value: 'card', label: 'Card' },
-  { value: 'layout-grid', label: 'Grid' },
-  { value: 'layout-list', label: 'List' },
-  { value: 'edit', label: 'Edit' },
-  { value: 'code', label: 'Code' },
-  { value: 'database', label: 'Database' },
-  { value: 'server', label: 'Server' },
-  { value: 'cloud', label: 'Cloud' },
-  { value: 'shield', label: 'Shield' },
-  { value: 'bar-chart', label: 'Chart' }
+  { value: 'card', label: 'Card', component: CreditCard },
+  { value: 'layout-grid', label: 'Grid', component: LayoutGrid },
+  { value: 'layout-list', label: 'List', component: LayoutList },
+  { value: 'edit', label: 'Edit', component: Edit },
+  { value: 'code', label: 'Code', component: Code },
+  { value: 'database', label: 'Database', component: Database },
+  { value: 'server', label: 'Server', component: Server },
+  { value: 'cloud', label: 'Cloud', component: Cloud },
+  { value: 'shield', label: 'Shield', component: Shield },
+  { value: 'bar-chart', label: 'Chart', component: BarChart },
+  { value: 'brain', label: 'Brain', component: Brain },
+  { value: 'cpu', label: 'CPU', component: Cpu },
+  { value: 'network', label: 'Network', component: Network },
+  { value: 'hard-drive', label: 'Storage', component: HardDrive },
+  { value: 'monitor', label: 'Monitor', component: Monitor },
+  { value: 'lock', label: 'Security', component: Lock },
+  { value: 'trending-up', label: 'Analytics', component: TrendingUp },
+  { value: 'settings', label: 'Settings', component: Settings },
+  { value: 'zap', label: 'Performance', component: Zap },
+  { value: 'globe', label: 'Global', component: Globe }
 ];
+
+export const getIconComponent = (iconName: string) => {
+  return iconComponents[iconName as keyof typeof iconComponents] || CreditCard;
+};
 
 export const colors = [
   { value: 'bg-primary', label: 'Brand Green' },

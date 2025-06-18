@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { getIconComponent } from '@/components/admin/moduleManager/moduleData';
 
 const PracticeHub = () => {
   const navigate = useNavigate();
@@ -41,13 +42,15 @@ const PracticeHub = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {domains.map((domain) => (
-          <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300">
-            <CardHeader>
-              <div className="flex items-center space-x-3">
-                <div className={`p-3 rounded-lg ${domain.color || 'bg-blue-500'}`}>
-                  <div className="h-6 w-6 bg-white rounded"></div>
-                </div>
+        {domains.map((domain) => {
+          const IconComponent = getIconComponent(domain.icon);
+          return (
+            <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300">
+              <CardHeader>
+                <div className="flex items-center space-x-3">
+                  <div className={`p-3 rounded-lg ${domain.color || 'bg-blue-500'}`}>
+                    <IconComponent className="h-6 w-6 text-white" />
+                  </div>
                 <div>
                   <CardTitle className="text-lg">{domain.name}</CardTitle>
                   <Badge variant="secondary">Practice</Badge>
@@ -66,7 +69,8 @@ const PracticeHub = () => {
               </Button>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {domains.length === 0 && (

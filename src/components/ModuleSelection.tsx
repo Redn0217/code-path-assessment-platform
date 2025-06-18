@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Play } from 'lucide-react';
+import { getIconComponent } from '@/components/admin/moduleManager/moduleData';
 
 interface Module {
   id: string;
@@ -139,13 +140,14 @@ const ModuleSelection = ({ domain, domainInfo, onModuleSelect, onBack }: ModuleS
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {modules.map((module) => {
             const questionCount = questionCounts?.[module.id] || 0;
-            
+            const IconComponent = getIconComponent(module.icon);
+
             return (
               <Card key={module.id} className="hover:shadow-lg transition-shadow duration-300">
                 <CardHeader>
                   <div className="flex items-center space-x-3 mb-2">
                     <div className={`p-3 rounded-lg ${module.color}`}>
-                      <div className="h-6 w-6 bg-white rounded"></div>
+                      <IconComponent className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
                       <CardTitle className="text-lg">{module.name}</CardTitle>

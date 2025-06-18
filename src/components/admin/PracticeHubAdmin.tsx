@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, Layout, ArrowLeft } from 'lucide-react';
 import DomainForm from '@/components/DomainForm';
 import ModuleManager from '@/components/admin/ModuleManager';
 import { useToast } from '@/hooks/use-toast';
+import { getIconComponent } from '@/components/admin/moduleManager/moduleData';
 
 interface PracticeHubAdminProps {
   onModuleSelect?: (module: any) => void;
@@ -121,14 +122,16 @@ const PracticeHubAdmin: React.FC<PracticeHubAdminProps> = ({ onModuleSelect }) =
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {domains.map((domain) => (
-          <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-3 rounded-lg ${domain.color || 'bg-blue-500'}`}>
-                    <div className="h-6 w-6 bg-white rounded"></div>
-                  </div>
+        {domains.map((domain) => {
+          const IconComponent = getIconComponent(domain.icon);
+          return (
+            <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-lg ${domain.color || 'bg-blue-500'}`}>
+                      <IconComponent className="h-6 w-6 text-white" />
+                    </div>
                   <div>
                     <CardTitle className="text-lg">{domain.name}</CardTitle>
                     <Badge variant={domain.is_active ? "secondary" : "destructive"}>
@@ -145,7 +148,7 @@ const PracticeHubAdmin: React.FC<PracticeHubAdminProps> = ({ onModuleSelect }) =
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(domain.id)}
                   >
@@ -175,7 +178,8 @@ const PracticeHubAdmin: React.FC<PracticeHubAdminProps> = ({ onModuleSelect }) =
               </Button>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {domains.length === 0 && (

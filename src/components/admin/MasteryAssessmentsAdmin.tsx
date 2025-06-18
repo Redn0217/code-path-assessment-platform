@@ -36,24 +36,29 @@ const MasteryAssessmentsAdmin = () => {
   };
 
   const handleDelete = async (assessmentId: string) => {
+    // Add confirmation dialog
+    if (!confirm('Are you sure you want to delete this mastery assessment? This will also delete all related user attempts and cannot be undone.')) {
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('mastery_assessments')
         .delete()
         .eq('id', assessmentId);
-      
+
       if (error) throw error;
-      
+
       toast({
         title: "Success",
-        description: "Mastery assessment deleted successfully",
+        description: "Mastery assessment and all related data deleted successfully",
       });
       refetch();
     } catch (error) {
       console.error('Error deleting assessment:', error);
       toast({
         title: "Error",
-        description: "Failed to delete assessment",
+        description: error.message || "Failed to delete assessment",
         variant: "destructive",
       });
     }
@@ -133,7 +138,7 @@ const MasteryAssessmentsAdmin = () => {
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(assessment.id)}
                   >
