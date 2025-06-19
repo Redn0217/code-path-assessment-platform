@@ -7,11 +7,14 @@ import { LogOut, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useNavigate } from 'react-router-dom';
+import ProfileIcon from './profile/ProfileIcon';
 
 interface UserProfile {
   id: string;
   email: string;
   full_name: string | null;
+  avatar_url: string | null;
+  created_at: string | null;
 }
 
 interface AuthenticatedLayoutProps {
@@ -55,7 +58,7 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name')
+        .select('id, email, full_name, avatar_url, created_at')
         .eq('id', userId)
         .single();
 
@@ -140,6 +143,12 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
                 <span className="text-sm text-muted-foreground">
                   Welcome, {userProfile?.full_name || user.email}
                 </span>
+              )}
+              {user && userProfile && (
+                <ProfileIcon
+                  userProfile={userProfile}
+                  onProfileUpdate={() => fetchUserProfile(user.id)}
+                />
               )}
               <Button
                 onClick={handleLogout}

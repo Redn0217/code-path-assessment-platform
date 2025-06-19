@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Target, Clock, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
+import UserAssessmentDetails from './UserAssessmentDetails';
 
 interface AssessmentData {
   id: string;
@@ -21,9 +22,13 @@ interface AssessmentData {
   domains?: string[];
   strong_areas?: string[];
   weak_areas?: string[];
+  answers?: any[];
+  question_ids?: string[];
 }
 
 const UserPerformance = () => {
+  const [selectedAssessment, setSelectedAssessment] = useState<AssessmentData | null>(null);
+
   const { data: performanceData = [], isLoading } = useQuery({
     queryKey: ['user-performance'],
     queryFn: async () => {
@@ -67,7 +72,9 @@ const UserPerformance = () => {
         difficulty: attempt.difficulty,
         domain: attempt.domain,
         strong_areas: attempt.strong_areas,
-        weak_areas: attempt.weak_areas
+        weak_areas: attempt.weak_areas,
+        answers: attempt.answers,
+        question_ids: attempt.question_ids
       })) || [];
 
       const mastery: AssessmentData[] = masteryAttempts.data?.map(attempt => ({
@@ -80,14 +87,20 @@ const UserPerformance = () => {
         completed_at: attempt.completed_at,
         time_taken: attempt.time_taken,
         domains: (attempt.mastery_assessments as any)?.domains,
-        difficulty: (attempt.mastery_assessments as any)?.difficulty
+        difficulty: (attempt.mastery_assessments as any)?.difficulty,
+        answers: attempt.answers,
+        question_ids: attempt.question_ids
       })) || [];
 
-      return [...practice, ...mastery].sort((a, b) => 
+      return [...practice, ...mastery].sort((a, b) =>
         new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
       );
     },
   });
+
+  const handleAssessmentClick = (assessment: AssessmentData) => {
+    setSelectedAssessment(assessment);
+  };
 
   const getPerformanceColor = (percentage: number) => {
     if (percentage >= 80) return 'text-green-600';
@@ -114,6 +127,15 @@ const UserPerformance = () => {
     return <div className="flex justify-center p-8">Loading your performance data...</div>;
   }
 
+  if (selectedAssessment) {
+    return (
+      <UserAssessmentDetails
+        assessment={selectedAssessment}
+        onBack={() => setSelectedAssessment(null)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -132,7 +154,11 @@ const UserPerformance = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {performanceData.map((assessment, index) => (
-            <Card key={`${assessment.assessment_type}-${assessment.id}-${index}`} className="hover:shadow-lg transition-shadow duration-300">
+            <Card
+              key={`${assessment.assessment_type}-${assessment.id}-${index}`}
+              className="hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+              onClick={() => handleAssessmentClick(assessment)}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
