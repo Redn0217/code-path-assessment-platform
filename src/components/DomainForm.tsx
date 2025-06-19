@@ -10,9 +10,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { icons } from '@/components/admin/moduleManager/moduleData';
 
-const domains = [
-  'python', 'devops', 'cloud', 'linux', 'networking', 
-  'storage', 'virtualization', 'object-storage', 'ai-ml', 
+const domainKeys = [
+  'python', 'devops', 'cloud', 'linux', 'networking',
+  'storage', 'virtualization', 'object-storage', 'ai-ml',
   'data-security', 'data-science'
 ];
 
@@ -31,7 +31,7 @@ const DomainForm: React.FC<DomainFormProps> = ({ domain, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    domain: '',
+    domain_key: '',
     color: 'bg-blue-500',
     icon: 'card',
     is_active: true,
@@ -45,7 +45,7 @@ const DomainForm: React.FC<DomainFormProps> = ({ domain, onClose }) => {
       setFormData({
         name: domain.name || '',
         description: domain.description || '',
-        domain: domain.domain || '',
+        domain_key: domain.domain_key || domain.domain || '', // Support both old and new field names
         color: domain.color || 'bg-blue-500',
         icon: domain.icon || 'card',
         is_active: domain.is_active ?? true,
@@ -69,25 +69,25 @@ const DomainForm: React.FC<DomainFormProps> = ({ domain, onClose }) => {
 
       if (domain) {
         // Update existing domain
-        const { error } = await supabase
-          .from('modules')
+        const { error } = await (supabase as any)
+          .from('domains')
           .update(dataToSubmit)
           .eq('id', domain.id);
-        
+
         if (error) throw error;
-        
+
         toast({
           title: "Success",
           description: "Domain updated successfully",
         });
       } else {
         // Create new domain
-        const { error } = await supabase
-          .from('modules')
+        const { error } = await (supabase as any)
+          .from('domains')
           .insert(dataToSubmit);
-        
+
         if (error) throw error;
-        
+
         toast({
           title: "Success",
           description: "Domain created successfully",
@@ -126,15 +126,15 @@ const DomainForm: React.FC<DomainFormProps> = ({ domain, onClose }) => {
           </div>
 
           <div>
-            <Label htmlFor="domain">Domain ID</Label>
-            <Select value={formData.domain} onValueChange={(value) => setFormData({ ...formData, domain: value })}>
+            <Label htmlFor="domain_key">Domain Key</Label>
+            <Select value={formData.domain_key} onValueChange={(value) => setFormData({ ...formData, domain_key: value })}>
               <SelectTrigger>
-                <SelectValue placeholder="Select domain" />
+                <SelectValue placeholder="Select domain key" />
               </SelectTrigger>
               <SelectContent>
-                {domains.map((domainId) => (
-                  <SelectItem key={domainId} value={domainId}>
-                    {domainId}
+                {domainKeys.map((domainKey) => (
+                  <SelectItem key={domainKey} value={domainKey}>
+                    {domainKey}
                   </SelectItem>
                 ))}
               </SelectContent>

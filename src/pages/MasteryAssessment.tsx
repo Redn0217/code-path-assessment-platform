@@ -9,6 +9,8 @@ import { ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
+import { useNavigation } from '@/contexts/NavigationContext';
+import MasteryAssessmentPreview from '@/components/MasteryAssessmentPreview';
 
 const MasteryAssessment = () => {
   const { assessmentId } = useParams<{ assessmentId: string }>();
@@ -16,7 +18,8 @@ const MasteryAssessment = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const attemptId = searchParams.get('attempt');
-  
+  const { restrictNavigation, allowNavigation } = useNavigation();
+
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -97,6 +100,20 @@ const MasteryAssessment = () => {
     }
   }, [timeLeft, isStarted, isCompleted]);
 
+  // Manage navigation restrictions
+  useEffect(() => {
+    if (isStarted && !isCompleted) {
+      restrictNavigation('Mastery assessment in progress');
+    } else {
+      allowNavigation();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      allowNavigation();
+    };
+  }, [isStarted, isCompleted, restrictNavigation, allowNavigation]);
+
   const updateAttempt = useMutation({
     mutationFn: async (data: any) => {
       if (!attemptId) throw new Error('Attempt ID is required');
@@ -132,7 +149,7 @@ const MasteryAssessment = () => {
 
   const handleSubmitAssessment = async () => {
     setIsCompleted(true);
-    
+
     const score = answers.reduce((total, answer, index) => {
       const question = questions[index];
       if (question?.question_type === 'mcq') {
@@ -153,6 +170,9 @@ const MasteryAssessment = () => {
         completed_at: new Date().toISOString(),
         time_taken: (assessment?.time_limit_minutes || 90) * 60 - timeLeft,
       });
+
+      // Allow navigation after successful submission
+      allowNavigation();
 
       toast({
         title: "Assessment completed",
@@ -213,57 +233,32 @@ const MasteryAssessment = () => {
     return (
       <AuthenticatedLayout>
         <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="mb-6 flex items-center space-x-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Dashboard</span>
-            </Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (isStarted && !isCompleted) {
+                toast({
+                  title: "Cannot navigate away",
+                  description: "Assessment is in progress. Please complete it first.",
+                  variant: "destructive",
+                });
+              } else {
+                navigate('/');
+              }
+            }}
+            className="mb-6 flex items-center space-x-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Button>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">{assessment.title}</CardTitle>
-                <CardDescription>{assessment.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{questions.length}</div>
-                    <div className="text-sm text-gray-600">Questions</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{Math.floor(timeLeft / 60)}</div>
-                    <div className="text-sm text-gray-600">Minutes</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{assessment.difficulty}</div>
-                    <div className="text-sm text-gray-600">Difficulty</div>
-                  </div>
-                </div>
-                
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-yellow-800 mb-2">Instructions:</h3>
-                  <ul className="text-sm text-yellow-700 space-y-1">
-                    <li>• Choose the best answer for each question</li>
-                    <li>• You have {Math.floor(timeLeft / 60)} minutes to complete the assessment</li>
-                    <li>• You cannot go back to previous questions</li>
-                    <li>• This assessment can only be taken once</li>
-                  </ul>
-                </div>
-
-                <Button 
-                  onClick={() => setIsStarted(true)}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  size="lg"
-                >
-                  Start Assessment
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          <MasteryAssessmentPreview
+            assessment={assessment}
+            questions={questions}
+            timeLeft={timeLeft}
+            onStartAssessment={() => setIsStarted(true)}
+            isLoading={isLoading}
+          />
         </div>
       </AuthenticatedLayout>
     );
@@ -390,7 +385,18 @@ const MasteryAssessment = () => {
               <div className="flex justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => navigate('/')}
+                  onClick={() => {
+                    if (isStarted && !isCompleted) {
+                      toast({
+                        title: "Cannot exit assessment",
+                        description: "Please complete your assessment first or submit it to exit.",
+                        variant: "destructive",
+                      });
+                    } else {
+                      navigate('/');
+                    }
+                  }}
+                  className={isStarted && !isCompleted ? 'cursor-not-allowed opacity-60' : ''}
                 >
                   Exit Assessment
                 </Button>

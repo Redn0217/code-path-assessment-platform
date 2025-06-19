@@ -7,41 +7,63 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Play } from 'lucide-react';
 import { getIconComponent } from '@/components/admin/moduleManager/moduleData';
-
-interface Module {
-  id: string;
-  name: string;
-  description: string;
-  domain: string;
-  icon: string;
-  color: string;
-  is_active: boolean;
-  order_index: number;
-}
+import { Module } from '@/types/module';
 
 interface ModuleSelectionProps {
   domain: string;
-  domainInfo: { name: string; color: string };
+  domainInfo: { name: string; color: string; icon?: string };
   onModuleSelect: (module: Module) => void;
   onBack: () => void;
 }
 
 const ModuleSelection = ({ domain, domainInfo, onModuleSelect, onBack }: ModuleSelectionProps) => {
-  // Fetch modules for the selected domain
-  const { data: modules = [], isLoading, error } = useQuery({
-    queryKey: ['modules', domain],
+  // First fetch the domain to get domain_id
+  const { data: domainData } = useQuery({
+    queryKey: ['domain', domain],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('modules')
+      const { data, error } = await (supabase as any)
+        .from('domains')
         .select('*')
-        .eq('domain', domain)
-        .eq('is_active', true)
-        .order('order_index', { ascending: true });
-      
+        .eq('domain_key', domain)
+        .single();
+
       if (error) throw error;
-      return data || [];
+      return data;
     },
     enabled: !!domain,
+  });
+
+  // Fetch modules for the selected domain using domain_id
+  const { data: modules = [], isLoading, error } = useQuery({
+    queryKey: ['modules', domainData?.id],
+    queryFn: async () => {
+      if (!domainData?.id) return [];
+
+      const { data, error } = await (supabase as any)
+        .from('modules')
+        .select(`
+          *,
+          domains!inner(
+            id,
+            name,
+            domain_key
+          )
+        `)
+        .eq('domain_id', domainData.id)
+        .eq('is_active', true)
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+
+      // Transform the data to include domain name directly on the module object
+      const transformedData = data?.map((module: any) => ({
+        ...module,
+        domain: module.domains?.domain_key || module.domains?.name
+      })) || [];
+
+      return transformedData;
+    },
+    enabled: !!domainData?.id,
   });
 
   // Fetch question count for each module
@@ -138,7 +160,7 @@ const ModuleSelection = ({ domain, domainInfo, onModuleSelect, onBack }: ModuleS
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modules.map((module) => {
+          {modules.map((module: any) => {
             const questionCount = questionCounts?.[module.id] || 0;
             const IconComponent = getIconComponent(module.icon);
 

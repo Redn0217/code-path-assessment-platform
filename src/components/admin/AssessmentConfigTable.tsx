@@ -1,16 +1,14 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Edit } from 'lucide-react';
 import { hasEnoughQuestions } from './AssessmentConfigUtils';
 
 interface AssessmentConfigTableProps {
   configs?: any[];
   questionCounts?: any;
   isLoading: boolean;
-  onEdit: (config: any) => void;
+  onEdit?: (config: any) => void; // Made optional since we're not using it anymore
 }
 
 const AssessmentConfigTable: React.FC<AssessmentConfigTableProps> = ({
@@ -37,7 +35,6 @@ const AssessmentConfigTable: React.FC<AssessmentConfigTableProps> = ({
           <TableHead>Scenario</TableHead>
           <TableHead>Time (min)</TableHead>
           <TableHead>Available Questions</TableHead>
-          <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -58,15 +55,6 @@ const AssessmentConfigTable: React.FC<AssessmentConfigTableProps> = ({
                 <Badge variant={hasSufficientQuestions ? "default" : "destructive"}>
                   {hasSufficientQuestions ? "Sufficient" : "Insufficient"}
                 </Badge>
-              </TableCell>
-              <TableCell>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => onEdit(config)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
               </TableCell>
             </TableRow>
           );

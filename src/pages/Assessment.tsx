@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import ModuleSelection from '@/components/ModuleSelection';
+import AssessmentPreview from '@/components/AssessmentPreview';
+import { Module } from '@/types/module';
 
 const domains = {
   python: { name: 'Python', color: 'bg-blue-500' },
@@ -26,17 +28,6 @@ const domains = {
   'data-science': { name: 'Data Science', color: 'bg-violet-500' }
 };
 
-interface Module {
-  id: string;
-  name: string;
-  description: string;
-  domain: string;
-  icon: string;
-  color: string;
-  is_active: boolean;
-  order_index: number;
-}
-
 const Assessment = () => {
   const { domain } = useParams<{ domain: string }>();
   const navigate = useNavigate();
@@ -46,55 +37,63 @@ const Assessment = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800); // Default 30 minutes
   const [isStarted, setIsStarted] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
 
   const domainInfo = domain ? domains[domain as keyof typeof domains] : null;
 
-  // Fetch questions from database based on selected module
-  const { data: questions = [], isLoading, error } = useQuery({
-    queryKey: ['assessment-questions', selectedModule?.id],
+  // Generate assessment based on configuration
+  const { data: assessmentData, isLoading, error } = useQuery({
+    queryKey: ['generated-assessment', selectedModule?.id],
     queryFn: async () => {
-      if (!selectedModule) return [];
-      
-      console.log('Fetching questions for module:', selectedModule.id);
-      
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('module_id', selectedModule.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching questions:', error);
-        throw error;
+      if (!selectedModule) return null;
+
+      console.log('Generating assessment for module:', selectedModule.id);
+
+      try {
+        const { AssessmentGenerator } = await import('@/services/assessmentGenerator');
+        const generatedAssessment = await AssessmentGenerator.generateAssessment(selectedModule.id);
+
+        console.log('Generated assessment:', {
+          totalQuestions: generatedAssessment.questions.length,
+          metadata: generatedAssessment.metadata
+        });
+
+        return generatedAssessment;
+      } catch (error) {
+        console.error('Error generating assessment:', error);
+
+        // Fallback: fetch all questions if generation fails
+        console.log('Falling back to all questions...');
+        const { data, error: fallbackError } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('module_id', selectedModule.id)
+          .order('created_at', { ascending: false });
+
+        if (fallbackError) throw fallbackError;
+
+        return {
+          questions: data || [],
+          config: null,
+          metadata: {
+            total_questions: data?.length || 0,
+            mcq_count: 0,
+            coding_count: 0,
+            scenario_count: 0,
+            difficulty_breakdown: { beginner: 0, intermediate: 0, advanced: 0 },
+            estimated_time_minutes: 30
+          }
+        };
       }
-      
-      console.log('Fetched questions:', data?.length || 0);
-      return data || [];
     },
     enabled: !!selectedModule,
   });
 
-  // Fetch assessment configuration for time settings
-  const { data: assessmentConfig } = useQuery({
-    queryKey: ['assessment-config', selectedModule?.id],
-    queryFn: async () => {
-      if (!selectedModule) return null;
-      
-      const { data, error } = await supabase
-        .from('assessment_configs')
-        .select('*')
-        .eq('module_id', selectedModule.id)
-        .single();
-      
-      if (error) {
-        console.error('No assessment config found, using defaults');
-        return { total_time_minutes: 30 }; // Default config
-      }
-      
-      return data;
-    },
-    enabled: !!selectedModule,
-  });
+  // Extract questions and config from assessment data
+  const questions = assessmentData?.questions || [];
+  const assessmentConfig = assessmentData?.config;
+
+  // Assessment config is now included in the generated assessment data
 
   useEffect(() => {
     if (assessmentConfig?.total_time_minutes) {
@@ -255,68 +254,28 @@ const Assessment = () => {
     );
   }
 
-  if (!isStarted) {
+  if (!isStarted && showPreview && assessmentData) {
     return (
       <AuthenticatedLayout>
         <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedModule(null)}
-              className="mb-6 flex items-center space-x-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Modules</span>
-            </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setSelectedModule(null)}
+            className="mb-6 flex items-center space-x-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Modules</span>
+          </Button>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className={`p-3 rounded-lg ${selectedModule.color}`}>
-                    <div className="h-6 w-6 bg-white rounded"></div>
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl">{selectedModule.name} Assessment</CardTitle>
-                    <CardDescription>Test your knowledge in {selectedModule.name}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{questions.length}</div>
-                    <div className="text-sm text-gray-600">Questions</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{Math.floor(timeLeft / 60)}</div>
-                    <div className="text-sm text-gray-600">Minutes</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">Mixed</div>
-                    <div className="text-sm text-gray-600">Difficulty</div>
-                  </div>
-                </div>
-                
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-yellow-800 mb-2">Instructions:</h3>
-                  <ul className="text-sm text-yellow-700 space-y-1">
-                    <li>• Choose the best answer for each question</li>
-                    <li>• You have {Math.floor(timeLeft / 60)} minutes to complete the assessment</li>
-                    <li>• You cannot go back to previous questions</li>
-                    <li>• Your progress will be saved automatically</li>
-                  </ul>
-                </div>
-
-                <Button 
-                  onClick={() => setIsStarted(true)}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  size="lg"
-                >
-                  Start Assessment
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          <AssessmentPreview
+            assessmentData={assessmentData}
+            moduleName={selectedModule.name}
+            onStartAssessment={() => {
+              setShowPreview(false);
+              setIsStarted(true);
+            }}
+            isLoading={isLoading}
+          />
         </div>
       </AuthenticatedLayout>
     );

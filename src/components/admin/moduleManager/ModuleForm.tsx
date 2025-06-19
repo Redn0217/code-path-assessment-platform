@@ -5,21 +5,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { domains, icons, colors } from './moduleData';
-
-interface FormData {
-  name: string;
-  description: string;
-  domain: string;
-  icon: string;
-  color: string;
-  is_active: boolean;
-  order_index: number;
-}
+import { icons, colors } from './moduleData';
+import { ModuleFormData } from '@/types/module';
 
 interface ModuleFormProps {
-  formData: FormData;
-  setFormData: (data: FormData) => void;
+  formData: ModuleFormData;
+  setFormData: (data: ModuleFormData) => void;
 }
 
 const ModuleForm: React.FC<ModuleFormProps> = ({ formData, setFormData }) => {
@@ -47,24 +38,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({ formData, setFormData }) => {
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="domain">Domain</Label>
-        <Select
-          value={formData.domain}
-          onValueChange={(value) => setFormData({ ...formData, domain: value })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {domains.map((domain) => (
-              <SelectItem key={domain.id} value={domain.id}>
-                {domain.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Domain is now set automatically based on the selected domain context */}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

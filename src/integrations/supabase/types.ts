@@ -250,6 +250,108 @@ export type Database = {
         }
         Relationships: []
       }
+      question_bank: {
+        Row: {
+          code_template: string | null
+          correct_answer: string
+          created_at: string
+          created_by: string | null
+          difficulty: string
+          domain: string
+          explanation: string | null
+          id: string
+          is_active: boolean | null
+          memory_limit: number | null
+          options: Json | null
+          question_text: string
+          question_type: string
+          tags: string[] | null
+          test_cases: Json | null
+          time_limit: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          code_template?: string | null
+          correct_answer: string
+          created_at?: string
+          created_by?: string | null
+          difficulty: string
+          domain: string
+          explanation?: string | null
+          id?: string
+          is_active?: boolean | null
+          memory_limit?: number | null
+          options?: Json | null
+          question_text: string
+          question_type: string
+          tags?: string[] | null
+          test_cases?: Json | null
+          time_limit?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          code_template?: string | null
+          correct_answer?: string
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          domain?: string
+          explanation?: string | null
+          id?: string
+          is_active?: boolean | null
+          memory_limit?: number | null
+          options?: Json | null
+          question_text?: string
+          question_type?: string
+          tags?: string[] | null
+          test_cases?: Json | null
+          time_limit?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      module_questions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          module_id: string
+          question_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module_id: string
+          question_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module_id?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           color: string | null
@@ -324,6 +426,7 @@ export type Database = {
           code_template: string | null
           correct_answer: string
           created_at: string | null
+          created_by: string | null
           difficulty: Database["public"]["Enums"]["difficulty_level"]
           domain: string
           explanation: string | null
@@ -331,6 +434,7 @@ export type Database = {
           memory_limit: number | null
           module_id: string | null
           options: Json | null
+          question_bank_id: string
           question_text: string
           question_type: Database["public"]["Enums"]["question_type"]
           tags: string[] | null
@@ -343,6 +447,7 @@ export type Database = {
           code_template?: string | null
           correct_answer: string
           created_at?: string | null
+          created_by?: string | null
           difficulty: Database["public"]["Enums"]["difficulty_level"]
           domain: string
           explanation?: string | null
@@ -350,6 +455,7 @@ export type Database = {
           memory_limit?: number | null
           module_id?: string | null
           options?: Json | null
+          question_bank_id: string
           question_text: string
           question_type: Database["public"]["Enums"]["question_type"]
           tags?: string[] | null
@@ -362,6 +468,7 @@ export type Database = {
           code_template?: string | null
           correct_answer?: string
           created_at?: string | null
+          created_by?: string | null
           difficulty?: Database["public"]["Enums"]["difficulty_level"]
           domain?: string
           explanation?: string | null
@@ -369,6 +476,7 @@ export type Database = {
           memory_limit?: number | null
           module_id?: string | null
           options?: Json | null
+          question_bank_id?: string
           question_text?: string
           question_type?: Database["public"]["Enums"]["question_type"]
           tags?: string[] | null
@@ -383,6 +491,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_question_bank_id_fkey"
+            columns: ["question_bank_id"]
+            isOneToOne: false
+            referencedRelation: "question_bank"
             referencedColumns: ["id"]
           },
         ]

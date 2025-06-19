@@ -11,6 +11,21 @@ import ModuleManager from '@/components/admin/ModuleManager';
 import { useToast } from '@/hooks/use-toast';
 import { getIconComponent } from '@/components/admin/moduleManager/moduleData';
 
+// Define Domain type for this component
+interface Domain {
+  id: string;
+  name: string;
+  description?: string;
+  domain_key: string;
+  icon: string;
+  color: string;
+  is_active: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at?: string;
+  created_by?: string;
+}
+
 interface PracticeHubAdminProps {
   onModuleSelect?: (module: any) => void;
 }
@@ -21,17 +36,17 @@ const PracticeHubAdmin: React.FC<PracticeHubAdminProps> = ({ onModuleSelect }) =
   const [selectedDomainForModules, setSelectedDomainForModules] = useState(null);
   const { toast } = useToast();
 
-  // Fetch domains (modules)
-  const { data: domains = [], isLoading, refetch } = useQuery({
+  // Fetch domains from the domains table
+  const { data: domains = [], isLoading, refetch } = useQuery<Domain[]>({
     queryKey: ['admin-practice-domains'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('modules')
+      const { data, error } = await (supabase as any)
+        .from('domains')
         .select('*')
         .order('order_index', { ascending: true });
-      
+
       if (error) throw error;
-      return data || [];
+      return (data || []) as Domain[];
     },
   });
 
@@ -42,13 +57,13 @@ const PracticeHubAdmin: React.FC<PracticeHubAdminProps> = ({ onModuleSelect }) =
 
   const handleDelete = async (domainId: string) => {
     try {
-      const { error } = await supabase
-        .from('modules')
+      const { error } = await (supabase as any)
+        .from('domains')
         .delete()
         .eq('id', domainId);
-      
+
       if (error) throw error;
-      
+
       toast({
         title: "Success",
         description: "Domain deleted successfully",
@@ -122,7 +137,7 @@ const PracticeHubAdmin: React.FC<PracticeHubAdminProps> = ({ onModuleSelect }) =
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {domains.map((domain) => {
+        {domains.map((domain: Domain) => {
           const IconComponent = getIconComponent(domain.icon);
           return (
             <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300">
@@ -159,7 +174,7 @@ const PracticeHubAdmin: React.FC<PracticeHubAdminProps> = ({ onModuleSelect }) =
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-2">
-                <strong>Domain:</strong> {domain.domain}
+                <strong>Domain Key:</strong> {domain.domain_key}
               </p>
               <p className="text-sm text-gray-600 mb-2">
                 <strong>Order:</strong> {domain.order_index}

@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { NavigationProvider } from "@/contexts/NavigationContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Assessment from "./pages/Assessment";
@@ -19,15 +20,17 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/assessment/:domain" element={<Assessment />} />
-          <Route path="/assessment/mastery/:assessmentId" element={<MasteryAssessment />} />
-          <Route path="/admin" element={<Admin />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <NavigationProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/assessment/:domain" element={<Assessment />} />
+            <Route path="/assessment/mastery/:assessmentId" element={<MasteryAssessment />} />
+            <Route path="/admin" element={<Admin />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </NavigationProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

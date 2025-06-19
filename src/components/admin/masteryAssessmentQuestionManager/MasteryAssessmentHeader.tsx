@@ -8,12 +8,14 @@ interface MasteryAssessmentHeaderProps {
   assessment: any;
   parsedDomains: string[];
   onBack: () => void;
+  actionButtons?: React.ReactNode;
 }
 
 const MasteryAssessmentHeader: React.FC<MasteryAssessmentHeaderProps> = ({
   assessment,
   parsedDomains,
-  onBack
+  onBack,
+  actionButtons
 }) => {
   return (
     <CardHeader>
@@ -34,6 +36,11 @@ const MasteryAssessmentHeader: React.FC<MasteryAssessmentHeaderProps> = ({
             </p>
           </div>
         </div>
+        {actionButtons && (
+          <div className="flex items-center gap-2">
+            {actionButtons}
+          </div>
+        )}
       </div>
     </CardHeader>
   );

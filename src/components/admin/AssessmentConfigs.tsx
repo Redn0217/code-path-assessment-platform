@@ -66,12 +66,26 @@ const AssessmentConfigs: React.FC<AssessmentConfigsProps> = ({ selectedModule })
       };
 
       if (editingConfig) {
+        // Update existing configuration
         const { error } = await supabase
           .from('assessment_configs')
           .update(payload)
           .eq('id', editingConfig.id);
         if (error) throw error;
       } else {
+        // Check if configuration already exists for this module
+        const { data: existingConfigs, error: checkError } = await supabase
+          .from('assessment_configs')
+          .select('id')
+          .eq('module_id', selectedModule.id);
+
+        if (checkError) throw checkError;
+
+        if (existingConfigs && existingConfigs.length > 0) {
+          throw new Error('Configuration already exists for this module. Please edit the existing configuration instead.');
+        }
+
+        // Create new configuration
         const { error } = await supabase
           .from('assessment_configs')
           .insert([payload]);
@@ -115,6 +129,16 @@ const AssessmentConfigs: React.FC<AssessmentConfigsProps> = ({ selectedModule })
     setIsFormOpen(true);
   };
 
+  const handleButtonClick = () => {
+    if (configs && configs.length > 0) {
+      // If configuration exists, edit the first (and should be only) one
+      handleEdit(configs[0]);
+    } else {
+      // If no configuration exists, create a new one
+      resetForm();
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -139,7 +163,7 @@ const AssessmentConfigs: React.FC<AssessmentConfigsProps> = ({ selectedModule })
             </div>
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
-                <Button onClick={resetForm}>
+                <Button onClick={() => handleButtonClick()}>
                   <Plus className="h-4 w-4 mr-2" />
                   {configs?.length ? 'Edit Configuration' : 'Add Configuration'}
                 </Button>

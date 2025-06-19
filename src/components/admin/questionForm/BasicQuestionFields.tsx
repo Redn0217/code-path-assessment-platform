@@ -9,13 +9,18 @@ interface BasicQuestionFieldsProps {
   formData: any;
   setFormData: (data: any) => void;
   availableDomains?: string[];
+  selectedModule?: any;
 }
 
-const BasicQuestionFields: React.FC<BasicQuestionFieldsProps> = ({ 
-  formData, 
-  setFormData, 
-  availableDomains 
+const BasicQuestionFields: React.FC<BasicQuestionFieldsProps> = ({
+  formData,
+  setFormData,
+  availableDomains,
+  selectedModule
 }) => {
+  console.log('BasicQuestionFields - formData:', formData);
+  console.log('BasicQuestionFields - selectedModule:', selectedModule);
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
@@ -48,30 +53,33 @@ const BasicQuestionFields: React.FC<BasicQuestionFieldsProps> = ({
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="domain">Domain *</Label>
-        {availableDomains && availableDomains.length > 0 ? (
-          <Select value={formData.domain} onValueChange={(value) => setFormData({ ...formData, domain: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a domain" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableDomains.map((domain) => (
-                <SelectItem key={domain} value={domain}>
-                  {domain}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            id="domain"
-            value={formData.domain}
-            onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-            placeholder="Enter domain (e.g., python, devops, cloud)"
-          />
-        )}
-      </div>
+      {/* Only show domain field when not in module context (i.e., for mastery assessments) */}
+      {!selectedModule && (
+        <div>
+          <Label htmlFor="domain">Domain *</Label>
+          {availableDomains && availableDomains.length > 0 ? (
+            <Select value={formData.domain} onValueChange={(value) => setFormData({ ...formData, domain: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a domain" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDomains.map((domain) => (
+                  <SelectItem key={domain} value={domain}>
+                    {domain}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="domain"
+              value={formData.domain}
+              onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+              placeholder="Enter domain (e.g., python, devops, cloud)"
+            />
+          )}
+        </div>
+      )}
 
       <div>
         <Label htmlFor="title">Title *</Label>

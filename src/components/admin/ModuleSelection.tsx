@@ -35,12 +35,26 @@ const ModuleSelection: React.FC<ModuleSelectionProps> = ({ onModuleSelect }) => 
     queryFn: async () => {
       const { data, error } = await supabase
         .from('modules')
-        .select('*')
-        .eq('domain', selectedDomain)
+        .select(`
+          *,
+          domains!inner(
+            id,
+            name,
+            domain_key
+          )
+        `)
+        .eq('domains.domain_key', selectedDomain)
         .order('order_index', { ascending: true });
-      
+
       if (error) throw error;
-      return data || [];
+
+      // Transform the data to include domain name directly on the module object
+      const transformedData = data?.map((module: any) => ({
+        ...module,
+        domain: module.domains?.domain_key || module.domains?.name
+      })) || [];
+
+      return transformedData;
     },
   });
 

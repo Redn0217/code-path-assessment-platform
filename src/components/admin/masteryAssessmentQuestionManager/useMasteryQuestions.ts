@@ -68,7 +68,10 @@ export const useMasteryQuestions = (
     },
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (questionOrId: any) => {
+    // Handle both question object and ID string
+    const id = typeof questionOrId === 'string' ? questionOrId : questionOrId.id;
+
     if (confirm('Are you sure you want to delete this question?')) {
       deleteQuestion.mutate(id);
     }

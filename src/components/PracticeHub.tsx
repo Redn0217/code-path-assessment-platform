@@ -11,23 +11,23 @@ import { getIconComponent } from '@/components/admin/moduleManager/moduleData';
 const PracticeHub = () => {
   const navigate = useNavigate();
 
-  // Fetch domains (modules)
+  // Fetch domains from the domains table
   const { data: domains = [], isLoading } = useQuery({
     queryKey: ['practice-domains'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('modules')
+      const { data, error } = await (supabase as any)
+        .from('domains')
         .select('*')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
-      
+
       if (error) throw error;
       return data || [];
     },
   });
 
   const handleDomainClick = (domain: any) => {
-    navigate(`/assessment/${domain.domain}`);
+    navigate(`/assessment/${domain.domain_key}`);
   };
 
   if (isLoading) {
@@ -42,7 +42,7 @@ const PracticeHub = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {domains.map((domain) => {
+        {domains.map((domain: any) => {
           const IconComponent = getIconComponent(domain.icon);
           return (
             <Card key={domain.id} className="hover:shadow-lg transition-shadow duration-300">

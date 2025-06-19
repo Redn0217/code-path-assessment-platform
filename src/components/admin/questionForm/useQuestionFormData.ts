@@ -46,7 +46,8 @@ export const useQuestionFormData = (question: any, selectedModule: any, assessme
 
   useEffect(() => {
     if (question) {
-      setFormData({
+      console.log('useQuestionFormData - Processing question:', question);
+      const newFormData = {
         domain: question.domain || selectedModule?.domain || (assessmentDomains && assessmentDomains.length > 0 ? assessmentDomains[0] : ''),
         module_id: question.module_id || selectedModule?.id || null,
         question_type: question.question_type || 'mcq',
@@ -61,7 +62,9 @@ export const useQuestionFormData = (question: any, selectedModule: any, assessme
         time_limit: question.time_limit || 300,
         memory_limit: question.memory_limit || 128,
         tags: question.tags || [],
-      });
+      };
+      console.log('useQuestionFormData - Setting form data:', newFormData);
+      setFormData(newFormData);
     } else {
       setFormData(prev => ({
         ...prev,
@@ -69,7 +72,7 @@ export const useQuestionFormData = (question: any, selectedModule: any, assessme
         module_id: selectedModule?.id || null,
       }));
     }
-  }, [question, selectedModule, assessmentDomains]);
+  }, [question?.id, question, selectedModule, assessmentDomains]);
 
   return {
     formData,

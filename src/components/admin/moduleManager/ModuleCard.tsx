@@ -2,21 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Settings } from 'lucide-react';
+import { Edit, Settings } from 'lucide-react';
 import { getIconComponent } from './moduleData';
-
-interface Module {
-  id: string;
-  name: string;
-  description: string;
-  domain: string;
-  icon: string;
-  color: string;
-  is_active: boolean;
-  order_index: number;
-  created_at: string;
-}
+import { Module } from '@/types/module';
+import { DeleteButton } from '@/components/ui/delete-button';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 interface ModuleCardProps {
   module: Module;
@@ -38,9 +28,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onEdit, onDelete, onMod
             </div>
             <div className="flex-1">
               <CardTitle className="text-lg">{module.name}</CardTitle>
-              <Badge variant={module.is_active ? "default" : "secondary"} className="mt-1">
-                {module.is_active ? "Active" : "Inactive"}
-              </Badge>
+              <StatusBadge isActive={module.is_active} className="mt-1" />
             </div>
           </div>
           <div className="flex space-x-1">
@@ -51,13 +39,10 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onEdit, onDelete, onMod
             >
               <Edit className="h-4 w-4" />
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
+            <DeleteButton
+              variant="ghost"
               onClick={() => onDelete(module.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            />
           </div>
         </div>
       </CardHeader>

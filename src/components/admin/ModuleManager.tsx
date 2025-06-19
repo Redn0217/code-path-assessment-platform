@@ -9,31 +9,34 @@ import { Plus } from 'lucide-react';
 import ModuleCard from './moduleManager/ModuleCard';
 import ModuleForm from './moduleManager/ModuleForm';
 import { useModuleMutations } from './moduleManager/useModuleMutations';
-
-interface Module {
-  id: string;
-  name: string;
-  description: string;
-  domain: string;
-  icon: string;
-  color: string;
-  is_active: boolean;
-  order_index: number;
-  created_at: string;
-}
+import { useToast } from '@/hooks/use-toast';
+import { Module, Domain } from '@/types/module';
 
 interface ModuleManagerProps {
-  selectedDomain?: string;
+  selectedDomain: any; // Now expects domain object instead of string
   onModuleSelect?: (module: any) => void;
 }
 
-const ModuleManager: React.FC<ModuleManagerProps> = ({ selectedDomain = 'python', onModuleSelect }) => {
+const ModuleManager: React.FC<ModuleManagerProps> = ({ selectedDomain, onModuleSelect }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const { toast } = useToast();
+
+  // Safety check for selectedDomain
+  if (!selectedDomain || !selectedDomain.id) {
+    return (
+      <div className="flex justify-center p-8">
+        <div className="text-center">
+          <p className="text-gray-600">No domain selected</p>
+          <p className="text-sm text-gray-500 mt-2">Please select a domain to manage its modules.</p>
+        </div>
+      </div>
+    );
+  }
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    domain: selectedDomain,
+    domain_id: selectedDomain?.id,
     icon: 'card',
     color: 'bg-blue-500',
     is_active: true,
@@ -43,25 +46,53 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({ selectedDomain = 'python'
   const { createModule, updateModule, deleteModule } = useModuleMutations();
 
   // Fetch modules for the selected domain
-  const { data: modules = [], isLoading } = useQuery({
-    queryKey: ['modules', selectedDomain],
+  const { data: modules = [], isLoading, error } = useQuery({
+    queryKey: ['modules', selectedDomain?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!selectedDomain?.id) return [];
+
+      const { data, error } = await (supabase as any)
         .from('modules')
-        .select('*')
-        .eq('domain', selectedDomain)
+        .select(`
+          *,
+          domains!inner(
+            id,
+            name,
+            domain_key
+          )
+        `)
+        .eq('domain_id', selectedDomain.id)
         .order('order_index', { ascending: true });
-      
+
       if (error) throw error;
-      return data || [];
+
+      // Transform the data to include domain name directly on the module object
+      const transformedData = data?.map(module => ({
+        ...module,
+        domain: module.domains?.domain_key || module.domains?.name
+      })) || [];
+
+      return transformedData;
     },
+    enabled: !!selectedDomain?.id,
   });
+
+  if (error) {
+    return (
+      <div className="flex justify-center p-8">
+        <div className="text-center">
+          <p className="text-red-600">Error loading modules: {error.message}</p>
+          <p className="text-sm text-gray-500 mt-2">Please try refreshing the page.</p>
+        </div>
+      </div>
+    );
+  }
 
   const resetForm = () => {
     setFormData({
       name: '',
       description: '',
-      domain: selectedDomain,
+      domain_id: selectedDomain?.id,
       icon: 'card',
       color: 'bg-blue-500',
       is_active: true,
@@ -75,7 +106,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({ selectedDomain = 'python'
     setFormData({
       name: module.name,
       description: module.description || '',
-      domain: module.domain,
+      domain_id: module.domain_id || selectedDomain?.id,
       icon: module.icon,
       color: module.color,
       is_active: module.is_active,
@@ -86,7 +117,29 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({ selectedDomain = 'python'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    console.log('Form submission - formData:', formData);
+    console.log('Selected domain:', selectedDomain);
+
+    // Validate required fields
+    if (!formData.domain_id) {
+      toast({
+        title: "Error",
+        description: "Domain ID is required. Please select a domain.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.name?.trim()) {
+      toast({
+        title: "Error",
+        description: "Module name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (editingModule) {
       updateModule.mutate({ id: editingModule.id, ...formData }, {
         onSuccess: () => {
@@ -158,7 +211,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({ selectedDomain = 'python'
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {modules.map((module) => (
+        {modules.map((module: Module) => (
           <ModuleCard
             key={module.id}
             module={module}
@@ -172,7 +225,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({ selectedDomain = 'python'
       {modules.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <p className="text-gray-500">No modules found for {selectedDomain}.</p>
+            <p className="text-gray-500">No modules found for {selectedDomain?.name || 'this domain'}.</p>
             <p className="text-sm text-gray-400 mt-2">Create your first module to get started.</p>
           </CardContent>
         </Card>

@@ -18,7 +18,9 @@ interface QuestionTableProps {
   questions?: Question[];
   isLoading: boolean;
   onEdit: (question: Question) => void;
-  onDelete: (id: string) => void;
+  onDelete: (questionOrId: Question | string) => void;
+  deleteButtonText?: string;
+  deleteButtonTooltip?: string;
 }
 
 const QuestionTable: React.FC<QuestionTableProps> = ({
@@ -26,6 +28,8 @@ const QuestionTable: React.FC<QuestionTableProps> = ({
   isLoading,
   onEdit,
   onDelete,
+  deleteButtonText = "Delete",
+  deleteButtonTooltip = "Delete this question",
 }) => {
   if (isLoading) {
     return (
@@ -72,12 +76,17 @@ const QuestionTable: React.FC<QuestionTableProps> = ({
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
-                  onClick={() => onDelete(question.id)}
+                  onClick={() => onDelete(question)}
+                  className="hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                  title={deleteButtonTooltip}
                 >
                   <Trash2 className="h-4 w-4" />
+                  {deleteButtonText !== "Delete" && (
+                    <span className="ml-1 text-xs">{deleteButtonText}</span>
+                  )}
                 </Button>
               </div>
             </TableCell>

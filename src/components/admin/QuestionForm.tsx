@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,9 @@ interface QuestionFormProps {
   masteryAssessmentId?: string;
 }
 
-const QuestionForm: React.FC<QuestionFormProps> = ({ 
-  question, 
-  selectedModule, 
+const QuestionForm: React.FC<QuestionFormProps> = ({
+  question,
+  selectedModule,
   onClose,
   assessmentDomains,
   masteryAssessmentId
@@ -31,13 +31,24 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { validateForm } = useQuestionFormValidation();
-  
+
+  console.log('QuestionForm - Received question prop:', question);
+  console.log('QuestionForm - Selected module:', selectedModule);
+  console.log('QuestionForm - Assessment domains:', assessmentDomains);
+
   const {
     formData,
     setFormData,
     newTag,
     setNewTag,
   } = useQuestionFormData(question, selectedModule, assessmentDomains);
+
+  console.log('QuestionForm - Current form data:', formData);
+
+  // Log when question prop changes
+  useEffect(() => {
+    console.log('QuestionForm - Question prop changed:', question);
+  }, [question]);
 
   const saveQuestion = useMutation({
     mutationFn: async (data: any) => {
@@ -48,14 +59,16 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         code_template: data.question_type === 'coding' ? data.code_template : null,
       };
 
-      // If this is for a mastery assessment, use the mastery_assessment_questions table
-      if (masteryAssessmentId) {
+      // Determine which table to use based on context
+      const isMasteryQuestion = masteryAssessmentId || (question && question.source === 'mastery');
+
+      if (isMasteryQuestion) {
         // Create a clean payload for mastery assessment questions table
         // Remove module_id completely as it doesn't exist in mastery_assessment_questions table
         const { module_id, ...cleanPayload } = payload;
         const masteryPayload = {
           ...cleanPayload,
-          mastery_assessment_id: masteryAssessmentId,
+          mastery_assessment_id: masteryAssessmentId || question?.mastery_assessment_id,
         };
 
         console.log('Mastery assessment payload:', masteryPayload);
@@ -73,24 +86,88 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
           if (error) throw error;
         }
       } else {
-        // Regular question for modules
+        // Regular question for modules using question bank architecture
         if (question) {
-          const { error } = await supabase
-            .from('questions')
+          // Update existing question in question bank
+          const { error: bankError } = await supabase
+            .from('question_bank')
             .update(payload)
-            .eq('id', question.id);
-          if (error) throw error;
+            .eq('id', question.question_bank_id || question.id);
+          if (bankError) throw bankError;
         } else {
-          const { error } = await supabase
-            .from('questions')
-            .insert([payload]);
-          if (error) throw error;
+          // Check if question already exists in question bank
+          const { data: existingQuestions, error: checkError } = await supabase
+            .from('question_bank')
+            .select('id')
+            .eq('title', payload.title)
+            .eq('question_text', payload.question_text)
+            .limit(1);
+
+          if (checkError) throw checkError;
+
+          let newBankQuestion;
+
+          if (existingQuestions && existingQuestions.length > 0) {
+            // Question already exists, use the existing one
+            const { data: existingQuestion, error: fetchError } = await supabase
+              .from('question_bank')
+              .select('*')
+              .eq('id', existingQuestions[0].id)
+              .single();
+
+            if (fetchError) throw fetchError;
+            newBankQuestion = existingQuestion;
+
+            toast({
+              title: 'Using Existing Question',
+              description: 'A question with the same title and content already exists in the question bank. Using the existing question.',
+              variant: 'default'
+            });
+          } else {
+            // Create new question in question bank
+            const { data: createdQuestion, error: bankError } = await supabase
+              .from('question_bank')
+              .insert([payload])
+              .select()
+              .single();
+
+            if (bankError) throw bankError;
+            newBankQuestion = createdQuestion;
+          }
+
+          // If we have a selected module, assign the question to it
+          if (selectedModule?.id && newBankQuestion) {
+            const { error: assignError } = await supabase
+              .from('questions')
+              .insert([{
+                module_id: selectedModule.id,
+                question_bank_id: newBankQuestion.id,
+                // Copy required fields from question bank
+                title: newBankQuestion.title,
+                question_text: newBankQuestion.question_text,
+                question_type: newBankQuestion.question_type,
+                difficulty: newBankQuestion.difficulty,
+                domain: newBankQuestion.domain,
+                options: newBankQuestion.options,
+                correct_answer: newBankQuestion.correct_answer,
+                explanation: newBankQuestion.explanation,
+                code_template: newBankQuestion.code_template,
+                test_cases: newBankQuestion.test_cases,
+                time_limit: newBankQuestion.time_limit,
+                memory_limit: newBankQuestion.memory_limit,
+                tags: newBankQuestion.tags
+              }]);
+
+            if (assignError) throw assignError;
+          }
         }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['module-questions'] });
       queryClient.invalidateQueries({ queryKey: ['mastery-assessment-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      queryClient.invalidateQueries({ queryKey: ['question-bank-mastery'] });
       toast({ title: `Question ${question ? 'updated' : 'created'} successfully` });
       onClose();
     },
@@ -106,8 +183,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm(formData)) {
+
+    if (!validateForm(formData, selectedModule)) {
       return;
     }
 
@@ -134,10 +211,11 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         </CardContent>
       </Card>
 
-      <BasicQuestionFields 
-        formData={formData} 
+      <BasicQuestionFields
+        formData={formData}
         setFormData={setFormData}
         availableDomains={assessmentDomains}
+        selectedModule={selectedModule}
       />
 
       <McqOptionsSection formData={formData} setFormData={setFormData} />

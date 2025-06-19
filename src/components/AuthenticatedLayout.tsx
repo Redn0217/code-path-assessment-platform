@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -20,6 +22,8 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { isNavigationRestricted, restrictionReason } = useNavigation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth state listener
@@ -67,6 +71,15 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   };
 
   const handleLogout = async () => {
+    if (isNavigationRestricted) {
+      toast({
+        title: "Cannot logout",
+        description: restrictionReason + ". Please complete your assessment first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -90,6 +103,18 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
     }
   };
 
+  const handleLogoClick = () => {
+    if (isNavigationRestricted) {
+      toast({
+        title: "Navigation Restricted",
+        description: restrictionReason + ". Please complete your assessment first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Header */}
@@ -97,7 +122,18 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
-              <img src="/logo.png" alt="evalu8 Logo" className="h-10 w-auto" />
+              <img
+                src="/logo.png"
+                alt="evalu8 Logo"
+                className={`h-10 w-auto ${isNavigationRestricted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                onClick={handleLogoClick}
+              />
+              {isNavigationRestricted && (
+                <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                  <Lock className="h-4 w-4" />
+                  <span className="text-sm font-medium">Assessment in Progress</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center space-x-4">
               {user && (
@@ -109,7 +145,12 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-2 hover:bg-brand-navy hover:text-red-500"
+                className={`flex items-center space-x-2 ${
+                  isNavigationRestricted
+                    ? 'cursor-not-allowed opacity-60 hover:bg-red-100 hover:text-red-600'
+                    : 'hover:bg-brand-navy hover:text-red-500'
+                }`}
+                disabled={isNavigationRestricted}
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>

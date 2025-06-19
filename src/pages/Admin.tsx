@@ -5,14 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Target, Dumbbell, ArrowLeft } from 'lucide-react';
+import { Users, Target, Dumbbell, ArrowLeft, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import QuestionManager from '@/components/admin/QuestionManager';
 import AssessmentConfigs from '@/components/admin/AssessmentConfigs';
 import AdminStats from '@/components/admin/AdminStats';
 import UserManagement from '@/components/admin/UserManagement';
-import PracticeHubAdmin from '@/components/admin/PracticeHubAdmin';
+import DomainAdmin from '@/components/admin/DomainAdmin';
 import MasteryAssessmentsAdmin from '@/components/admin/MasteryAssessmentsAdmin';
+import QuestionBank from '@/components/admin/QuestionBank';
 import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
@@ -136,14 +137,18 @@ const Admin = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="practice-hub" className="flex items-center gap-2">
               <Dumbbell className="h-4 w-4" />
-              Practice Hub
+              Domains & Modules
             </TabsTrigger>
             <TabsTrigger value="mastery-assessments" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Mastery Assessments
+            </TabsTrigger>
+            <TabsTrigger value="question-bank" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Question Bank
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -152,11 +157,15 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="practice-hub" className="mt-6">
-            <PracticeHubAdmin onModuleSelect={setSelectedModule} />
+            <DomainAdmin onModuleSelect={setSelectedModule} />
           </TabsContent>
 
           <TabsContent value="mastery-assessments" className="mt-6">
             <MasteryAssessmentsAdmin />
+          </TabsContent>
+
+          <TabsContent value="question-bank" className="mt-6">
+            <QuestionBank />
           </TabsContent>
 
           <TabsContent value="users" className="mt-6">

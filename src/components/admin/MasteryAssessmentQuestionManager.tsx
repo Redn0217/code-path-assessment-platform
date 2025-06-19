@@ -62,18 +62,19 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
           assessment={assessment}
           parsedDomains={parsedDomains}
           onBack={onBack}
+          actionButtons={
+            <QuestionActions
+              isFormOpen={isFormOpen}
+              setIsFormOpen={setIsFormOpen}
+              editingQuestion={editingQuestion}
+              setEditingQuestion={setEditingQuestion}
+              parsedDomains={parsedDomains}
+              onFormClose={handleFormClose}
+              masteryAssessmentId={assessment.id}
+              assessment={assessment}
+            />
+          }
         />
-        <div className="px-6 pb-2">
-          <QuestionActions
-            isFormOpen={isFormOpen}
-            setIsFormOpen={setIsFormOpen}
-            editingQuestion={editingQuestion}
-            setEditingQuestion={setEditingQuestion}
-            parsedDomains={parsedDomains}
-            onFormClose={handleFormClose}
-            masteryAssessmentId={assessment.id}
-          />
-        </div>
         <CardContent>
           <QuestionFilters
             filterType={filterType}
