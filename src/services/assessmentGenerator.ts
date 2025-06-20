@@ -76,24 +76,34 @@ export class AssessmentGenerator {
    * Generate an assessment for a specific module
    */
   static async generateAssessment(moduleId: string): Promise<GeneratedAssessment> {
+    console.log('=== ASSESSMENT GENERATION DEBUG ===');
+    console.log('Module ID:', moduleId);
+
     // 1. Fetch assessment configuration
     const config = await this.getAssessmentConfig(moduleId);
     if (!config) {
       throw new Error('No assessment configuration found for this module');
     }
+    console.log('Assessment Config:', config);
 
     // 2. Fetch all available questions for the module
     const allQuestions = await this.getAllQuestions(moduleId);
-    
+    console.log('All Questions Found:', allQuestions.length);
+    console.log('Questions by Type:', this.countQuestionsByType(allQuestions));
+
     // 3. Validate sufficient questions exist
     this.validateQuestionAvailability(config, allQuestions);
-    
+
     // 4. Generate the assessment
     const selectedQuestions = this.selectQuestions(config, allQuestions);
-    
+    console.log('Selected Questions:', selectedQuestions.length);
+    console.log('Selected Questions by Type:', this.countQuestionsByType(selectedQuestions));
+
     // 5. Create metadata
     const metadata = this.generateMetadata(selectedQuestions, config);
-    
+    console.log('Generated Metadata:', metadata);
+    console.log('=== END ASSESSMENT GENERATION DEBUG ===');
+
     return {
       questions: selectedQuestions,
       config,
@@ -170,9 +180,32 @@ export class AssessmentGenerator {
    * Fetch all questions for a module, grouped by type and difficulty
    */
   private static async getAllQuestions(moduleId: string): Promise<Question[]> {
+    // Query questions assigned to this module using the new question bank architecture
     const { data, error } = await supabase
       .from('questions')
-      .select('*')
+      .select(`
+        id,
+        module_id,
+        created_at,
+        question_bank_id,
+        question_bank!inner(
+          id,
+          title,
+          question_text,
+          question_type,
+          difficulty,
+          domain,
+          options,
+          correct_answer,
+          explanation,
+          code_template,
+          test_cases,
+          time_limit,
+          memory_limit,
+          tags,
+          is_active
+        )
+      `)
       .eq('module_id', moduleId);
 
     if (error) {
@@ -183,7 +216,21 @@ export class AssessmentGenerator {
       throw new Error('No questions found for this module');
     }
 
-    return data as Question[];
+    // Transform the data to flatten the question bank content
+    const transformedData = data.map(item => ({
+      id: item.question_bank_id, // Use question bank ID as the main ID
+      module_id: item.module_id,
+      created_at: item.created_at,
+      // Flatten question bank content
+      ...item.question_bank,
+    }));
+
+    console.log('Raw data from database:', data.length, 'items');
+    console.log('Sample raw item:', data[0]);
+    console.log('Transformed data:', transformedData.length, 'items');
+    console.log('Sample transformed item:', transformedData[0]);
+
+    return transformedData as Question[];
   }
 
   /**
@@ -227,34 +274,42 @@ export class AssessmentGenerator {
    */
   private static selectQuestions(config: AssessmentConfig, allQuestions: Question[]): Question[] {
     const selectedQuestions: Question[] = [];
-    
+
     // Group questions by type and difficulty
     const questionsByType = this.groupQuestionsByType(allQuestions);
-    
+    console.log('Questions grouped by type:', {
+      mcq: questionsByType.mcq?.length || 0,
+      coding: questionsByType.coding?.length || 0,
+      scenario: questionsByType.scenario?.length || 0
+    });
+
     // Select MCQ questions
     const mcqQuestions = this.selectQuestionsByTypeAndDifficulty(
       questionsByType.mcq || [],
       config.mcq_count,
       config.difficulty_distribution
     );
+    console.log(`Selected ${mcqQuestions.length} MCQ questions (requested: ${config.mcq_count})`);
     selectedQuestions.push(...mcqQuestions);
-    
+
     // Select coding questions
     const codingQuestions = this.selectQuestionsByTypeAndDifficulty(
       questionsByType.coding || [],
       config.coding_count,
       config.difficulty_distribution
     );
+    console.log(`Selected ${codingQuestions.length} coding questions (requested: ${config.coding_count})`);
     selectedQuestions.push(...codingQuestions);
-    
+
     // Select scenario questions
     const scenarioQuestions = this.selectQuestionsByTypeAndDifficulty(
       questionsByType.scenario || [],
       config.scenario_count,
       config.difficulty_distribution
     );
+    console.log(`Selected ${scenarioQuestions.length} scenario questions (requested: ${config.scenario_count})`);
     selectedQuestions.push(...scenarioQuestions);
-    
+
     // Shuffle the final question order
     return this.shuffleArray(selectedQuestions);
   }
@@ -281,6 +336,18 @@ export class AssessmentGenerator {
     totalCount: number,
     difficultyDistribution: { beginner: number; intermediate: number; advanced: number }
   ): Question[] {
+    console.log(`Selecting ${totalCount} questions from ${questions.length} available questions`);
+
+    if (totalCount === 0 || questions.length === 0) {
+      return [];
+    }
+
+    // If we need more questions than available, just return all available questions
+    if (totalCount >= questions.length) {
+      console.log('Returning all available questions (need more than available)');
+      return this.shuffleArray([...questions]);
+    }
+
     // Group by difficulty
     const questionsByDifficulty = questions.reduce((groups, question) => {
       const difficulty = question.difficulty;
@@ -290,27 +357,79 @@ export class AssessmentGenerator {
       groups[difficulty].push(question);
       return groups;
     }, {} as Record<string, Question[]>);
-    
+
+    console.log('Questions by difficulty:', {
+      beginner: questionsByDifficulty.beginner?.length || 0,
+      intermediate: questionsByDifficulty.intermediate?.length || 0,
+      advanced: questionsByDifficulty.advanced?.length || 0
+    });
+
+    // For small question counts (1-3), use a simpler approach
+    if (totalCount <= 3) {
+      console.log('Using simple selection for small question count');
+      return this.selectQuestionsSimple(questionsByDifficulty, totalCount);
+    }
+
     // Calculate how many questions needed for each difficulty
     const beginnerCount = Math.round((totalCount * difficultyDistribution.beginner) / 100);
     const intermediateCount = Math.round((totalCount * difficultyDistribution.intermediate) / 100);
     const advancedCount = totalCount - beginnerCount - intermediateCount; // Ensure exact total
-    
+
+    console.log('Target counts by difficulty:', {
+      beginner: beginnerCount,
+      intermediate: intermediateCount,
+      advanced: advancedCount
+    });
+
     const selectedQuestions: Question[] = [];
-    
+
     // Select beginner questions
     const beginnerQuestions = this.shuffleArray(questionsByDifficulty.beginner || []).slice(0, beginnerCount);
     selectedQuestions.push(...beginnerQuestions);
-    
+    console.log(`Selected ${beginnerQuestions.length} beginner questions`);
+
     // Select intermediate questions
     const intermediateQuestions = this.shuffleArray(questionsByDifficulty.intermediate || []).slice(0, intermediateCount);
     selectedQuestions.push(...intermediateQuestions);
-    
+    console.log(`Selected ${intermediateQuestions.length} intermediate questions`);
+
     // Select advanced questions
     const advancedQuestions = this.shuffleArray(questionsByDifficulty.advanced || []).slice(0, advancedCount);
     selectedQuestions.push(...advancedQuestions);
-    
+    console.log(`Selected ${advancedQuestions.length} advanced questions`);
+
+    // If we still don't have enough questions, fill from any available difficulty
+    if (selectedQuestions.length < totalCount) {
+      console.log(`Need ${totalCount - selectedQuestions.length} more questions, filling from any difficulty`);
+      const remainingQuestions = questions.filter(q => !selectedQuestions.some(sq => sq.id === q.id));
+      const additionalQuestions = this.shuffleArray(remainingQuestions).slice(0, totalCount - selectedQuestions.length);
+      selectedQuestions.push(...additionalQuestions);
+      console.log(`Added ${additionalQuestions.length} additional questions`);
+    }
+
     return selectedQuestions;
+  }
+
+  /**
+   * Simple question selection for small counts (1-3 questions)
+   */
+  private static selectQuestionsSimple(
+    questionsByDifficulty: Record<string, Question[]>,
+    totalCount: number
+  ): Question[] {
+    const allQuestions: Question[] = [];
+
+    // Collect all questions in priority order: beginner, intermediate, advanced
+    if (questionsByDifficulty.beginner) allQuestions.push(...questionsByDifficulty.beginner);
+    if (questionsByDifficulty.intermediate) allQuestions.push(...questionsByDifficulty.intermediate);
+    if (questionsByDifficulty.advanced) allQuestions.push(...questionsByDifficulty.advanced);
+
+    // Shuffle and take the required count
+    const shuffled = this.shuffleArray(allQuestions);
+    const selected = shuffled.slice(0, totalCount);
+
+    console.log(`Simple selection: selected ${selected.length} questions from ${allQuestions.length} available`);
+    return selected;
   }
 
   /**

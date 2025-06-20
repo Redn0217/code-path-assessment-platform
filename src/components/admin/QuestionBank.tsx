@@ -42,12 +42,12 @@ const QuestionBank = () => {
   const { data: domains = [] } = useQuery({
     queryKey: ['question-bank-domains'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('domains')
         .select('*')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
-      
+
       if (error) throw error;
       return data || [];
     },
@@ -59,7 +59,7 @@ const QuestionBank = () => {
     queryFn: async () => {
       if (selectedDomain === 'all') return [];
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('modules')
         .select('*')
         .eq('domain_id', selectedDomain)

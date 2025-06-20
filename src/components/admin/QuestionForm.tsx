@@ -87,11 +87,14 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         }
       } else {
         // Regular question for modules using question bank architecture
+        // Create a clean payload for question bank (remove module_id and other fields not in question_bank table)
+        const { module_id, ...cleanBankPayload } = payload;
+
         if (question) {
           // Update existing question in question bank
           const { error: bankError } = await supabase
             .from('question_bank')
-            .update(payload)
+            .update(cleanBankPayload)
             .eq('id', question.question_bank_id || question.id);
           if (bankError) throw bankError;
         } else {
@@ -99,8 +102,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
           const { data: existingQuestions, error: checkError } = await supabase
             .from('question_bank')
             .select('id')
-            .eq('title', payload.title)
-            .eq('question_text', payload.question_text)
+            .eq('title', cleanBankPayload.title)
+            .eq('question_text', cleanBankPayload.question_text)
             .limit(1);
 
           if (checkError) throw checkError;
@@ -127,7 +130,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             // Create new question in question bank
             const { data: createdQuestion, error: bankError } = await supabase
               .from('question_bank')
-              .insert([payload])
+              .insert([cleanBankPayload])
               .select()
               .single();
 

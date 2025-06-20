@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import ModuleSelection from '@/components/ModuleSelection';
 import AssessmentPreview from '@/components/AssessmentPreview';
+import ImprovedCodeEditor from '@/components/ImprovedCodeEditor';
 import { Module } from '@/types/module';
 
 const domains = {
@@ -33,7 +34,7 @@ const Assessment = () => {
   const navigate = useNavigate();
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]);
+  const [answers, setAnswers] = useState<{[key: number]: number | string}>({});
   const [isCompleted, setIsCompleted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800); // Default 30 minutes
   const [isStarted, setIsStarted] = useState(false);
@@ -143,10 +144,11 @@ const Assessment = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswerSelect = (answerIndex: number) => {
-    const newAnswers = [...answers];
-    newAnswers[currentQuestion] = answerIndex;
-    setAnswers(newAnswers);
+  const handleAnswerSelect = (answer: number | string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestion]: answer
+    }));
   };
 
   const handleNext = () => {
@@ -159,10 +161,12 @@ const Assessment = () => {
 
   const handleSubmitAssessment = async () => {
     setIsCompleted(true);
-    
+
     // Calculate score with proper type checking
-    const score = answers.reduce((total, answer, index) => {
-      const question = questions[index];
+    const score = questions.reduce((total, question, index) => {
+      const answer = answers[index];
+      if (answer === undefined) return total;
+
       if (question?.question_type === 'mcq') {
         // Type guard to ensure options is an array of strings
         const options = question.options;
@@ -170,6 +174,10 @@ const Assessment = () => {
           const correctIndex = options.indexOf(question.correct_answer);
           return total + (answer === correctIndex ? 1 : 0);
         }
+      } else if (question?.question_type === 'coding') {
+        // For coding questions, we'll do a simple string comparison for now
+        // In a real implementation, you'd want to run the code and check test cases
+        return total + (answer.toString().trim() === question.correct_answer?.trim() ? 1 : 0);
       }
       return total + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
@@ -187,7 +195,7 @@ const Assessment = () => {
             difficulty: 'beginner',
             score,
             total_questions: questions.length,
-            answers: answers,
+            answers: Object.values(answers),
             question_ids: questions.map(q => q.id),
             strong_areas: score > questions.length * 0.7 ? [domain || ''] : [],
             weak_areas: score <= questions.length * 0.5 ? [domain || ''] : []
@@ -283,14 +291,18 @@ const Assessment = () => {
 
   if (isCompleted) {
     // Calculate score with proper type checking for results page
-    const score = answers.reduce((total, answer, index) => {
-      const question = questions[index];
+    const score = questions.reduce((total, question, index) => {
+      const answer = answers[index];
+      if (answer === undefined) return total;
+
       if (question?.question_type === 'mcq') {
         const options = question.options;
         if (Array.isArray(options) && options.every(opt => typeof opt === 'string')) {
           const correctIndex = options.indexOf(question.correct_answer);
           return total + (answer === correctIndex ? 1 : 0);
         }
+      } else if (question?.question_type === 'coding') {
+        return total + (answer.toString().trim() === question.correct_answer?.trim() ? 1 : 0);
       }
       return total + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
@@ -347,10 +359,10 @@ const Assessment = () => {
                   >
                     Back to Modules
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => {
                       setCurrentQuestion(0);
-                      setAnswers([]);
+                      setAnswers({});
                       setIsCompleted(false);
                       setTimeLeft(assessmentConfig?.total_time_minutes ? assessmentConfig.total_time_minutes * 60 : 1800);
                       setIsStarted(false);
@@ -397,11 +409,19 @@ const Assessment = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <h2 className="text-xl font-semibold">{currentQ?.title || currentQ?.question_text}</h2>
-              
+              <h2 className="text-xl font-semibold">{currentQ?.title}</h2>
+
+              {/* Question Text */}
+              {currentQ?.question_text && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700 whitespace-pre-wrap">{currentQ.question_text}</p>
+                </div>
+              )}
+
               <div className="space-y-3">
-                {currentQ?.question_type === 'mcq' && Array.isArray(currentQ?.options) && 
-                 currentQ.options.every((opt: any) => typeof opt === 'string') && 
+                {/* MCQ Questions */}
+                {currentQ?.question_type === 'mcq' && Array.isArray(currentQ?.options) &&
+                 currentQ.options.every((opt: any) => typeof opt === 'string') &&
                  (currentQ.options as string[]).map((option: string, index: number) => (
                   <Button
                     key={index}
@@ -415,6 +435,20 @@ const Assessment = () => {
                     {option}
                   </Button>
                 ))}
+
+                {/* Coding Questions */}
+                {currentQ?.question_type === 'coding' && (
+                  <div className="mt-4">
+                    <ImprovedCodeEditor
+                      language={domain === 'python' ? 'python' : domain === 'linux' ? 'bash' : 'javascript'}
+                      value={answers[currentQuestion] as string || currentQ.code_template || ''}
+                      onChange={(code) => handleAnswerSelect(code)}
+                      testCases={currentQ.test_cases || []}
+                      timeLimit={currentQ.time_limit}
+                      memoryLimit={currentQ.memory_limit}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between">
