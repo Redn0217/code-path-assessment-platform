@@ -21,11 +21,12 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({ selectedMod
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [selectedTag, setSelectedTag] = useState('all');
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
 
   // Fetch available questions from question bank (excluding already assigned ones)
   const { data: availableQuestions = [], isLoading } = useQuery({
-    queryKey: ['available-questions', selectedModule?.id, searchTerm, selectedType, selectedDifficulty],
+    queryKey: ['available-questions', selectedModule?.id, searchTerm, selectedType, selectedDifficulty, selectedTag],
     queryFn: async () => {
       try {
         // Get all questions from question bank
@@ -59,14 +60,51 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({ selectedMod
 
         const assignedIds = new Set(assignedData?.map(a => a.question_bank_id) || []);
 
-        // Filter out already assigned questions
-        return (bankData || []).filter(q => !assignedIds.has(q.id));
+        // Filter out already assigned questions and apply tag filter
+        let filteredQuestions = (bankData || []).filter(q => !assignedIds.has(q.id));
+
+        // Apply tag filter if selected
+        if (selectedTag !== 'all') {
+          filteredQuestions = filteredQuestions.filter(q =>
+            q.tags && Array.isArray(q.tags) && q.tags.includes(selectedTag)
+          );
+        }
+
+        return filteredQuestions;
       } catch (error) {
         console.error('Error fetching available questions:', error);
         throw error;
       }
     },
     enabled: !!selectedModule?.id,
+  });
+
+  // Fetch all available tags for the filter dropdown
+  const { data: availableTags = [] } = useQuery({
+    queryKey: ['question-bank-tags'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('question_bank')
+          .select('tags')
+          .eq('is_active', true);
+
+        if (error) throw error;
+
+        // Extract unique tags from all questions
+        const allTags = new Set<string>();
+        data?.forEach(question => {
+          if (question.tags && Array.isArray(question.tags)) {
+            question.tags.forEach(tag => allTags.add(tag));
+          }
+        });
+
+        return Array.from(allTags).sort();
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+        return [];
+      }
+    },
   });
 
   // Assign questions to module mutation
@@ -245,6 +283,19 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({ selectedMod
             <SelectItem value="beginner">Beginner</SelectItem>
             <SelectItem value="intermediate">Intermediate</SelectItem>
             <SelectItem value="advanced">Advanced</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={selectedTag} onValueChange={setSelectedTag}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Tags" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Tags</SelectItem>
+            {availableTags.map((tag) => (
+              <SelectItem key={tag} value={tag}>
+                {tag}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

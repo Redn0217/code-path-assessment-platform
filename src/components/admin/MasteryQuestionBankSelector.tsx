@@ -27,11 +27,12 @@ const MasteryQuestionBankSelector: React.FC<MasteryQuestionBankSelectorProps> = 
   const [selectedType, setSelectedType] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [selectedDomain, setSelectedDomain] = useState('all');
+  const [selectedTag, setSelectedTag] = useState('all');
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
 
   // Fetch available questions from question bank (excluding already assigned ones)
   const { data: availableQuestions = [], isLoading } = useQuery({
-    queryKey: ['available-mastery-questions', assessment?.id, searchTerm, selectedType, selectedDifficulty, selectedDomain],
+    queryKey: ['available-mastery-questions', assessment?.id, searchTerm, selectedType, selectedDifficulty, selectedDomain, selectedTag],
     queryFn: async () => {
       try {
         // Get all questions from question bank
@@ -72,15 +73,52 @@ const MasteryQuestionBankSelector: React.FC<MasteryQuestionBankSelectorProps> = 
         );
 
         // Filter out already assigned questions by comparing title and question_text
-        return (bankData || []).filter(q => 
+        let filteredQuestions = (bankData || []).filter(q =>
           !assignedSignatures.has(`${q.title}|||${q.question_text}`)
         );
+
+        // Apply tag filter if selected
+        if (selectedTag !== 'all') {
+          filteredQuestions = filteredQuestions.filter(q =>
+            q.tags && Array.isArray(q.tags) && q.tags.includes(selectedTag)
+          );
+        }
+
+        return filteredQuestions;
       } catch (error) {
         console.error('Error fetching available questions:', error);
         throw error;
       }
     },
     enabled: !!assessment?.id,
+  });
+
+  // Fetch all available tags for the filter dropdown
+  const { data: availableTags = [] } = useQuery({
+    queryKey: ['mastery-question-bank-tags'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('question_bank')
+          .select('tags')
+          .eq('is_active', true);
+
+        if (error) throw error;
+
+        // Extract unique tags from all questions
+        const allTags = new Set<string>();
+        data?.forEach(question => {
+          if (question.tags && Array.isArray(question.tags)) {
+            question.tags.forEach(tag => allTags.add(tag));
+          }
+        });
+
+        return Array.from(allTags).sort();
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+        return [];
+      }
+    },
   });
 
   // Assign questions to mastery assessment mutation
@@ -100,8 +138,8 @@ const MasteryQuestionBankSelector: React.FC<MasteryQuestionBankSelectorProps> = 
         // Copy all required fields from question bank
         title: qb.title,
         question_text: qb.question_text,
-        question_type: qb.question_type,
-        difficulty: qb.difficulty,
+        question_type: qb.question_type as 'mcq' | 'coding' | 'scenario',
+        difficulty: qb.difficulty as 'beginner' | 'intermediate' | 'advanced',
         domain: qb.domain,
         options: qb.options,
         correct_answer: qb.correct_answer,
@@ -262,6 +300,19 @@ const MasteryQuestionBankSelector: React.FC<MasteryQuestionBankSelectorProps> = 
             <SelectItem value="all">All Domains</SelectItem>
             {parsedDomains.map(domain => (
               <SelectItem key={domain} value={domain}>{domain}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedTag} onValueChange={setSelectedTag}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Tags" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Tags</SelectItem>
+            {availableTags.map((tag) => (
+              <SelectItem key={tag} value={tag}>
+                {tag}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
