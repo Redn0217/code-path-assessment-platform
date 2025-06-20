@@ -74,7 +74,7 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({ userProfile, onProfileUpdate 
       <Button
         variant="ghost"
         size="sm"
-        className="p-1 rounded-full hover:bg-gray-100"
+        className="p-1 rounded-full hover:bg-gray-100 pulse-animation"
         onClick={handleAvatarClick}
       >
         <Avatar className="h-8 w-8">

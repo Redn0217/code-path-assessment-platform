@@ -119,20 +119,20 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      {/* Header */}
-      <header className="bg-card shadow-sm border-b border-border">
+    <div className="min-h-screen bright-bg-primary">
+      {/* Modern Sticky Header */}
+      <header className="modern-navbar sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-3">
             <div className="flex items-center space-x-4">
               <img
                 src="/logo.png"
                 alt="evalu8 Logo"
-                className={`h-10 w-auto ${isNavigationRestricted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                className={`h-8 w-auto navbar-logo ${isNavigationRestricted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                 onClick={handleLogoClick}
               />
               {isNavigationRestricted && (
-                <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                <div className="flex items-center space-x-2 text-amber-600 bg-amber-50/90 px-3 py-1 rounded-full border border-amber-200 backdrop-blur-sm">
                   <Lock className="h-4 w-4" />
                   <span className="text-sm font-medium">Assessment in Progress</span>
                 </div>
@@ -140,8 +140,8 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
             </div>
             <div className="flex items-center space-x-4">
               {user && (
-                <span className="text-sm text-muted-foreground">
-                  Welcome, {userProfile?.full_name || user.email}
+                <span className="fahkwang-name text-sm bright-text-primary inspiring-text font-medium navbar-inspire">
+                  Welcome, {userProfile?.full_name || user.email}! 🚀
                 </span>
               )}
               {user && userProfile && (
@@ -154,10 +154,10 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className={`flex items-center space-x-2 ${
+                className={`navbar-button flex items-center space-x-2 bright-button-secondary ${
                   isNavigationRestricted
-                    ? 'cursor-not-allowed opacity-60 hover:bg-red-100 hover:text-red-600'
-                    : 'hover:bg-brand-navy hover:text-red-500'
+                    ? 'cursor-not-allowed opacity-60'
+                    : ''
                 }`}
                 disabled={isNavigationRestricted}
               >
