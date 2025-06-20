@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Library } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -68,6 +69,7 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ selectedModule }) => 
         question_bank_id: item.question_bank_id,
         module_id: item.module_id,
         assigned_at: item.created_at,
+        created_at: item.created_at, // Add this for QuestionTable compatibility
         // Flatten question bank content
         ...item.question_bank,
       })) || [];
@@ -84,6 +86,17 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ selectedModule }) => 
     },
     enabled: !!selectedModule?.id,
   });
+
+  // Calculate statistics
+  const stats = {
+    total: questions?.length || 0,
+    mcq: questions?.filter(q => q.question_type === 'mcq').length || 0,
+    coding: questions?.filter(q => q.question_type === 'coding').length || 0,
+    scenario: questions?.filter(q => q.question_type === 'scenario').length || 0,
+    beginner: questions?.filter(q => q.difficulty === 'beginner').length || 0,
+    intermediate: questions?.filter(q => q.difficulty === 'intermediate').length || 0,
+    advanced: questions?.filter(q => q.difficulty === 'advanced').length || 0,
+  };
 
   const removeQuestionFromModule = useMutation({
     mutationFn: async (question: any) => {
@@ -120,55 +133,100 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ selectedModule }) => 
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Questions for {selectedModule?.name}</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Manage questions specific to this module
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Dialog open={isBankSelectorOpen} onOpenChange={setIsBankSelectorOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <Library className="h-4 w-4 mr-2" />
-                    Add from Question Bank
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Add Questions from Question Bank</DialogTitle>
-                  </DialogHeader>
-                  <QuestionBankSelector
-                    selectedModule={selectedModule}
-                    onClose={() => setIsBankSelectorOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Questions for {selectedModule?.name}</CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Manage questions specific to this module
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Dialog open={isBankSelectorOpen} onOpenChange={setIsBankSelectorOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Library className="h-4 w-4 mr-2" />
+                      Add from Question Bank
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Add Questions from Question Bank</DialogTitle>
+                    </DialogHeader>
+                    <QuestionBankSelector
+                      selectedModule={selectedModule}
+                      onClose={() => setIsBankSelectorOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
 
-              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => setEditingQuestion(null)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New Question
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingQuestion ? 'Edit Question' : 'Add New Question'}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <QuestionForm
-                    question={editingQuestion}
-                    selectedModule={selectedModule}
-                    onClose={() => {
-                      setIsFormOpen(false);
-                      setEditingQuestion(null);
-                    }}
-                  />
-                </DialogContent>
-              </Dialog>
+                <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => setEditingQuestion(null)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Question
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {editingQuestion ? 'Edit Question' : 'Add New Question'}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <QuestionForm
+                      question={editingQuestion}
+                      selectedModule={selectedModule}
+                      onClose={() => {
+                        setIsFormOpen(false);
+                        setEditingQuestion(null);
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+
+            {/* Statistics Badges */}
+            <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Total:</span>
+                <Badge
+                  variant="secondary"
+                  className="text-sm hover:bg-gray-300 transition-colors cursor-default"
+                >
+                  {stats.total} Questions
+                </Badge>
+              </div>
+
+              <div className="h-4 w-px bg-gray-300 mx-1"></div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Types:</span>
+                <Badge className="bg-blue-100 text-blue-800 text-sm hover:bg-blue-200 transition-colors cursor-default">
+                  {stats.mcq} MCQ
+                </Badge>
+                <Badge className="bg-green-100 text-green-800 text-sm hover:bg-green-200 transition-colors cursor-default">
+                  {stats.coding} Coding
+                </Badge>
+                <Badge className="bg-purple-100 text-purple-800 text-sm hover:bg-purple-200 transition-colors cursor-default">
+                  {stats.scenario} Scenario
+                </Badge>
+              </div>
+
+              <div className="h-4 w-px bg-gray-300 mx-1"></div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Difficulty:</span>
+                <Badge className="bg-emerald-100 text-emerald-800 text-sm hover:bg-emerald-200 transition-colors cursor-default">
+                  {stats.beginner} Beginner
+                </Badge>
+                <Badge className="bg-yellow-100 text-yellow-800 text-sm hover:bg-yellow-200 transition-colors cursor-default">
+                  {stats.intermediate} Intermediate
+                </Badge>
+                <Badge className="bg-red-100 text-red-800 text-sm hover:bg-red-200 transition-colors cursor-default">
+                  {stats.advanced} Advanced
+                </Badge>
+              </div>
             </div>
           </div>
         </CardHeader>

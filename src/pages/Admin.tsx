@@ -13,6 +13,7 @@ import AdminStats from '@/components/admin/AdminStats';
 import UserManagement from '@/components/admin/UserManagement';
 import DomainAdmin from '@/components/admin/DomainAdmin';
 import MasteryAssessmentsAdmin from '@/components/admin/MasteryAssessmentsAdmin';
+import MasteryAttemptManager from '@/components/admin/MasteryAttemptManager';
 import QuestionBank from '@/components/admin/QuestionBank';
 import { useToast } from '@/hooks/use-toast';
 
@@ -137,7 +138,7 @@ const Admin = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="practice-hub" className="flex items-center gap-2">
               <Dumbbell className="h-4 w-4" />
               Domains & Modules
@@ -145,6 +146,10 @@ const Admin = () => {
             <TabsTrigger value="mastery-assessments" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Mastery Assessments
+            </TabsTrigger>
+            <TabsTrigger value="mastery-attempts" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Reset Attempts
             </TabsTrigger>
             <TabsTrigger value="question-bank" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
@@ -162,6 +167,10 @@ const Admin = () => {
 
           <TabsContent value="mastery-assessments" className="mt-6">
             <MasteryAssessmentsAdmin />
+          </TabsContent>
+
+          <TabsContent value="mastery-attempts" className="mt-6">
+            <MasteryAttemptManager />
           </TabsContent>
 
           <TabsContent value="question-bank" className="mt-6">

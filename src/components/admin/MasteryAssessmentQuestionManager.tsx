@@ -36,6 +36,17 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
     filterDomain
   );
 
+  // Calculate statistics
+  const stats = {
+    total: questions?.length || 0,
+    mcq: questions?.filter(q => q.question_type === 'mcq').length || 0,
+    coding: questions?.filter(q => q.question_type === 'coding').length || 0,
+    scenario: questions?.filter(q => q.question_type === 'scenario').length || 0,
+    beginner: questions?.filter(q => q.difficulty === 'beginner').length || 0,
+    intermediate: questions?.filter(q => q.difficulty === 'intermediate').length || 0,
+    advanced: questions?.filter(q => q.difficulty === 'advanced').length || 0,
+  };
+
   const handleEdit = (question: any) => {
     setEditingQuestion(question);
     setIsFormOpen(true);
@@ -62,6 +73,7 @@ const MasteryAssessmentQuestionManager: React.FC<MasteryAssessmentQuestionManage
           assessment={assessment}
           parsedDomains={parsedDomains}
           onBack={onBack}
+          stats={stats}
           actionButtons={
             <QuestionActions
               isFormOpen={isFormOpen}

@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 
 interface AssessmentData {
   id: string;
+  attempt_id?: string; // For mastery assessments, this is the attempt ID
   assessment_type: 'practice' | 'mastery';
   assessment_title: string;
   percentage: number;
@@ -33,6 +34,7 @@ interface Question {
   difficulty: string;
   correct_answer: string;
   options?: string[];
+  question_type?: string;
 }
 
 interface UserAssessmentDetailsProps {
@@ -46,25 +48,52 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
 }) => {
   // Fetch questions for detailed analysis
   const { data: questions = [] } = useQuery({
-    queryKey: ['assessment-questions', assessment.question_ids],
+    queryKey: ['assessment-questions', assessment.id, assessment.assessment_type],
     queryFn: async () => {
-      if (!assessment.question_ids || assessment.question_ids.length === 0) {
-        return [];
+      console.log('UserAssessmentDetails: Fetching questions for assessment:', {
+        id: assessment.id,
+        attempt_id: assessment.attempt_id,
+        type: assessment.assessment_type,
+        question_ids: assessment.question_ids
+      });
+
+      if (assessment.assessment_type === 'mastery') {
+        // For mastery assessments, fetch from mastery_assessment_questions table
+        const { data, error } = await supabase
+          .from('mastery_assessment_questions')
+          .select('id, title, question_text, difficulty, correct_answer, options, question_type')
+          .eq('mastery_assessment_id', assessment.id)
+          .order('created_at', { ascending: true }); // Maintain order for answer matching
+
+        if (error) {
+          console.error('Error fetching mastery questions:', error);
+          return [];
+        }
+
+        console.log('UserAssessmentDetails: Fetched mastery questions:', data?.length || 0);
+        return data || [];
+      } else {
+        // For regular assessments, fetch from questions table
+        if (!assessment.question_ids || assessment.question_ids.length === 0) {
+          console.log('UserAssessmentDetails: No question_ids found for regular assessment');
+          return [];
+        }
+
+        const { data, error } = await supabase
+          .from('questions')
+          .select('id, title, question_text, difficulty, correct_answer, options')
+          .in('id', assessment.question_ids);
+
+        if (error) {
+          console.error('Error fetching questions:', error);
+          return [];
+        }
+
+        console.log('UserAssessmentDetails: Fetched regular questions:', data?.length || 0);
+        return data || [];
       }
-
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, title, question_text, difficulty, correct_answer, options')
-        .in('id', assessment.question_ids);
-
-      if (error) {
-        console.error('Error fetching questions:', error);
-        return [];
-      }
-
-      return data || [];
     },
-    enabled: !!assessment.question_ids?.length,
+    enabled: assessment.assessment_type === 'mastery' || !!assessment.question_ids?.length,
   });
 
   const scorePercentage = assessment.percentage;
@@ -92,15 +121,32 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
 
   // Calculate question-by-question performance
   const questionAnalysis = questions.map((question, index) => {
-    const userAnswer = assessment.answers?.[index];
+    let userAnswer;
+
+    if (assessment.assessment_type === 'mastery') {
+      // For mastery assessments, answers are stored as an object with indices as keys
+      userAnswer = assessment.answers?.[index.toString()];
+    } else {
+      // For regular assessments, answers are stored as an array
+      userAnswer = assessment.answers?.[index];
+    }
+
+    console.log(`UserAssessmentDetails: Question ${index + 1} analysis:`, {
+      questionId: question.id,
+      userAnswer,
+      correctAnswer: question.correct_answer,
+      hasOptions: !!question.options,
+      assessmentType: assessment.assessment_type
+    });
+
     let isCorrect = false;
-    
+
     if (question.options && Array.isArray(question.options)) {
       // MCQ question
       const correctIndex = question.options.indexOf(question.correct_answer);
       isCorrect = userAnswer === correctIndex;
     } else {
-      // Other question types
+      // Other question types (coding, scenario)
       isCorrect = userAnswer === question.correct_answer;
     }
 
@@ -113,6 +159,17 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
   });
 
   const correctAnswers = questionAnalysis.filter(q => q.isCorrect).length;
+
+  // Debug logging
+  console.log('UserAssessmentDetails: Analysis summary:', {
+    questionsCount: questions.length,
+    questionAnalysisCount: questionAnalysis.length,
+    assessmentType: assessment.assessment_type,
+    assessmentId: assessment.id,
+    hasAnswers: !!assessment.answers,
+    answersType: typeof assessment.answers,
+    answersKeys: assessment.answers ? Object.keys(assessment.answers) : 'no answers'
+  });
 
   return (
     <div className="space-y-6">
@@ -252,12 +309,12 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
       )}
 
       {/* Question-by-Question Analysis */}
-      {questionAnalysis.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Question-by-Question Analysis</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Question-by-Question Analysis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {questionAnalysis.length > 0 ? (
             <div className="space-y-4">
               {questionAnalysis.map((analysis) => (
                 <div
@@ -285,26 +342,76 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
                   <h4 className="font-medium mb-2">{analysis.question.title}</h4>
                   <p className="text-sm text-gray-600 mb-3">{analysis.question.question_text}</p>
 
-                  {analysis.question.options && (
-                    <div className="space-y-1 text-sm">
-                      <div className="font-medium">
-                        Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
-                      </div>
-                      {!analysis.isCorrect && (
+                  <div className="space-y-1 text-sm">
+                    {analysis.question.options && Array.isArray(analysis.question.options) ? (
+                      // MCQ Question
+                      <>
                         <div className="font-medium">
-                          Your Answer: <span className="text-red-600">
-                            {analysis.question.options[analysis.userAnswer] || 'No answer'}
-                          </span>
+                          Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {!analysis.isCorrect && (
+                          <div className="font-medium">
+                            Your Answer: <span className="text-red-600">
+                              {analysis.question.options[analysis.userAnswer] || 'No answer'}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      // Non-MCQ Question (Coding, Scenario)
+                      <>
+                        <div className="font-medium">
+                          Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
+                        </div>
+                        {!analysis.isCorrect && (
+                          <div className="font-medium">
+                            Your Answer: <span className="text-red-600">
+                              {analysis.userAnswer !== undefined && analysis.userAnswer !== null
+                                ? analysis.userAnswer.toString()
+                                : 'No answer provided'}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Show question type for mastery assessments */}
+                    {assessment.assessment_type === 'mastery' && analysis.question.question_type && (
+                      <div className="mt-2 pt-2 border-t border-gray-200">
+                        <Badge variant="outline" className="text-xs">
+                          {analysis.question.question_type.toUpperCase()}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-gray-500 mb-4">
+                <Target className="h-12 w-12 mx-auto mb-2" />
+                <p className="text-lg font-medium">No Question Analysis Available</p>
+                <p className="text-sm mt-2">
+                  {assessment.assessment_type === 'mastery'
+                    ? 'Questions for this mastery assessment could not be loaded.'
+                    : 'Questions for this practice assessment could not be loaded.'}
+                </p>
+              </div>
+              <div className="text-xs text-gray-400 bg-gray-50 p-3 rounded">
+                <p><strong>Debug Info:</strong></p>
+                <p>Assessment Type: {assessment.assessment_type}</p>
+                <p>Assessment ID: {assessment.id}</p>
+                <p>Attempt ID: {assessment.attempt_id || 'N/A'}</p>
+                <p>Questions Found: {questions.length}</p>
+                <p>Has Answers: {assessment.answers ? 'Yes' : 'No'}</p>
+                <p>Answers Type: {typeof assessment.answers}</p>
+                <p>Question IDs: {assessment.question_ids?.length || 0}</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

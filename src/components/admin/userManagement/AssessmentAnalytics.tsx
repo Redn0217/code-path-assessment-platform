@@ -25,8 +25,10 @@ interface Assessment {
   time_taken: number;
   strong_areas: string[];
   weak_areas: string[];
-  answers: any[];
+  answers: any;
   question_ids: string[];
+  assessment_type?: string;
+  assessment_title?: string;
 }
 
 interface Question {
@@ -36,6 +38,7 @@ interface Question {
   difficulty: string;
   correct_answer: string;
   options?: string[];
+  question_type?: string;
 }
 
 interface AssessmentAnalyticsProps {
@@ -51,25 +54,51 @@ const AssessmentAnalytics: React.FC<AssessmentAnalyticsProps> = ({
 }) => {
   // Fetch questions for detailed analysis
   const { data: questions = [] } = useQuery({
-    queryKey: ['assessment-questions', assessment.question_ids],
+    queryKey: ['assessment-questions', assessment.id, assessment.assessment_type],
     queryFn: async () => {
-      if (!assessment.question_ids || assessment.question_ids.length === 0) {
-        return [];
+      console.log('Fetching questions for assessment:', {
+        id: assessment.id,
+        type: assessment.assessment_type,
+        question_ids: assessment.question_ids
+      });
+
+      if (assessment.assessment_type === 'mastery') {
+        // For mastery assessments, fetch from mastery_assessment_questions table
+        const { data, error } = await supabase
+          .from('mastery_assessment_questions')
+          .select('id, title, question_text, difficulty, correct_answer, options, question_type')
+          .eq('mastery_assessment_id', assessment.id)
+          .order('created_at', { ascending: true }); // Maintain order for answer matching
+
+        if (error) {
+          console.error('Error fetching mastery questions:', error);
+          return [];
+        }
+
+        console.log('Fetched mastery questions:', data?.length || 0);
+        return data || [];
+      } else {
+        // For regular assessments, fetch from questions table
+        if (!assessment.question_ids || assessment.question_ids.length === 0) {
+          console.log('No question_ids found for regular assessment');
+          return [];
+        }
+
+        const { data, error } = await supabase
+          .from('questions')
+          .select('id, title, question_text, difficulty, correct_answer, options')
+          .in('id', assessment.question_ids);
+
+        if (error) {
+          console.error('Error fetching questions:', error);
+          return [];
+        }
+
+        console.log('Fetched regular questions:', data?.length || 0);
+        return data || [];
       }
-
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, title, question_text, difficulty, correct_answer, options')
-        .in('id', assessment.question_ids);
-
-      if (error) {
-        console.error('Error fetching questions:', error);
-        return [];
-      }
-
-      return data || [];
     },
-    enabled: !!assessment.question_ids?.length,
+    enabled: assessment.assessment_type === 'mastery' || !!assessment.question_ids?.length,
   });
 
   const scorePercentage = Math.round((assessment.score / assessment.total_questions) * 100);
@@ -97,15 +126,24 @@ const AssessmentAnalytics: React.FC<AssessmentAnalyticsProps> = ({
 
   // Calculate question-by-question performance
   const questionAnalysis = questions.map((question, index) => {
-    const userAnswer = assessment.answers[index];
+    let userAnswer;
+
+    if (assessment.assessment_type === 'mastery') {
+      // For mastery assessments, answers are stored as an object with indices as keys
+      userAnswer = assessment.answers[index.toString()];
+    } else {
+      // For regular assessments, answers are stored as an array
+      userAnswer = assessment.answers[index];
+    }
+
     let isCorrect = false;
-    
+
     if (question.options && Array.isArray(question.options)) {
       // MCQ question
       const correctIndex = question.options.indexOf(question.correct_answer);
       isCorrect = userAnswer === correctIndex;
     } else {
-      // Other question types
+      // Other question types (coding, scenario)
       isCorrect = userAnswer === question.correct_answer;
     }
 
@@ -277,20 +315,48 @@ const AssessmentAnalytics: React.FC<AssessmentAnalyticsProps> = ({
                   <h4 className="font-medium mb-2">{analysis.question.title}</h4>
                   <p className="text-sm text-gray-600 mb-3">{analysis.question.question_text}</p>
                   
-                  {analysis.question.options && (
-                    <div className="space-y-1 text-sm">
-                      <div className="font-medium">
-                        Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
-                      </div>
-                      {!analysis.isCorrect && (
+                  <div className="space-y-1 text-sm">
+                    {analysis.question.options && Array.isArray(analysis.question.options) ? (
+                      // MCQ Question
+                      <>
                         <div className="font-medium">
-                          User Answer: <span className="text-red-600">
-                            {analysis.question.options[analysis.userAnswer] || 'No answer'}
-                          </span>
+                          Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {!analysis.isCorrect && (
+                          <div className="font-medium">
+                            User Answer: <span className="text-red-600">
+                              {analysis.question.options[analysis.userAnswer] || 'No answer'}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      // Non-MCQ Question (Coding, Scenario)
+                      <>
+                        <div className="font-medium">
+                          Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
+                        </div>
+                        {!analysis.isCorrect && (
+                          <div className="font-medium">
+                            User Answer: <span className="text-red-600">
+                              {analysis.userAnswer !== undefined && analysis.userAnswer !== null
+                                ? analysis.userAnswer.toString()
+                                : 'No answer provided'}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Show question type for mastery assessments */}
+                    {assessment.assessment_type === 'mastery' && analysis.question.question_type && (
+                      <div className="mt-2 pt-2 border-t border-gray-200">
+                        <Badge variant="outline" className="text-xs">
+                          {analysis.question.question_type.toUpperCase()}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

@@ -149,7 +149,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
     // Transform the assessment data to match our Assessment interface
     // Handle both regular and mastery assessments
     const transformedAssessment: Assessment = {
-      id: assessment.id,
+      id: assessment.assessment_type === 'mastery'
+        ? assessment.mastery_assessment_id // Use mastery_assessment_id for mastery assessments
+        : assessment.id, // Use regular id for practice assessments
       domain: assessment.assessment_type === 'mastery'
         ? assessment.domain // Already formatted as comma-separated string
         : assessment.domain,
@@ -161,7 +163,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBack }) => {
       time_taken: assessment.time_taken,
       strong_areas: assessment.strong_areas || [],
       weak_areas: assessment.weak_areas || [],
-      answers: Array.isArray(assessment.answers) ? assessment.answers : [],
+      answers: assessment.answers || [],
       question_ids: assessment.question_ids || [],
       assessment_type: assessment.assessment_type,
       assessment_title: assessment.assessment_title

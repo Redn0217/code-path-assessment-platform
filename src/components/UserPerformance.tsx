@@ -10,6 +10,7 @@ import UserAssessmentDetails from './UserAssessmentDetails';
 
 interface AssessmentData {
   id: string;
+  attempt_id?: string; // For mastery assessments, this is the attempt ID
   assessment_type: 'practice' | 'mastery';
   assessment_title: string;
   percentage: number;
@@ -77,20 +78,40 @@ const UserPerformance = () => {
         question_ids: attempt.question_ids
       })) || [];
 
-      const mastery: AssessmentData[] = masteryAttempts.data?.map(attempt => ({
-        id: attempt.id,
-        assessment_type: 'mastery' as const,
-        assessment_title: (attempt.mastery_assessments as any)?.title || 'Unknown Assessment',
-        percentage: attempt.score ? Math.round((attempt.score / attempt.total_questions) * 100) : 0,
-        score: attempt.score || 0,
-        total_questions: attempt.total_questions,
-        completed_at: attempt.completed_at,
-        time_taken: attempt.time_taken,
-        domains: (attempt.mastery_assessments as any)?.domains,
-        difficulty: (attempt.mastery_assessments as any)?.difficulty,
-        answers: attempt.answers,
-        question_ids: attempt.question_ids
-      })) || [];
+      const mastery: AssessmentData[] = masteryAttempts.data?.map(attempt => {
+        // Parse domains properly - handle both string and array formats
+        let parsedDomains: string[] = [];
+        const domainsData = (attempt.mastery_assessments as any)?.domains;
+
+        if (domainsData) {
+          try {
+            if (Array.isArray(domainsData)) {
+              parsedDomains = domainsData;
+            } else if (typeof domainsData === 'string') {
+              parsedDomains = JSON.parse(domainsData);
+            }
+          } catch (error) {
+            console.error('Error parsing domains for mastery assessment:', error);
+            parsedDomains = [];
+          }
+        }
+
+        return {
+          id: attempt.mastery_assessment_id, // Use mastery_assessment_id for question fetching
+          attempt_id: attempt.id, // Keep the attempt ID for reference
+          assessment_type: 'mastery' as const,
+          assessment_title: (attempt.mastery_assessments as any)?.title || 'Unknown Assessment',
+          percentage: attempt.score ? Math.round((attempt.score / attempt.total_questions) * 100) : 0,
+          score: attempt.score || 0,
+          total_questions: attempt.total_questions,
+          completed_at: attempt.completed_at,
+          time_taken: attempt.time_taken,
+          domains: parsedDomains,
+          difficulty: (attempt.mastery_assessments as any)?.difficulty,
+          answers: attempt.answers,
+          question_ids: attempt.question_ids
+        };
+      }) || [];
 
       return [...practice, ...mastery].sort((a, b) =>
         new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()

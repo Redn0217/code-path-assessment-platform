@@ -411,29 +411,75 @@ const QuestionBank = () => {
                 Manage all questions across domains, modules, and mastery assessments
               </p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary" className="text-sm">
-                {stats.total} Total Questions
-              </Badge>
-              <Badge variant="outline" className="text-sm">
-                {stats.practice} Practice
-              </Badge>
-              <Badge variant="outline" className="text-sm">
-                {stats.mastery} Mastery
-              </Badge>
-              <Badge className="bg-blue-100 text-blue-800 text-sm">
-                {stats.mcq} MCQ
-              </Badge>
-              <Badge className="bg-green-100 text-green-800 text-sm">
-                {stats.coding} Coding
-              </Badge>
-              <Badge className="bg-purple-100 text-purple-800 text-sm">
-                {stats.scenario} Scenario
-              </Badge>
-              {selectedQuestions.size > 0 && (
-                <Badge variant="default" className="text-sm">
-                  {selectedQuestions.size} Selected
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Total:</span>
+                <Badge
+                  variant="secondary"
+                  className="text-sm hover:bg-gray-300 transition-colors cursor-default"
+                >
+                  {stats.total} Questions
                 </Badge>
+              </div>
+
+              <div className="h-4 w-px bg-gray-300 mx-1"></div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Source:</span>
+                <Badge
+                  variant="outline"
+                  className="text-sm hover:bg-gray-100 transition-colors cursor-default"
+                >
+                  {stats.practice} Practice
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-sm hover:bg-gray-100 transition-colors cursor-default"
+                >
+                  {stats.mastery} Mastery
+                </Badge>
+              </div>
+
+              <div className="h-4 w-px bg-gray-300 mx-1"></div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Types:</span>
+                <Badge className="bg-blue-100 text-blue-800 text-sm hover:bg-blue-200 transition-colors cursor-default">
+                  {stats.mcq} MCQ
+                </Badge>
+                <Badge className="bg-green-100 text-green-800 text-sm hover:bg-green-200 transition-colors cursor-default">
+                  {stats.coding} Coding
+                </Badge>
+                <Badge className="bg-purple-100 text-purple-800 text-sm hover:bg-purple-200 transition-colors cursor-default">
+                  {stats.scenario} Scenario
+                </Badge>
+              </div>
+
+              <div className="h-4 w-px bg-gray-300 mx-1"></div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Difficulty:</span>
+                <Badge className="bg-emerald-100 text-emerald-800 text-sm hover:bg-emerald-200 transition-colors cursor-default">
+                  {stats.beginner} Beginner
+                </Badge>
+                <Badge className="bg-yellow-100 text-yellow-800 text-sm hover:bg-yellow-200 transition-colors cursor-default">
+                  {stats.intermediate} Intermediate
+                </Badge>
+                <Badge className="bg-red-100 text-red-800 text-sm hover:bg-red-200 transition-colors cursor-default">
+                  {stats.advanced} Advanced
+                </Badge>
+              </div>
+
+              {selectedQuestions.size > 0 && (
+                <>
+                  <div className="h-4 w-px bg-gray-300 mx-1"></div>
+                  <Badge
+                    variant="default"
+                    className="text-sm hover:bg-blue-700 transition-colors cursor-default"
+                  >
+                    {selectedQuestions.size} Selected
+                  </Badge>
+                </>
               )}
             </div>
           </div>
