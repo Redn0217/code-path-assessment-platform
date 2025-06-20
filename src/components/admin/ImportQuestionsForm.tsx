@@ -28,34 +28,56 @@ const ImportQuestionsForm: React.FC<ImportQuestionsFormProps> = ({ onClose, onSu
   const importMutation = useMutation({
     mutationFn: async (data: { questions: any[], type: 'practice' | 'mastery' }) => {
       const { questions, type } = data;
-      
+
       if (type === 'practice') {
-        // Import to questions table
-        const questionsToInsert = questions.map(q => ({
-          ...q,
-          module_id: selectedModule || null,
-          domain: selectedDomain || q.domain,
-        }));
-        
-        const { error } = await supabase
-          .from('questions')
-          .insert(questionsToInsert);
-        
-        if (error) throw error;
+        // Step 1: Import to question_bank table first
+        const questionsToInsert = questions.map(q => {
+          // Remove fields that don't belong in question_bank
+          const { id, module, source, created_at, ...questionData } = q;
+          return {
+            ...questionData,
+            domain: selectedDomain || q.domain,
+          };
+        });
+
+        const { data: insertedQuestions, error: bankError } = await supabase
+          .from('question_bank')
+          .insert(questionsToInsert)
+          .select('id');
+
+        if (bankError) throw bankError;
+
+        // Step 2: If module is selected, create assignments in questions table
+        if (selectedModule && insertedQuestions) {
+          const assignments = insertedQuestions.map(qb => ({
+            module_id: selectedModule,
+            question_bank_id: qb.id,
+          }));
+
+          const { error: assignmentError } = await supabase
+            .from('questions')
+            .insert(assignments);
+
+          if (assignmentError) throw assignmentError;
+        }
       } else {
         // Import to mastery_assessment_questions table
         const { error } = await supabase
           .from('mastery_assessment_questions')
           .insert(questions);
-        
+
         if (error) throw error;
       }
-      
+
       return questions.length;
     },
     onSuccess: (count) => {
-      queryClient.invalidateQueries({ queryKey: ['question-bank-practice'] });
+      // Invalidate all relevant query keys
+      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
       queryClient.invalidateQueries({ queryKey: ['question-bank-mastery'] });
+      queryClient.invalidateQueries({ queryKey: ['available-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['available-mastery-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['module-questions'] });
       toast({
         title: "Import Successful",
         description: `${count} question(s) imported successfully.`,
@@ -171,20 +193,22 @@ const ImportQuestionsForm: React.FC<ImportQuestionsFormProps> = ({ onClose, onSu
       {importType === 'practice' && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Domain (Optional)</Label>
+            <Label>Domain Override (Optional)</Label>
             <Input
               value={selectedDomain}
               onChange={(e) => setSelectedDomain(e.target.value)}
               placeholder="e.g., python, devops"
             />
+            <p className="text-xs text-gray-500 mt-1">Override domain for all imported questions</p>
           </div>
           <div>
-            <Label>Module ID (Optional)</Label>
+            <Label>Assign to Module (Optional)</Label>
             <Input
               value={selectedModule}
               onChange={(e) => setSelectedModule(e.target.value)}
               placeholder="Module ID"
             />
+            <p className="text-xs text-gray-500 mt-1">Automatically assign all questions to this module</p>
           </div>
         </div>
       )}
@@ -201,13 +225,14 @@ const ImportQuestionsForm: React.FC<ImportQuestionsFormProps> = ({ onClose, onSu
             className="max-w-xs mx-auto"
           />
           <p className="text-sm text-gray-500 mt-2">
-            Upload a JSON file containing an array of questions
+            Upload a JSON file containing an array of questions. Questions will be imported to the Question Bank and optionally assigned to a module.
           </p>
           <details className="mt-3 text-left">
             <summary className="text-sm font-medium cursor-pointer text-blue-600">
               View JSON Format Example
             </summary>
-            <pre className="mt-2 text-xs bg-gray-100 p-3 rounded overflow-x-auto">
+            <div className="mt-2 space-y-2">
+              <pre className="text-xs bg-gray-100 p-3 rounded overflow-x-auto">
 {`[
   {
     "title": "Python Basics",
@@ -223,7 +248,11 @@ const ImportQuestionsForm: React.FC<ImportQuestionsFormProps> = ({ onClose, onSu
     "memory_limit": 128
   }
 ]`}
-            </pre>
+              </pre>
+              <p className="text-xs text-gray-600 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
+                <strong>Note:</strong> Fields like 'id', 'module', 'source', and 'created_at' from exported files will be ignored during import.
+              </p>
+            </div>
           </details>
         </div>
       </div>
@@ -260,7 +289,7 @@ const ImportQuestionsForm: React.FC<ImportQuestionsFormProps> = ({ onClose, onSu
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="max-h-64 overflow-y-auto space-y-3 pr-2">
               {previewData.map((question, index) => (
                 <div key={index} className="bg-white p-3 rounded border">
                   <div className="flex items-start justify-between">
