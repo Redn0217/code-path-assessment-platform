@@ -362,8 +362,15 @@ const MasteryAssessment = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <h2 className="text-xl font-semibold">{currentQ?.title || currentQ?.question_text}</h2>
-              
+              <h2 className="text-xl font-semibold">{currentQ?.title}</h2>
+
+              {/* Question Text */}
+              {currentQ?.question_text && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700 whitespace-pre-wrap">{currentQ.question_text}</p>
+                </div>
+              )}
+
               <div className="space-y-3">
                 {currentQ?.question_type === 'mcq' && Array.isArray(currentQ?.options) && 
                  currentQ.options.every((opt: any) => typeof opt === 'string') && 
