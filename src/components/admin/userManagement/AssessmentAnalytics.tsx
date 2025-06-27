@@ -68,7 +68,7 @@ const AssessmentAnalytics: React.FC<AssessmentAnalyticsProps> = ({
           .from('mastery_assessment_questions')
           .select('id, title, question_text, difficulty, correct_answer, options, question_type')
           .eq('mastery_assessment_id', assessment.id)
-          .order('created_at', { ascending: true }); // Maintain order for answer matching
+          .order('created_at', { ascending: false }); // Match the order used during assessment
 
         if (error) {
           console.error('Error fetching mastery questions:', error);
@@ -78,27 +78,139 @@ const AssessmentAnalytics: React.FC<AssessmentAnalyticsProps> = ({
         console.log('Fetched mastery questions:', data?.length || 0);
         return data || [];
       } else {
-        // For regular assessments, fetch from questions table
-        if (!assessment.question_ids || assessment.question_ids.length === 0) {
-          console.log('No question_ids found for regular assessment');
+        // For practice assessments, handle question_ids properly
+        console.log('AssessmentAnalytics: Processing practice assessment questions:', {
+          question_ids: assessment.question_ids,
+          question_ids_type: typeof assessment.question_ids,
+          question_ids_length: assessment.question_ids?.length,
+          is_array: Array.isArray(assessment.question_ids)
+        });
+
+        // Ensure question_ids is an array (handle multiple possible formats)
+        let questionIds = assessment.question_ids;
+
+        if (typeof questionIds === 'string') {
+          try {
+            questionIds = JSON.parse(questionIds);
+            console.log('AssessmentAnalytics: Parsed question_ids from JSON string:', questionIds);
+          } catch (e) {
+            console.error('AssessmentAnalytics: Failed to parse question_ids string:', e);
+            return [];
+          }
+        } else if (typeof questionIds === 'number') {
+          console.error('AssessmentAnalytics: question_ids is a number (length), not an array:', questionIds);
+          return [];
+        } else if (!questionIds) {
+          console.log('AssessmentAnalytics: question_ids is null/undefined');
           return [];
         }
 
-        const { data, error } = await supabase
-          .from('questions')
-          .select('id, title, question_text, difficulty, correct_answer, options')
-          .in('id', assessment.question_ids);
-
-        if (error) {
-          console.error('Error fetching questions:', error);
+        if (!Array.isArray(questionIds) || questionIds.length === 0) {
+          console.log('AssessmentAnalytics: question_ids is not a valid array:', questionIds);
           return [];
         }
 
-        console.log('Fetched regular questions:', data?.length || 0);
-        return data || [];
+        console.log('AssessmentAnalytics: Using question_ids:', questionIds);
+
+        // IMPORTANT: Practice assessments store question_bank IDs, not questions table IDs
+        // This is because AssessmentGenerator uses question_bank_id as the main ID
+        console.log('AssessmentAnalytics: Fetching directly from question_bank (practice assessments use question_bank IDs)...');
+
+        const { data: bankData, error: bankError } = await supabase
+          .from('question_bank')
+          .select('id, title, question_text, difficulty, correct_answer, options, question_type')
+          .in('id', questionIds);
+
+        if (bankError) {
+          console.error('AssessmentAnalytics: Error fetching from question_bank:', bankError);
+
+          // Fallback: try to fetch from questions table (in case of old data)
+          console.log('AssessmentAnalytics: Trying fallback to questions table...');
+          const { data: questionsData, error: questionsError } = await supabase
+            .from('questions')
+            .select(`
+              id,
+              question_bank!inner(
+                id,
+                title,
+                question_text,
+                difficulty,
+                correct_answer,
+                options,
+                question_type
+              )
+            `)
+            .in('question_bank_id', questionIds); // Use question_bank_id for lookup
+
+          if (questionsError) {
+            console.error('AssessmentAnalytics: Fallback also failed:', questionsError);
+            return [];
+          }
+
+          // Transform questions data to flatten the question_bank structure
+          const transformedData = questionsData?.map(q => ({
+            id: q.question_bank.id,
+            title: q.question_bank.title,
+            question_text: q.question_bank.question_text,
+            difficulty: q.question_bank.difficulty,
+            correct_answer: q.question_bank.correct_answer,
+            options: q.question_bank.options,
+            question_type: q.question_bank.question_type
+          })) || [];
+
+          console.log('AssessmentAnalytics: Fetched via fallback:', transformedData?.length || 0);
+
+          // CRITICAL: Ensure questions are returned in the same order as question_ids
+          const orderedFallbackQuestions = questionIds.map(id =>
+            transformedData?.find(q => q.id === id)
+          ).filter(Boolean);
+
+          console.log('AssessmentAnalytics: Ordered fallback questions:', orderedFallbackQuestions?.length || 0);
+          return orderedFallbackQuestions;
+        }
+
+        console.log('AssessmentAnalytics: Successfully fetched from question_bank:', bankData?.length || 0);
+
+        // CRITICAL: Ensure questions are returned in the same order as question_ids
+        // This is essential for correct answer mapping during analysis
+        const orderedQuestions = questionIds.map(id =>
+          bankData?.find(q => q.id === id)
+        ).filter(Boolean); // Remove any undefined entries
+
+        console.log('AssessmentAnalytics: Ordered questions:', orderedQuestions?.length || 0);
+        console.log('AssessmentAnalytics: Question order check:', {
+          questionIds: questionIds.slice(0, 3),
+          orderedQuestionIds: orderedQuestions.slice(0, 3).map(q => q.id)
+        });
+
+        return orderedQuestions || [];
       }
     },
-    enabled: assessment.assessment_type === 'mastery' || !!assessment.question_ids?.length,
+    enabled: (() => {
+      if (assessment.assessment_type === 'mastery') {
+        return true;
+      }
+
+      // For practice assessments, check if we have valid question_ids
+      let questionIds = assessment.question_ids;
+      if (typeof questionIds === 'string') {
+        try {
+          questionIds = JSON.parse(questionIds);
+        } catch (e) {
+          return false;
+        }
+      }
+
+      const isEnabled = Array.isArray(questionIds) && questionIds.length > 0;
+      console.log('AssessmentAnalytics: Query enabled check:', {
+        assessment_type: assessment.assessment_type,
+        question_ids: assessment.question_ids,
+        parsed_question_ids: questionIds,
+        question_ids_length: Array.isArray(questionIds) ? questionIds.length : 'not array',
+        isEnabled
+      });
+      return isEnabled;
+    })(),
   });
 
   const scorePercentage = Math.round((assessment.score / assessment.total_questions) * 100);
@@ -126,15 +238,8 @@ const AssessmentAnalytics: React.FC<AssessmentAnalyticsProps> = ({
 
   // Calculate question-by-question performance
   const questionAnalysis = questions.map((question, index) => {
-    let userAnswer;
-
-    if (assessment.assessment_type === 'mastery') {
-      // For mastery assessments, answers are stored as an object with indices as keys
-      userAnswer = assessment.answers[index.toString()];
-    } else {
-      // For regular assessments, answers are stored as an array
-      userAnswer = assessment.answers[index];
-    }
+    // Both mastery and regular assessments store answers as arrays
+    const userAnswer = assessment.answers[index];
 
     let isCorrect = false;
 
@@ -322,13 +427,15 @@ const AssessmentAnalytics: React.FC<AssessmentAnalyticsProps> = ({
                         <div className="font-medium">
                           Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
                         </div>
-                        {!analysis.isCorrect && (
-                          <div className="font-medium">
-                            User Answer: <span className="text-red-600">
-                              {analysis.question.options[analysis.userAnswer] || 'No answer'}
-                            </span>
-                          </div>
-                        )}
+                        <div className="font-medium">
+                          User Answer: <span className={analysis.isCorrect ? "text-green-600" : "text-red-600"}>
+                            {typeof analysis.userAnswer === 'number' && analysis.question.options[analysis.userAnswer]
+                              ? analysis.question.options[analysis.userAnswer]
+                              : analysis.userAnswer !== undefined && analysis.userAnswer !== null && analysis.userAnswer !== ''
+                              ? analysis.userAnswer.toString()
+                              : 'No answer provided'}
+                          </span>
+                        </div>
                       </>
                     ) : (
                       // Non-MCQ Question (Coding, Scenario)

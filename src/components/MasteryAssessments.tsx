@@ -56,7 +56,7 @@ const MasteryAssessments = () => {
           user_id: user.id,
           mastery_assessment_id: assessmentId,
           total_questions: 0, // This will be updated when questions are loaded
-          answers: {},
+          answers: [], // Initialize as empty array instead of empty object
           started_at: new Date().toISOString()
         })
         .select()

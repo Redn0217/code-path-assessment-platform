@@ -37,6 +37,8 @@ const UserPerformance = () => {
       if (!user) return [];
 
       // Fetch from both user_attempts and user_mastery_attempts
+      console.log('UserPerformance: Fetching practice and mastery attempts...');
+
       const [practiceAttempts, masteryAttempts] = await Promise.all([
         supabase
           .from('assessments')
@@ -61,22 +63,37 @@ const UserPerformance = () => {
           .order('completed_at', { ascending: false })
       ]);
 
-      const practice: AssessmentData[] = practiceAttempts.data?.map(attempt => ({
-        id: attempt.id,
-        assessment_type: 'practice' as const,
-        assessment_title: `${attempt.domain} Assessment`,
-        percentage: Math.round((attempt.score / attempt.total_questions) * 100),
-        score: attempt.score,
-        total_questions: attempt.total_questions,
-        completed_at: attempt.completed_at,
-        time_taken: attempt.time_taken,
-        difficulty: attempt.difficulty,
-        domain: attempt.domain,
-        strong_areas: attempt.strong_areas,
-        weak_areas: attempt.weak_areas,
-        answers: attempt.answers,
-        question_ids: attempt.question_ids
-      })) || [];
+      console.log('UserPerformance: Raw practice attempts from database:', practiceAttempts.data);
+      console.log('UserPerformance: Practice attempts error:', practiceAttempts.error);
+
+      const practice: AssessmentData[] = practiceAttempts.data?.map(attempt => {
+        console.log('UserPerformance: Processing practice attempt:', {
+          id: attempt.id,
+          question_ids: attempt.question_ids,
+          question_ids_type: typeof attempt.question_ids,
+          question_ids_is_array: Array.isArray(attempt.question_ids),
+          answers: attempt.answers,
+          answers_type: typeof attempt.answers,
+          answers_is_array: Array.isArray(attempt.answers)
+        });
+
+        return {
+          id: attempt.id,
+          assessment_type: 'practice' as const,
+          assessment_title: `${attempt.domain} Assessment`,
+          percentage: Math.round((attempt.score / attempt.total_questions) * 100),
+          score: attempt.score,
+          total_questions: attempt.total_questions,
+          completed_at: attempt.completed_at,
+          time_taken: attempt.time_taken,
+          difficulty: attempt.difficulty,
+          domain: attempt.domain,
+          strong_areas: attempt.strong_areas,
+          weak_areas: attempt.weak_areas,
+          answers: attempt.answers,
+          question_ids: attempt.question_ids
+        };
+      }) || [];
 
       const mastery: AssessmentData[] = masteryAttempts.data?.map(attempt => {
         // Parse domains properly - handle both string and array formats

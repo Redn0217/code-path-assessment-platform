@@ -42,10 +42,20 @@ interface UserAssessmentDetailsProps {
   onBack: () => void;
 }
 
-const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({ 
-  assessment, 
-  onBack 
+const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
+  assessment,
+  onBack
 }) => {
+  // Debug: Log the assessment data received
+  console.log('UserAssessmentDetails: Received assessment data:', assessment);
+  console.log('UserAssessmentDetails: Assessment answers:', assessment.answers);
+  console.log('UserAssessmentDetails: Assessment answers type:', typeof assessment.answers);
+  console.log('UserAssessmentDetails: Assessment answers is array:', Array.isArray(assessment.answers));
+  console.log('UserAssessmentDetails: Question IDs:', assessment.question_ids);
+  console.log('UserAssessmentDetails: Question IDs type:', typeof assessment.question_ids);
+  console.log('UserAssessmentDetails: Question IDs is array:', Array.isArray(assessment.question_ids));
+  console.log('UserAssessmentDetails: Question IDs length:', assessment.question_ids?.length);
+
   // Fetch questions for detailed analysis
   const { data: questions = [] } = useQuery({
     queryKey: ['assessment-questions', assessment.id, assessment.assessment_type],
@@ -63,7 +73,7 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
           .from('mastery_assessment_questions')
           .select('id, title, question_text, difficulty, correct_answer, options, question_type')
           .eq('mastery_assessment_id', assessment.id)
-          .order('created_at', { ascending: true }); // Maintain order for answer matching
+          .order('created_at', { ascending: false }); // Match the order used during assessment
 
         if (error) {
           console.error('Error fetching mastery questions:', error);
@@ -71,29 +81,146 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
         }
 
         console.log('UserAssessmentDetails: Fetched mastery questions:', data?.length || 0);
+        console.log('UserAssessmentDetails: Question order (first 3):', data?.slice(0, 3).map(q => ({ id: q.id, title: q.title })));
         return data || [];
       } else {
         // For regular assessments, fetch from questions table
-        if (!assessment.question_ids || assessment.question_ids.length === 0) {
-          console.log('UserAssessmentDetails: No question_ids found for regular assessment');
+        console.log('UserAssessmentDetails: Processing regular assessment questions:', {
+          question_ids: assessment.question_ids,
+          question_ids_type: typeof assessment.question_ids,
+          question_ids_length: assessment.question_ids?.length,
+          is_array: Array.isArray(assessment.question_ids)
+        });
+
+        // Ensure question_ids is an array (handle multiple possible formats)
+        let questionIds = assessment.question_ids;
+
+        console.log('UserAssessmentDetails: Raw question_ids:', questionIds);
+        console.log('UserAssessmentDetails: Raw question_ids type:', typeof questionIds);
+
+        // Handle different possible formats
+        if (typeof questionIds === 'string') {
+          try {
+            questionIds = JSON.parse(questionIds);
+            console.log('UserAssessmentDetails: Parsed question_ids from JSON string:', questionIds);
+          } catch (e) {
+            console.error('UserAssessmentDetails: Failed to parse question_ids string:', e);
+            return [];
+          }
+        } else if (typeof questionIds === 'number') {
+          console.error('UserAssessmentDetails: question_ids is a number (length), not an array:', questionIds);
+          return [];
+        } else if (!questionIds) {
+          console.log('UserAssessmentDetails: question_ids is null/undefined');
           return [];
         }
 
-        const { data, error } = await supabase
-          .from('questions')
-          .select('id, title, question_text, difficulty, correct_answer, options')
-          .in('id', assessment.question_ids);
-
-        if (error) {
-          console.error('Error fetching questions:', error);
+        if (!Array.isArray(questionIds) || questionIds.length === 0) {
+          console.log('UserAssessmentDetails: question_ids is not a valid array:', questionIds);
           return [];
         }
 
-        console.log('UserAssessmentDetails: Fetched regular questions:', data?.length || 0);
-        return data || [];
+        console.log('UserAssessmentDetails: Using question_ids:', questionIds);
+
+        // IMPORTANT: Practice assessments store question_bank IDs, not questions table IDs
+        // This is because AssessmentGenerator uses question_bank_id as the main ID
+        console.log('UserAssessmentDetails: Fetching directly from question_bank (practice assessments use question_bank IDs)...');
+
+        const { data: bankData, error: bankError } = await supabase
+          .from('question_bank')
+          .select('id, title, question_text, difficulty, correct_answer, options, question_type')
+          .in('id', questionIds);
+
+        if (bankError) {
+          console.error('UserAssessmentDetails: Error fetching from question_bank:', bankError);
+
+          // Fallback: try to fetch from questions table (in case of old data)
+          console.log('UserAssessmentDetails: Trying fallback to questions table...');
+          const { data: questionsData, error: questionsError } = await supabase
+            .from('questions')
+            .select(`
+              id,
+              question_bank!inner(
+                id,
+                title,
+                question_text,
+                difficulty,
+                correct_answer,
+                options,
+                question_type
+              )
+            `)
+            .in('question_bank_id', questionIds); // Use question_bank_id for lookup
+
+          if (questionsError) {
+            console.error('UserAssessmentDetails: Fallback also failed:', questionsError);
+            return [];
+          }
+
+          // Transform questions data to flatten the question_bank structure
+          const transformedData = questionsData?.map(q => ({
+            id: q.question_bank.id,
+            title: q.question_bank.title,
+            question_text: q.question_bank.question_text,
+            difficulty: q.question_bank.difficulty,
+            correct_answer: q.question_bank.correct_answer,
+            options: q.question_bank.options,
+            question_type: q.question_bank.question_type
+          })) || [];
+
+          console.log('UserAssessmentDetails: Fetched via fallback:', transformedData?.length || 0);
+
+          // CRITICAL: Ensure questions are returned in the same order as question_ids
+          const orderedFallbackQuestions = questionIds.map(id =>
+            transformedData?.find(q => q.id === id)
+          ).filter(Boolean);
+
+          console.log('UserAssessmentDetails: Ordered fallback questions:', orderedFallbackQuestions?.length || 0);
+          return orderedFallbackQuestions;
+        }
+
+        console.log('UserAssessmentDetails: Successfully fetched from question_bank:', bankData?.length || 0);
+
+        // CRITICAL: Ensure questions are returned in the same order as question_ids
+        // This is essential for correct answer mapping during analysis
+        const orderedQuestions = questionIds.map(id =>
+          bankData?.find(q => q.id === id)
+        ).filter(Boolean); // Remove any undefined entries
+
+        console.log('UserAssessmentDetails: Ordered questions:', orderedQuestions?.length || 0);
+        console.log('UserAssessmentDetails: Question order check:', {
+          questionIds: questionIds.slice(0, 3),
+          orderedQuestionIds: orderedQuestions.slice(0, 3).map(q => q.id)
+        });
+
+        return orderedQuestions || [];
       }
     },
-    enabled: assessment.assessment_type === 'mastery' || !!assessment.question_ids?.length,
+    enabled: (() => {
+      if (assessment.assessment_type === 'mastery') {
+        return true;
+      }
+
+      // For practice assessments, check if we have valid question_ids
+      let questionIds = assessment.question_ids;
+      if (typeof questionIds === 'string') {
+        try {
+          questionIds = JSON.parse(questionIds);
+        } catch (e) {
+          return false;
+        }
+      }
+
+      const isEnabled = Array.isArray(questionIds) && questionIds.length > 0;
+      console.log('UserAssessmentDetails: Query enabled check:', {
+        assessment_type: assessment.assessment_type,
+        question_ids: assessment.question_ids,
+        parsed_question_ids: questionIds,
+        question_ids_length: Array.isArray(questionIds) ? questionIds.length : 'not array',
+        isEnabled
+      });
+      return isEnabled;
+    })(),
   });
 
   const scorePercentage = assessment.percentage;
@@ -121,23 +248,24 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
 
   // Calculate question-by-question performance
   const questionAnalysis = questions.map((question, index) => {
-    let userAnswer;
-
-    if (assessment.assessment_type === 'mastery') {
-      // For mastery assessments, answers are stored as an object with indices as keys
-      userAnswer = assessment.answers?.[index.toString()];
-    } else {
-      // For regular assessments, answers are stored as an array
-      userAnswer = assessment.answers?.[index];
-    }
+    // Both mastery and regular assessments store answers as arrays
+    const userAnswer = assessment.answers?.[index];
 
     console.log(`UserAssessmentDetails: Question ${index + 1} analysis:`, {
       questionId: question.id,
       userAnswer,
+      userAnswerType: typeof userAnswer,
       correctAnswer: question.correct_answer,
       hasOptions: !!question.options,
-      assessmentType: assessment.assessment_type
+      options: question.options,
+      assessmentType: assessment.assessment_type,
+      answersType: typeof assessment.answers,
+      isAnswersArray: Array.isArray(assessment.answers),
+      answersLength: Array.isArray(assessment.answers) ? assessment.answers.length : 'not array',
+      rawAnswers: assessment.answers
     });
+
+
 
     let isCorrect = false;
 
@@ -349,13 +477,15 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
                         <div className="font-medium">
                           Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
                         </div>
-                        {!analysis.isCorrect && (
-                          <div className="font-medium">
-                            Your Answer: <span className="text-red-600">
-                              {analysis.question.options[analysis.userAnswer] || 'No answer'}
-                            </span>
-                          </div>
-                        )}
+                        <div className="font-medium">
+                          Your Answer: <span className={analysis.isCorrect ? "text-green-600" : "text-red-600"}>
+                            {typeof analysis.userAnswer === 'number' && analysis.question.options[analysis.userAnswer]
+                              ? analysis.question.options[analysis.userAnswer]
+                              : analysis.userAnswer !== undefined && analysis.userAnswer !== null && analysis.userAnswer !== ''
+                              ? analysis.userAnswer.toString()
+                              : 'No answer provided'}
+                          </span>
+                        </div>
                       </>
                     ) : (
                       // Non-MCQ Question (Coding, Scenario)
@@ -363,15 +493,13 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
                         <div className="font-medium">
                           Correct Answer: <span className="text-green-600">{analysis.question.correct_answer}</span>
                         </div>
-                        {!analysis.isCorrect && (
-                          <div className="font-medium">
-                            Your Answer: <span className="text-red-600">
-                              {analysis.userAnswer !== undefined && analysis.userAnswer !== null
-                                ? analysis.userAnswer.toString()
-                                : 'No answer provided'}
-                            </span>
-                          </div>
-                        )}
+                        <div className="font-medium">
+                          Your Answer: <span className={analysis.isCorrect ? "text-green-600" : "text-red-600"}>
+                            {analysis.userAnswer !== undefined && analysis.userAnswer !== null
+                              ? analysis.userAnswer.toString()
+                              : 'No answer provided'}
+                          </span>
+                        </div>
                       </>
                     )}
 
@@ -406,7 +534,8 @@ const UserAssessmentDetails: React.FC<UserAssessmentDetailsProps> = ({
                 <p>Questions Found: {questions.length}</p>
                 <p>Has Answers: {assessment.answers ? 'Yes' : 'No'}</p>
                 <p>Answers Type: {typeof assessment.answers}</p>
-                <p>Question IDs: {assessment.question_ids?.length || 0}</p>
+                <p>Question IDs: {Array.isArray(assessment.question_ids) ? assessment.question_ids.length : typeof assessment.question_ids}</p>
+                <p>Question IDs Raw: {JSON.stringify(assessment.question_ids)}</p>
               </div>
             </div>
           )}

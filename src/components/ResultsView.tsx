@@ -73,11 +73,14 @@ const ResultsView = ({ domain, difficulty, questions, answers, onComplete }) => 
     const strengths = topicScores.filter(item => item.score >= 80).map(item => item.topic);
     const weaknesses = topicScores.filter(item => item.score < 60).map(item => item.topic);
     
+    const attempted = correctAnswers + incorrectAnswers;
+
     return {
       score,
       correctAnswers,
       incorrectAnswers,
-      unanswered: questions.length - (correctAnswers + incorrectAnswers),
+      attempted,
+      unanswered: questions.length - attempted,
       topicScores,
       strengths,
       weaknesses
@@ -131,7 +134,11 @@ const ResultsView = ({ domain, difficulty, questions, answers, onComplete }) => 
                   />
                 </svg>
               </div>
-              <div className="grid grid-cols-3 gap-8 w-full max-w-md">
+              <div className="grid grid-cols-4 gap-6 w-full max-w-lg">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{results.attempted}</div>
+                  <div className="text-sm text-gray-500">Attempted</div>
+                </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">{results.correctAnswers}</div>
                   <div className="text-sm text-gray-500">Correct</div>

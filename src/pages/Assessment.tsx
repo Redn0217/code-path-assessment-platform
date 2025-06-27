@@ -13,6 +13,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import ModuleSelection from '@/components/ModuleSelection';
 import AssessmentPreview from '@/components/AssessmentPreview';
 import ImprovedCodeEditor from '@/components/ImprovedCodeEditor';
+import EnhancedAssessmentView from '@/components/EnhancedAssessmentView';
 import { Module } from '@/types/module';
 
 const domains = {
@@ -59,6 +60,14 @@ const Assessment = () => {
           metadata: generatedAssessment.metadata
         });
 
+        // Debug test cases in generated questions
+        const codingQuestions = generatedAssessment.questions.filter(q => q.question_type === 'coding');
+        console.log('Coding questions found:', codingQuestions.length);
+        if (codingQuestions.length > 0) {
+          console.log('Sample coding question:', codingQuestions[0]);
+          console.log('Test cases in sample:', codingQuestions[0].test_cases);
+        }
+
         return generatedAssessment;
       } catch (error) {
         console.error('Error generating assessment:', error);
@@ -67,17 +76,51 @@ const Assessment = () => {
         console.log('Falling back to all questions...');
         const { data, error: fallbackError } = await supabase
           .from('questions')
-          .select('*')
+          .select(`
+            id,
+            module_id,
+            created_at,
+            question_bank_id,
+            question_bank!inner(
+              id,
+              title,
+              question_text,
+              question_type,
+              difficulty,
+              domain,
+              options,
+              correct_answer,
+              explanation,
+              code_template,
+              test_cases,
+              time_limit,
+              memory_limit,
+              tags,
+              is_active
+            )
+          `)
           .eq('module_id', selectedModule.id)
           .order('created_at', { ascending: false });
 
         if (fallbackError) throw fallbackError;
 
+        // Transform fallback data to match AssessmentGenerator format
+        const transformedFallbackData = data?.map(item => ({
+          id: item.question_bank_id, // Use question bank ID as the main ID
+          module_id: item.module_id,
+          created_at: item.created_at,
+          // Flatten question bank content
+          ...item.question_bank,
+        })) || [];
+
+        console.log('Fallback data transformed:', transformedFallbackData.length, 'questions');
+        console.log('Sample fallback question:', transformedFallbackData[0]);
+
         return {
-          questions: data || [],
+          questions: transformedFallbackData,
           config: null,
           metadata: {
-            total_questions: data?.length || 0,
+            total_questions: transformedFallbackData.length,
             mcq_count: 0,
             coding_count: 0,
             scenario_count: 0,
@@ -162,6 +205,11 @@ const Assessment = () => {
   const handleSubmitAssessment = async () => {
     setIsCompleted(true);
 
+    // Calculate number of attempted questions (non-undefined answers)
+    const attemptedQuestions = questions.filter((_, index) =>
+      answers[index] !== undefined && answers[index] !== null && answers[index] !== ''
+    ).length;
+
     // Calculate score with proper type checking
     const score = questions.reduce((total, question, index) => {
       const answer = answers[index];
@@ -195,7 +243,7 @@ const Assessment = () => {
             difficulty: 'beginner',
             score,
             total_questions: questions.length,
-            answers: Object.values(answers),
+            answers: questions.map((_, index) => answers[index]), // Ensure answers are in question order
             question_ids: questions.map(q => q.id),
             strong_areas: score > questions.length * 0.7 ? [domain || ''] : [],
             weak_areas: score <= questions.length * 0.5 ? [domain || ''] : []
@@ -262,7 +310,7 @@ const Assessment = () => {
     );
   }
 
-  if (!isStarted && showPreview && assessmentData) {
+  if (!isStarted && showPreview) {
     return (
       <AuthenticatedLayout>
         <div className="container mx-auto px-4 py-8">
@@ -290,6 +338,11 @@ const Assessment = () => {
   }
 
   if (isCompleted) {
+    // Calculate number of attempted questions (non-undefined answers)
+    const attemptedQuestions = questions.filter((_, index) =>
+      answers[index] !== undefined && answers[index] !== null && answers[index] !== ''
+    ).length;
+
     // Calculate score with proper type checking for results page
     const score = questions.reduce((total, question, index) => {
       const answer = answers[index];
@@ -328,6 +381,7 @@ const Assessment = () => {
                 <div className="text-center">
                   <div className="text-4xl font-bold mb-2">{percentage}%</div>
                   <div className="text-lg text-gray-600">{score} out of {questions.length} correct</div>
+                  <div className="text-sm text-gray-500 mt-1">{attemptedQuestions} out of {questions.length} attempted</div>
                 </div>
 
                 <div className="space-y-4">
@@ -339,7 +393,11 @@ const Assessment = () => {
                     <Progress value={percentage} className="h-3" />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{attemptedQuestions}</div>
+                      <div className="text-sm text-blue-700">Attempted</div>
+                    </div>
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                       <div className="text-2xl font-bold text-green-600">{score}</div>
                       <div className="text-sm text-green-700">Correct</div>
@@ -366,6 +424,7 @@ const Assessment = () => {
                       setIsCompleted(false);
                       setTimeLeft(assessmentConfig?.total_time_minutes ? assessmentConfig.total_time_minutes * 60 : 1800);
                       setIsStarted(false);
+                      setShowPreview(true); // Show preview again for retake
                     }}
                     className="flex-1"
                   >
@@ -380,94 +439,70 @@ const Assessment = () => {
     );
   }
 
-  const currentQ = questions[currentQuestion];
+  // Transform questions to match EnhancedAssessmentView interface
+  const transformedQuestions = questions.map(q => ({
+    id: q.id,
+    title: q.title,
+    question_text: q.question_text,
+    question_type: q.question_type,
+    difficulty: q.difficulty,
+    options: q.options,
+    correct_answer: q.correct_answer,
+    explanation: q.explanation,
+    code_template: q.code_template,
+    test_cases: q.test_cases,
+    time_limit: q.time_limit,
+    memory_limit: q.memory_limit,
+    tags: q.tags,
+    domain: domain
+  }));
 
+  // Transform answers to match EnhancedAssessmentView interface
+  const transformedAnswers = questions.reduce((acc, question, index) => {
+    if (answers[index] !== undefined) {
+      acc[question.id] = answers[index];
+    }
+    return acc;
+  }, {} as Record<string, any>);
+
+  const handleAnswerChange = (questionId: string, answer: any) => {
+    const questionIndex = questions.findIndex(q => q.id === questionId);
+    if (questionIndex !== -1) {
+      setAnswers(prev => ({
+        ...prev,
+        [questionIndex]: answer
+      }));
+    }
+  };
+
+  const handleEnhancedSubmit = () => {
+    handleSubmitAssessment(); // Submit directly, bypass question navigation logic
+  };
+
+  // Show enhanced assessment view only when started
+  if (isStarted && !isCompleted) {
+    return (
+      <AuthenticatedLayout>
+        <EnhancedAssessmentView
+          questions={transformedQuestions}
+          answers={transformedAnswers}
+          onAnswerChange={handleAnswerChange}
+          onSubmit={handleEnhancedSubmit}
+          timeLeft={timeLeft}
+          isSubmitting={false}
+          title={selectedModule?.name || 'Practice Assessment'}
+        />
+      </AuthenticatedLayout>
+    );
+  }
+
+  // Fallback - should not reach here normally
   return (
     <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Progress Header */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600">
-                Question {currentQuestion + 1} of {questions.length}
-              </span>
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Clock className="h-4 w-4" />
-                <span>{formatTime(timeLeft)}</span>
-              </div>
-            </div>
-            <Progress value={((currentQuestion + 1) / questions.length) * 100} className="h-2" />
-          </div>
-
-          {/* Question Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary">{selectedModule.name}</Badge>
-                <Badge variant="outline">{currentQ?.difficulty}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <h2 className="text-xl font-semibold">{currentQ?.title}</h2>
-
-              {/* Question Text */}
-              {currentQ?.question_text && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-700 whitespace-pre-wrap">{currentQ.question_text}</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {/* MCQ Questions */}
-                {currentQ?.question_type === 'mcq' && Array.isArray(currentQ?.options) &&
-                 currentQ.options.every((opt: any) => typeof opt === 'string') &&
-                 (currentQ.options as string[]).map((option: string, index: number) => (
-                  <Button
-                    key={index}
-                    variant={answers[currentQuestion] === index ? "default" : "outline"}
-                    className="w-full text-left justify-start h-auto p-4"
-                    onClick={() => handleAnswerSelect(index)}
-                  >
-                    <span className="mr-3 font-semibold">
-                      {String.fromCharCode(65 + index)}.
-                    </span>
-                    {option}
-                  </Button>
-                ))}
-
-                {/* Coding Questions */}
-                {currentQ?.question_type === 'coding' && (
-                  <div className="mt-4">
-                    <ImprovedCodeEditor
-                      language={domain === 'python' ? 'python' : domain === 'linux' ? 'bash' : 'javascript'}
-                      value={answers[currentQuestion] as string || currentQ.code_template || ''}
-                      onChange={(code) => handleAnswerSelect(code)}
-                      testCases={currentQ.test_cases || []}
-                      timeLimit={currentQ.time_limit}
-                      memoryLimit={currentQ.memory_limit}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedModule(null)}
-                >
-                  Exit Assessment
-                </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={answers[currentQuestion] === undefined}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {currentQuestion === questions.length - 1 ? 'Submit Assessment' : 'Next Question'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Preparing assessment...</p>
         </div>
       </div>
     </AuthenticatedLayout>

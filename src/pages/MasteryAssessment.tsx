@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,8 @@ import { toast } from '@/hooks/use-toast';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import { useNavigation } from '@/contexts/NavigationContext';
 import MasteryAssessmentPreview from '@/components/MasteryAssessmentPreview';
+import ImprovedCodeEditor from '@/components/ImprovedCodeEditor';
+import EnhancedAssessmentView from '@/components/EnhancedAssessmentView';
 
 const MasteryAssessment = () => {
   const { assessmentId } = useParams<{ assessmentId: string }>();
@@ -21,7 +23,7 @@ const MasteryAssessment = () => {
   const { restrictNavigation, allowNavigation } = useNavigation();
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]);
+  const [answers, setAnswers] = useState<(number | string)[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(5400); // Default 90 minutes
   const [isStarted, setIsStarted] = useState(false);
@@ -49,19 +51,23 @@ const MasteryAssessment = () => {
     queryKey: ['mastery-assessment-questions', assessmentId],
     queryFn: async () => {
       if (!assessmentId) return [];
-      
+
       console.log('Fetching questions for mastery assessment:', assessmentId);
-      
+
       const { data, error } = await supabase
         .from('mastery_assessment_questions')
         .select('*')
         .eq('mastery_assessment_id', assessmentId)
         .limit(assessment?.total_questions || 50)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
-      
+
       console.log('Fetched mastery assessment questions:', data?.length || 0);
+      console.log('Sample question data:', data?.[0]);
+      if (data?.[0]) {
+        console.log('Test cases:', data[0].test_cases);
+      }
       return data || [];
     },
     enabled: !!assessmentId && !!assessment,
@@ -117,13 +123,23 @@ const MasteryAssessment = () => {
   const updateAttempt = useMutation({
     mutationFn: async (data: any) => {
       if (!attemptId) throw new Error('Attempt ID is required');
-      
-      const { error } = await supabase
+
+      console.log('updateAttempt: Updating attempt with ID:', attemptId);
+      console.log('updateAttempt: Data being sent to database:', data);
+
+      const { data: result, error } = await supabase
         .from('user_mastery_attempts')
         .update(data)
-        .eq('id', attemptId);
-      
-      if (error) throw error;
+        .eq('id', attemptId)
+        .select(); // Add select to see what was actually saved
+
+      if (error) {
+        console.error('updateAttempt: Database error:', error);
+        throw error;
+      }
+
+      console.log('updateAttempt: Successfully updated, result:', result);
+      return result;
     },
   });
 
@@ -133,10 +149,56 @@ const MasteryAssessment = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswerSelect = (answerIndex: number) => {
+  // Transform questions and answers to match EnhancedAssessmentView interface
+  // These must be at the top level to avoid hook order issues
+  const transformedQuestions = useMemo(() => {
+    return questions.map(q => {
+      // For mastery assessments, questions come directly from mastery_assessment_questions table
+      // No need to check for question_bank property since the data is already flattened
+      return {
+        id: q.id,
+        title: q.title,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        difficulty: q.difficulty,
+        options: q.options,
+        correct_answer: q.correct_answer,
+        explanation: q.explanation,
+        code_template: q.code_template,
+        test_cases: q.test_cases,
+        time_limit: q.time_limit,
+        memory_limit: q.memory_limit,
+        domain: q.domain,
+        tags: q.tags
+      };
+    });
+  }, [questions]);
+
+  const transformedAnswers = useMemo(() => {
+    const answersArray = Array.isArray(answers) ? answers : [];
+    console.log('Transforming answers:', { answersArray, questionsLength: questions.length });
+
+    const transformed = questions.reduce((acc, question, index) => {
+      // For mastery assessments, questions come directly from mastery_assessment_questions table
+      const answer = answersArray[index];
+
+      // Include all answers, even undefined ones, so EnhancedAssessmentView can track them
+      acc[question.id] = answer;
+
+      console.log(`Question ${index}: ${question.id} -> ${answer}`);
+      return acc;
+    }, {} as Record<string, any>);
+
+    console.log('Transformed answers result:', transformed);
+    return transformed;
+  }, [answers, questions]);
+
+  const handleAnswerSelect = (answer: number | string) => {
+    console.log('handleAnswerSelect called:', { currentQuestion, answer, currentAnswers: answers });
     const newAnswers = [...answers];
-    newAnswers[currentQuestion] = answerIndex;
+    newAnswers[currentQuestion] = answer;
     setAnswers(newAnswers);
+    console.log('Updated answers:', newAnswers);
   };
 
   const handleNext = () => {
@@ -150,7 +212,9 @@ const MasteryAssessment = () => {
   const handleSubmitAssessment = async () => {
     setIsCompleted(true);
 
-    const score = answers.reduce((total, answer, index) => {
+    // Ensure answers is an array for score calculation
+    const answersArray = Array.isArray(answers) ? answers : [];
+    const score = answersArray.reduce((total, answer, index) => {
       const question = questions[index];
       if (question?.question_type === 'mcq') {
         const options = question.options;
@@ -163,13 +227,23 @@ const MasteryAssessment = () => {
     }, 0);
 
     try {
-      await updateAttempt.mutateAsync({
+      console.log('Submitting mastery assessment with answers:', answers);
+      console.log('Answers type:', typeof answers, 'Is array:', Array.isArray(answers));
+      console.log('Answers length:', Array.isArray(answers) ? answers.length : 'not array');
+      console.log('Questions length:', questions.length);
+      console.log('Non-undefined answers:', Array.isArray(answers) ? answers.filter(a => a !== undefined).length : 'not array');
+
+      const submissionData = {
         score,
         total_questions: questions.length,
         answers: answers,
         completed_at: new Date().toISOString(),
         time_taken: (assessment?.time_limit_minutes || 90) * 60 - timeLeft,
-      });
+      };
+
+      console.log('Full submission data:', submissionData);
+
+      await updateAttempt.mutateAsync(submissionData);
 
       // Allow navigation after successful submission
       allowNavigation();
@@ -265,7 +339,15 @@ const MasteryAssessment = () => {
   }
 
   if (isCompleted) {
-    const score = answers.reduce((total, answer, index) => {
+    // Ensure answers is an array for score calculation
+    const answersArray = Array.isArray(answers) ? answers : [];
+
+    // Calculate number of attempted questions (non-undefined answers)
+    const attemptedQuestions = answersArray.filter(answer =>
+      answer !== undefined && answer !== null && answer !== ''
+    ).length;
+
+    const score = answersArray.reduce((total, answer, index) => {
       const question = questions[index];
       if (question?.question_type === 'mcq') {
         const options = question.options;
@@ -298,6 +380,7 @@ const MasteryAssessment = () => {
                 <div className="text-center">
                   <div className="text-4xl font-bold mb-2">{percentage}%</div>
                   <div className="text-lg text-gray-600">{score} out of {questions.length} correct</div>
+                  <div className="text-sm text-gray-500 mt-1">{attemptedQuestions} out of {questions.length} attempted</div>
                 </div>
 
                 <div className="space-y-4">
@@ -309,7 +392,11 @@ const MasteryAssessment = () => {
                     <Progress value={percentage} className="h-3" />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{attemptedQuestions}</div>
+                      <div className="text-sm text-blue-700">Attempted</div>
+                    </div>
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                       <div className="text-2xl font-bold text-green-600">{score}</div>
                       <div className="text-sm text-green-700">Correct</div>
@@ -335,89 +422,61 @@ const MasteryAssessment = () => {
     );
   }
 
-  const currentQ = questions[currentQuestion];
 
+
+  const handleAnswerChange = (questionId: string, answer: any) => {
+    console.log('handleAnswerChange called:', { questionId, answer });
+    const questionIndex = questions.findIndex(q => {
+      const questionData = q.question_bank || q;
+      return questionData.id === questionId;
+    });
+    console.log('Found question index:', questionIndex, 'for questionId:', questionId);
+    if (questionIndex !== -1) {
+      setAnswers(prev => {
+        // Ensure prev is always treated as an array
+        const currentAnswers = Array.isArray(prev) ? prev : [];
+        const newAnswers = [...currentAnswers];
+        newAnswers[questionIndex] = answer;
+        console.log('Updated answers in handleAnswerChange:', newAnswers);
+        console.log('Previous answers:', currentAnswers);
+        console.log('Setting answer at index', questionIndex, 'to:', answer);
+        return newAnswers;
+      });
+    } else {
+      console.error('Question not found for ID:', questionId);
+      console.error('Available question IDs:', questions.map(q => {
+        const questionData = q.question_bank || q;
+        return questionData.id;
+      }));
+    }
+  };
+
+  const handleEnhancedSubmit = () => {
+    handleSubmitAssessment(); // Submit directly, bypass question navigation logic
+  };
+
+  // Show enhanced assessment view only when started and not completed
+  if (isStarted && !isCompleted) {
+    return (
+      <AuthenticatedLayout>
+        <EnhancedAssessmentView
+          questions={transformedQuestions}
+          answers={transformedAnswers}
+          onAnswerChange={handleAnswerChange}
+          onSubmit={handleEnhancedSubmit}
+          timeLeft={timeLeft}
+          isSubmitting={false}
+          title={assessment?.title || 'Mastery Assessment'}
+        />
+      </AuthenticatedLayout>
+    );
+  }
+
+  // Fallback - should not reach here normally
   return (
     <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600">
-                Question {currentQuestion + 1} of {questions.length}
-              </span>
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Clock className="h-4 w-4" />
-                <span>{formatTime(timeLeft)}</span>
-              </div>
-            </div>
-            <Progress value={((currentQuestion + 1) / questions.length) * 100} className="h-2" />
-          </div>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary">{assessment.title}</Badge>
-                <Badge variant="outline">{currentQ?.difficulty}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <h2 className="text-xl font-semibold">{currentQ?.title}</h2>
-
-              {/* Question Text */}
-              {currentQ?.question_text && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-700 whitespace-pre-wrap">{currentQ.question_text}</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {currentQ?.question_type === 'mcq' && Array.isArray(currentQ?.options) && 
-                 currentQ.options.every((opt: any) => typeof opt === 'string') && 
-                 (currentQ.options as string[]).map((option: string, index: number) => (
-                  <Button
-                    key={index}
-                    variant={answers[currentQuestion] === index ? "default" : "outline"}
-                    className="w-full text-left justify-start h-auto p-4"
-                    onClick={() => handleAnswerSelect(index)}
-                  >
-                    <span className="mr-3 font-semibold">
-                      {String.fromCharCode(65 + index)}.
-                    </span>
-                    {option}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (isStarted && !isCompleted) {
-                      toast({
-                        title: "Cannot exit assessment",
-                        description: "Please complete your assessment first or submit it to exit.",
-                        variant: "destructive",
-                      });
-                    } else {
-                      navigate('/');
-                    }
-                  }}
-                  className={isStarted && !isCompleted ? 'cursor-not-allowed opacity-60' : ''}
-                >
-                  Exit Assessment
-                </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={answers[currentQuestion] === undefined}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {currentQuestion === questions.length - 1 ? 'Submit Assessment' : 'Next Question'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <p>Loading assessment...</p>
       </div>
     </AuthenticatedLayout>
   );
