@@ -150,6 +150,9 @@ const EnhancedCodeEditor: React.FC<EnhancedCodeEditorProps> = ({
   };
 
   const runTests = async () => {
+    console.log('🚀 Enhanced Test Execution - Starting test execution');
+    console.log('🚀 Enhanced Test Execution - Test cases:', testCases);
+
     if (!testCases || testCases.length === 0) {
       toast({ title: 'No test cases', description: 'No test cases available for this question', variant: 'destructive' });
       return;
@@ -205,6 +208,217 @@ const EnhancedCodeEditor: React.FC<EnhancedCodeEditorProps> = ({
     }
   };
 
+  // Helper function to extract function names and their parameter counts from code
+  const extractFunctionInfo = (code: string, language: string) => {
+    const functions = [];
+
+    if (language === 'python') {
+      // Match Python function definitions: def function_name(params):
+      const pythonFunctionRegex = /def\s+(\w+)\s*\(([^)]*)\):/g;
+      let match;
+      while ((match = pythonFunctionRegex.exec(code)) !== null) {
+        const functionName = match[1];
+        const paramsString = match[2].trim();
+
+        // Count parameters (simple count by commas, ignoring defaults)
+        const paramCount = paramsString ? paramsString.split(',').length : 0;
+
+        functions.push({
+          name: functionName,
+          paramCount: paramCount,
+          paramsString: paramsString
+        });
+      }
+    } else if (language === 'javascript') {
+      // Match JavaScript function declarations: function functionName(params) {
+      const jsFunctionRegex = /function\s+(\w+)\s*\(([^)]*)\)\s*\{/g;
+      let match;
+      while ((match = jsFunctionRegex.exec(code)) !== null) {
+        const functionName = match[1];
+        const paramsString = match[2].trim();
+        const paramCount = paramsString ? paramsString.split(',').length : 0;
+
+        functions.push({
+          name: functionName,
+          paramCount: paramCount,
+          paramsString: paramsString
+        });
+      }
+
+      // Also match arrow functions: const functionName = (params) => {
+      const arrowFunctionRegex = /(?:const|let|var)\s+(\w+)\s*=\s*\(([^)]*)\)\s*=>/g;
+      while ((match = arrowFunctionRegex.exec(code)) !== null) {
+        const functionName = match[1];
+        const paramsString = match[2].trim();
+        const paramCount = paramsString ? paramsString.split(',').length : 0;
+
+        functions.push({
+          name: functionName,
+          paramCount: paramCount,
+          paramsString: paramsString
+        });
+      }
+    }
+
+    console.log('🔧 Extracted function info from code:', functions);
+    return functions;
+  };
+
+  // Helper function to extract just function names (for backward compatibility)
+  const extractFunctionNames = (code: string, language: string) => {
+    return extractFunctionInfo(code, language).map(func => func.name);
+  };
+
+  // Helper function to parse test input arguments
+  const parseTestArguments = (input: string) => {
+    console.log('🔧 Parsing test arguments:', input);
+
+    // Try to parse as JSON first (handles arrays, objects, etc.)
+    try {
+      const parsed = JSON.parse(input);
+      if (Array.isArray(parsed)) {
+        console.log('🔧 Parsed as JSON array (multiple args):', parsed);
+        return parsed.map(arg => String(arg));
+      } else {
+        console.log('🔧 Parsed as JSON single value:', parsed);
+        return [String(parsed)];
+      }
+    } catch (e) {
+      // Not JSON, continue with other parsing
+    }
+
+    // Check if input is a single array/list literal
+    const arrayMatch = input.match(/^\s*\[.*\]\s*$/);
+    if (arrayMatch) {
+      console.log('🔧 Detected array literal as single argument:', input);
+      return [input.trim()];
+    }
+
+    // Check if input is a single object literal
+    const objectMatch = input.match(/^\s*\{.*\}\s*$/);
+    if (objectMatch) {
+      console.log('🔧 Detected object literal as single argument:', input);
+      return [input.trim()];
+    }
+
+    // Check if input is a single quoted string
+    const quotedStringMatch = input.match(/^\s*["'].*["']\s*$/);
+    if (quotedStringMatch) {
+      console.log('🔧 Detected quoted string as single argument:', input);
+      return [input.trim()];
+    }
+
+    // If input looks like a function call, extract arguments
+    const functionCallMatch = input.match(/^(\w+)\s*\((.*)\)\s*$/);
+    if (functionCallMatch) {
+      const argsString = functionCallMatch[2].trim();
+      console.log('🔧 Found function call, extracting args:', argsString);
+
+      if (!argsString) {
+        return [];
+      }
+
+      return parseComplexArguments(argsString);
+    }
+
+    // If input contains commas but isn't wrapped in brackets/quotes, parse as multiple args
+    if (input.includes(',') && !arrayMatch && !objectMatch && !quotedStringMatch) {
+      return parseComplexArguments(input);
+    }
+
+    // Single argument or direct input
+    console.log('🔧 Single argument:', [input]);
+    return [input.trim()];
+  };
+
+  // Helper function to parse complex argument strings with proper bracket/quote handling
+  const parseComplexArguments = (argsString: string) => {
+    const args = [];
+    let current = '';
+    let inString = false;
+    let stringChar = '';
+    let bracketCount = 0;
+    let braceCount = 0;
+    let parenCount = 0;
+
+    for (let i = 0; i < argsString.length; i++) {
+      const char = argsString[i];
+
+      if (!inString && (char === '"' || char === "'")) {
+        inString = true;
+        stringChar = char;
+        current += char;
+      } else if (inString && char === stringChar && argsString[i-1] !== '\\') {
+        inString = false;
+        current += char;
+      } else if (!inString && char === '[') {
+        bracketCount++;
+        current += char;
+      } else if (!inString && char === ']') {
+        bracketCount--;
+        current += char;
+      } else if (!inString && char === '{') {
+        braceCount++;
+        current += char;
+      } else if (!inString && char === '}') {
+        braceCount--;
+        current += char;
+      } else if (!inString && char === '(') {
+        parenCount++;
+        current += char;
+      } else if (!inString && char === ')') {
+        parenCount--;
+        current += char;
+      } else if (!inString && char === ',' && bracketCount === 0 && braceCount === 0 && parenCount === 0) {
+        args.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+
+    if (current.trim()) {
+      args.push(current.trim());
+    }
+
+    console.log('🔧 Parsed complex args:', args);
+    return args;
+  };
+
+  // Helper function to convert string argument to Python value
+  const convertToPythonValue = (arg: string) => {
+    arg = arg.trim();
+
+    // Handle strings (quoted)
+    if ((arg.startsWith('"') && arg.endsWith('"')) ||
+        (arg.startsWith("'") && arg.endsWith("'"))) {
+      return arg;
+    }
+
+    // Handle lists/arrays
+    if (arg.startsWith('[') && arg.endsWith(']')) {
+      return arg;
+    }
+
+    // Handle numbers
+    if (!isNaN(Number(arg))) {
+      return arg;
+    }
+
+    // Handle booleans
+    if (arg.toLowerCase() === 'true' || arg.toLowerCase() === 'false') {
+      return arg.charAt(0).toUpperCase() + arg.slice(1).toLowerCase();
+    }
+
+    // Handle None/null
+    if (arg.toLowerCase() === 'none' || arg.toLowerCase() === 'null') {
+      return 'None';
+    }
+
+    // Default: treat as string
+    return `"${arg}"`;
+  };
+
   const executePython = async (runTests = false) => {
     if (!window.pyodideLoaded) {
       await loadPyodide();
@@ -255,7 +469,73 @@ finally:
           const escapedCode = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
           const escapedInput = testInput.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
 
-          window.pyodide.runPython(`
+          // Extract function info from user code
+          const functionInfo = extractFunctionInfo(value, language);
+          const functionNames = functionInfo.map(f => f.name);
+          console.log('🔍 Enhanced Test Execution - Available functions:', functionNames);
+          console.log('🔍 Enhanced Test Execution - Function info:', functionInfo);
+          console.log('🔍 Enhanced Test Execution - Test input:', testInput);
+          console.log('🔍 Enhanced Test Execution - Expected output:', expectedOutput);
+
+          // Parse test arguments
+          let testArgs = parseTestArguments(testInput);
+          console.log('🔍 Enhanced Test Execution - Parsed arguments:', testArgs);
+
+          if (functionInfo.length > 0 && testArgs.length > 0) {
+            // Use the first function found
+            const funcInfo = functionInfo[0];
+            const functionName = funcInfo.name;
+            console.log('🔍 Enhanced Test Execution - Using function:', functionName);
+            console.log('🔍 Enhanced Test Execution - Function expects', funcInfo.paramCount, 'parameters');
+            console.log('🔍 Enhanced Test Execution - We have', testArgs.length, 'arguments');
+
+            // Smart argument adjustment: if function expects 1 param but we have multiple args,
+            // try to combine them into a single list/array argument
+            if (funcInfo.paramCount === 1 && testArgs.length > 1) {
+              console.log('🔧 Smart adjustment: Converting multiple args to single array argument');
+              const arrayArg = `[${testArgs.join(', ')}]`;
+              testArgs = [arrayArg];
+              console.log('🔧 Adjusted arguments:', testArgs);
+            }
+
+            // Function call execution
+            const pythonArgs = testArgs.map((arg: string) => convertToPythonValue(arg)).join(', ');
+
+            window.pyodide.runPython(`
+import sys
+from io import StringIO
+
+old_stdout = sys.stdout
+sys.stdout = StringIO()
+
+try:
+    # Execute the user code first to define functions
+    exec("""${escapedCode}""")
+
+    # Check if the function exists
+    if '${functionName}' in locals() or '${functionName}' in globals():
+        # Call the function with parsed arguments
+        result = ${functionName}(${pythonArgs})
+
+        # Convert result to string for output comparison
+        if result is not None:
+            test_output = str(result)
+        else:
+            test_output = ""
+    else:
+        test_output = ""
+        test_error = f"Function '${functionName}' not found"
+
+    test_error = None
+except Exception as e:
+    test_output = ""
+    test_error = str(e)
+finally:
+    sys.stdout = old_stdout
+            `);
+          } else {
+            // Traditional input/output execution
+            window.pyodide.runPython(`
 import sys
 from io import StringIO
 
@@ -277,7 +557,8 @@ except Exception as e:
 finally:
     sys.stdout = old_stdout
     sys.stdin = old_stdin
-          `);
+            `);
+          }
 
           const actualOutput = window.pyodide.globals.get('test_output') || '';
           const error = window.pyodide.globals.get('test_error');
@@ -347,6 +628,19 @@ finally:
     for (let i = 0; i < testCases.length; i++) {
       const testCase = testCases[i];
       try {
+        const testInput = String(testCase.input || '');
+
+        // Extract function info from user code
+        const functionInfo = extractFunctionInfo(value, language);
+        const functionNames = functionInfo.map(f => f.name);
+        console.log('🔍 JS Enhanced Test Execution - Available functions:', functionNames);
+        console.log('🔍 JS Enhanced Test Execution - Function info:', functionInfo);
+        console.log('🔍 JS Enhanced Test Execution - Test input:', testInput);
+
+        // Parse test arguments
+        let testArgs = parseTestArguments(testInput);
+        console.log('🔍 JS Enhanced Test Execution - Parsed arguments:', testArgs);
+
         const originalLog = console.log;
         let capturedOutput = '';
 
@@ -354,10 +648,72 @@ finally:
           capturedOutput += args.map(arg => String(arg)).join(' ') + '\n';
         };
 
-        const result = new Function(value)();
+        let actualOutput = '';
+
+        if (functionInfo.length > 0 && testArgs.length > 0) {
+          // Use the first function found
+          const funcInfo = functionInfo[0];
+          const functionName = funcInfo.name;
+          console.log('🔍 JS Enhanced Test Execution - Using function:', functionName);
+          console.log('🔍 JS Enhanced Test Execution - Function expects', funcInfo.paramCount, 'parameters');
+          console.log('🔍 JS Enhanced Test Execution - We have', testArgs.length, 'arguments');
+
+          // Smart argument adjustment: if function expects 1 param but we have multiple args,
+          // try to combine them into a single array argument
+          if (funcInfo.paramCount === 1 && testArgs.length > 1) {
+            console.log('🔧 JS Smart adjustment: Converting multiple args to single array argument');
+            const arrayArg = `[${testArgs.join(', ')}]`;
+            testArgs = [arrayArg];
+            console.log('🔧 JS Adjusted arguments:', testArgs);
+          }
+
+          // Function call execution
+          try {
+            // Execute the user code to define functions
+            const userCode = new Function(value);
+            userCode();
+
+            // Check if function exists in global scope
+            const func = (window as any)[functionName];
+            if (typeof func === 'function') {
+              // Convert arguments to JavaScript values
+              const jsArgs = testArgs.map((arg: string) => {
+                try {
+                  // Try to parse as JSON first
+                  return JSON.parse(arg);
+                } catch (e) {
+                  // If not JSON, handle as string/number/boolean
+                  if (arg === 'true') return true;
+                  if (arg === 'false') return false;
+                  if (arg === 'null') return null;
+                  if (arg === 'undefined') return undefined;
+                  if (!isNaN(Number(arg))) return Number(arg);
+                  // Remove quotes if it's a quoted string
+                  if ((arg.startsWith('"') && arg.endsWith('"')) ||
+                      (arg.startsWith("'") && arg.endsWith("'"))) {
+                    return arg.slice(1, -1);
+                  }
+                  return arg;
+                }
+              });
+
+              // Call the function
+              const result = func(...jsArgs);
+              actualOutput = result !== undefined ? String(result) : '';
+            } else {
+              actualOutput = `Function '${functionName}' not found`;
+            }
+          } catch (error) {
+            actualOutput = `Function execution error: ${error.message}`;
+          }
+        } else {
+          // Traditional execution
+          const result = new Function(value)();
+          actualOutput = (capturedOutput || String(result || '')).trim();
+        }
+
         console.log = originalLog;
 
-        const actualOutput = (capturedOutput || String(result || '')).trim();
         const expectedOutput = String(testCase.expected_output || '').trim();
         const passed = actualOutput === expectedOutput;
 
