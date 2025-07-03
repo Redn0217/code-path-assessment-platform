@@ -68,6 +68,7 @@ interface EnhancedAssessmentViewProps {
   isSubmitting?: boolean;
   title?: string;
   isLoading?: boolean;
+  onTestResults?: (questionId: string, results: any[]) => void;
 }
 
 const EnhancedAssessmentView: React.FC<EnhancedAssessmentViewProps> = ({
@@ -78,7 +79,8 @@ const EnhancedAssessmentView: React.FC<EnhancedAssessmentViewProps> = ({
   timeLeft,
   isSubmitting = false,
   title = "Assessment",
-  isLoading = false
+  isLoading = false,
+  onTestResults
 }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentCategory, setCurrentCategory] = useState<'mcq' | 'coding' | 'scenario'>('mcq');
@@ -86,7 +88,12 @@ const EnhancedAssessmentView: React.FC<EnhancedAssessmentViewProps> = ({
   const [codeValues, setCodeValues] = useState<Record<string, string>>({});
   const [isMobile, setIsMobile] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
-  const [testResults, setTestResults] = useState<Record<string, any[]>>({});
+  const [testResults, setTestResults] = useState<Record<string, {
+    results: any[];
+    score?: number;
+    passedTests?: number;
+    totalTests?: number;
+  } | any[]>>({});
   const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
 
   // Check for mobile screen size
@@ -263,9 +270,73 @@ const EnhancedAssessmentView: React.FC<EnhancedAssessmentViewProps> = ({
   // Handle test results
   const handleTestResults = useCallback((results: any[]) => {
     if (currentQuestion) {
-      setTestResults(prev => ({ ...prev, [currentQuestion.id]: results }));
+      // Calculate score for this coding question based on test results
+      const passedTests = results.filter(r => r.passed).length;
+      const totalTests = results.length;
+      const questionScore = totalTests > 0 ? passedTests / totalTests : 0;
+
+      console.log(`🏆 Coding Question Score - ${currentQuestion.id}:`, {
+        passedTests,
+        totalTests,
+        score: questionScore,
+        percentage: Math.round(questionScore * 100)
+      });
+
+      // Store the test-based score for this question
+      setTestResults(prev => ({
+        ...prev,
+        [currentQuestion.id]: {
+          results,
+          score: questionScore,
+          passedTests,
+          totalTests
+        }
+      }));
+
+      // Also notify parent component about test results for scoring
+      if (onTestResults) {
+        onTestResults(currentQuestion.id, results);
+      }
     }
-  }, [currentQuestion]);
+  }, [currentQuestion, onTestResults]);
+
+  // Helper functions to handle test results format
+  const getTestResultsArray = (questionId: string) => {
+    const testData = testResults[questionId];
+    if (!testData) return [];
+
+    // Check if it's the new format with results property
+    if (typeof testData === 'object' && 'results' in testData) {
+      return testData.results;
+    }
+
+    // Otherwise it's the old array format
+    return Array.isArray(testData) ? testData : [];
+  };
+
+  const getTestResultsScore = (questionId: string) => {
+    const testData = testResults[questionId];
+    if (!testData) return null;
+
+    // Check if it's the new format with score property
+    if (typeof testData === 'object' && 'score' in testData) {
+      return {
+        score: testData.score || 0,
+        passedTests: testData.passedTests || 0,
+        totalTests: testData.totalTests || 0
+      };
+    }
+
+    // Calculate from old array format
+    const results = Array.isArray(testData) ? testData : [];
+    const passedTests = results.filter(r => r.passed).length;
+    const totalTests = results.length;
+    return {
+      score: totalTests > 0 ? passedTests / totalTests : 0,
+      passedTests,
+      totalTests
+    };
+  };
 
   // Handle submit with confirmation
   const handleSubmitClick = useCallback(() => {
@@ -655,16 +726,24 @@ const EnhancedAssessmentView: React.FC<EnhancedAssessmentViewProps> = ({
                     )}>
                       <div className="space-y-4">
                         {/* Test Results Section */}
-                        {testResults[currentQuestion.id] && testResults[currentQuestion.id].length > 0 && (
-                          <div>
-                            <h4 className="font-semibold mb-3 flex items-center gap-2">
-                              Test Results
-                              <Badge variant="outline" className="text-xs">
-                                {testResults[currentQuestion.id].filter(r => r.passed).length}/{testResults[currentQuestion.id].length} Passed
-                              </Badge>
-                            </h4>
-                            <div className="space-y-3">
-                              {testResults[currentQuestion.id].map((result: any, index: number) => {
+                        {(() => {
+                          const results = getTestResultsArray(currentQuestion.id);
+                          const scoreData = getTestResultsScore(currentQuestion.id);
+                          return results.length > 0 ? (
+                            <div>
+                              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                Test Results
+                                <Badge variant="outline" className="text-xs">
+                                  {scoreData?.passedTests || 0}/{scoreData?.totalTests || 0} Passed
+                                </Badge>
+                                {scoreData && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Score: {Math.round(scoreData.score * 100)}%
+                                  </Badge>
+                                )}
+                              </h4>
+                              <div className="space-y-3">
+                                {results.map((result: any, index: number) => {
                                 const isFirstTestCase = result.testCase === 1;
 
                                 return (
@@ -740,7 +819,8 @@ const EnhancedAssessmentView: React.FC<EnhancedAssessmentViewProps> = ({
                               })}
                             </div>
                           </div>
-                        )}
+                        ) : null;
+                        })()}
 
                         {/* Original Test Cases Section */}
                         <div>
@@ -749,7 +829,8 @@ const EnhancedAssessmentView: React.FC<EnhancedAssessmentViewProps> = ({
                             <div className="space-y-3 mt-3">
                               {currentQuestion.test_cases.map((testCase: any, index: number) => {
                                 const isFirstTestCase = index === 0;
-                                const testResult = testResults[currentQuestion.id]?.find(r => r.testCase === index + 1);
+                                const results = getTestResultsArray(currentQuestion.id);
+                                const testResult = results.find((r: any) => r.testCase === index + 1);
 
                                 return (
                                   <Card key={index} className={cn(

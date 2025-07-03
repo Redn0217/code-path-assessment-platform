@@ -39,6 +39,7 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
   const [timeRemaining, setTimeRemaining] = useState(60 * 45); // Default 45 minutes
   const [startTime] = useState(Date.now());
   const [insufficientQuestions, setInsufficientQuestions] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, any[]>>({});
   
   // Fetch assessment configuration for time settings
   const { data: config } = useQuery({
@@ -178,6 +179,14 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
       [questionId]: answer
     }));
   };
+
+  const handleTestResults = (questionId: string, results: any[]) => {
+    console.log(`🏆 Received test results for question ${questionId}:`, results);
+    setTestResults(prev => ({
+      ...prev,
+      [questionId]: results
+    }));
+  };
   
   const currentQuestion = questions[currentQuestionIndex];
   
@@ -194,19 +203,48 @@ const AssessmentView = ({ domain, difficulty, onComplete }: { domain: any; diffi
     const detailedResults: any[] = [];
     const strongAreas: string[] = [];
     const weakAreas: string[] = [];
-    
+
     questions.forEach((question: any) => {
       const userAnswer = answers[question.id];
-      const isCorrect = userAnswer === question.correct_answer;
-      
+      let isCorrect = false;
+      let questionScore = 0;
+
+      if (question.question_type === 'coding') {
+        // For coding questions, use test case results for scoring
+        const questionTestResults = testResults[question.id];
+        if (questionTestResults && questionTestResults.length > 0) {
+          const passedTests = questionTestResults.filter(r => r.passed).length;
+          const totalTests = questionTestResults.length;
+          questionScore = totalTests > 0 ? passedTests / totalTests : 0;
+          isCorrect = questionScore >= 0.5; // Consider 50%+ test cases passed as correct
+
+          console.log(`🏆 Coding Question ${question.id} Score:`, {
+            passedTests,
+            totalTests,
+            score: questionScore,
+            percentage: Math.round(questionScore * 100),
+            isCorrect
+          });
+        } else {
+          // No test results available, fallback to simple comparison
+          isCorrect = userAnswer === question.correct_answer;
+        }
+      } else {
+        // For MCQ and other question types, use simple comparison
+        isCorrect = userAnswer === question.correct_answer;
+        questionScore = isCorrect ? 1 : 0;
+      }
+
       if (isCorrect) correctAnswers++;
-      
+
       detailedResults.push({
         questionId: question.id,
         question: question.question_text,
         userAnswer,
         correctAnswer: question.correct_answer,
         isCorrect,
+        questionScore,
+        testResults: question.question_type === 'coding' ? testResults[question.id] : undefined,
         explanation: question.explanation,
         tags: question.tags,
       });

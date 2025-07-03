@@ -40,6 +40,7 @@ const Assessment = () => {
   const [timeLeft, setTimeLeft] = useState(1800); // Default 30 minutes
   const [isStarted, setIsStarted] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+  const [testResults, setTestResults] = useState<Record<string, any[]>>({});
 
   const domainInfo = domain ? domains[domain as keyof typeof domains] : null;
 
@@ -109,8 +110,13 @@ const Assessment = () => {
           id: item.question_bank_id, // Use question bank ID as the main ID
           module_id: item.module_id,
           created_at: item.created_at,
-          // Flatten question bank content
+          // Flatten question bank content with proper typing
           ...item.question_bank,
+          question_type: item.question_bank.question_type as 'mcq' | 'coding' | 'scenario',
+          difficulty: item.question_bank.difficulty as 'beginner' | 'intermediate' | 'advanced',
+          options: Array.isArray(item.question_bank.options) ? item.question_bank.options as string[] : undefined,
+          test_cases: Array.isArray(item.question_bank.test_cases) ? item.question_bank.test_cases as any[] : [],
+          tags: Array.isArray(item.question_bank.tags) ? item.question_bank.tags as string[] : [],
         })) || [];
 
         console.log('Fallback data transformed:', transformedFallbackData.length, 'questions');
@@ -181,36 +187,17 @@ const Assessment = () => {
     );
   }
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
 
-  const handleAnswerSelect = (answer: number | string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [currentQuestion]: answer
-    }));
-  };
-
-  const handleNext = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    } else {
-      handleSubmitAssessment();
-    }
-  };
 
   const handleSubmitAssessment = async () => {
     setIsCompleted(true);
 
     // Calculate number of attempted questions (non-undefined answers)
-    const attemptedQuestions = questions.filter((_, index) =>
+    questions.filter((_, index) =>
       answers[index] !== undefined && answers[index] !== null && answers[index] !== ''
     ).length;
 
-    // Calculate score with proper type checking
+    // Calculate score with proper type checking and test case results
     const score = questions.reduce((total, question, index) => {
       const answer = answers[index];
       if (answer === undefined) return total;
@@ -223,9 +210,26 @@ const Assessment = () => {
           return total + (answer === correctIndex ? 1 : 0);
         }
       } else if (question?.question_type === 'coding') {
-        // For coding questions, we'll do a simple string comparison for now
-        // In a real implementation, you'd want to run the code and check test cases
-        return total + (answer.toString().trim() === question.correct_answer?.trim() ? 1 : 0);
+        // For coding questions, use test case results for scoring
+        const questionTestResults = testResults[question.id];
+        if (questionTestResults && questionTestResults.length > 0) {
+          const passedTests = questionTestResults.filter(r => r.passed).length;
+          const totalTests = questionTestResults.length;
+          const questionScore = totalTests > 0 ? passedTests / totalTests : 0;
+
+          console.log(`🏆 Coding Question ${question.id} Final Score:`, {
+            passedTests,
+            totalTests,
+            score: questionScore,
+            percentage: Math.round(questionScore * 100)
+          });
+
+          // Add the percentage score (0-1) to total
+          return total + questionScore;
+        } else {
+          // Fallback to simple comparison if no test results
+          return total + (answer.toString().trim() === question.correct_answer?.trim() ? 1 : 0);
+        }
       }
       return total + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
@@ -355,7 +359,17 @@ const Assessment = () => {
           return total + (answer === correctIndex ? 1 : 0);
         }
       } else if (question?.question_type === 'coding') {
-        return total + (answer.toString().trim() === question.correct_answer?.trim() ? 1 : 0);
+        // For coding questions, use test case results for scoring
+        const questionTestResults = testResults[question.id];
+        if (questionTestResults && questionTestResults.length > 0) {
+          const passedTests = questionTestResults.filter(r => r.passed).length;
+          const totalTests = questionTestResults.length;
+          const questionScore = totalTests > 0 ? passedTests / totalTests : 0;
+          return total + questionScore;
+        } else {
+          // Fallback to simple comparison if no test results
+          return total + (answer.toString().trim() === question.correct_answer?.trim() ? 1 : 0);
+        }
       }
       return total + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
@@ -475,6 +489,14 @@ const Assessment = () => {
     }
   };
 
+  const handleTestResults = (questionId: string, results: any[]) => {
+    console.log(`🏆 Received test results for question ${questionId}:`, results);
+    setTestResults(prev => ({
+      ...prev,
+      [questionId]: results
+    }));
+  };
+
   const handleEnhancedSubmit = () => {
     handleSubmitAssessment(); // Submit directly, bypass question navigation logic
   };
@@ -491,6 +513,7 @@ const Assessment = () => {
           timeLeft={timeLeft}
           isSubmitting={false}
           title={selectedModule?.name || 'Practice Assessment'}
+          onTestResults={handleTestResults}
         />
       </AuthenticatedLayout>
     );
