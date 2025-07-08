@@ -38,142 +38,168 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bright-bg-primary">
-        {/* Modern Sticky Header */}
-        <header className="modern-navbar sticky top-0 z-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+        {/* Floating Geometric Shapes */}
+        <div className="geometric-bg">
+          <div className="orb-bg orb-1"></div>
+          <div className="orb-bg orb-2"></div>
+          <div className="orb-bg orb-3"></div>
+          <div className="orb-bg orb-4"></div>
+          
+          {/* Floating Shapes */}
+          <div className="shape shape-circle w-16 h-16 top-[20%] left-[10%] animate-float" style={{ animationDelay: '0s' }}></div>
+          <div className="shape shape-square w-12 h-12 top-[70%] right-[15%] animate-drift" style={{ animationDelay: '2s' }}></div>
+          <div className="shape shape-circle w-20 h-20 bottom-[30%] left-[20%] animate-pulse-glow" style={{ animationDelay: '1s' }}></div>
+          <div className="shape shape-square w-8 h-8 top-[40%] right-[30%] animate-spin-slow"></div>
+        </div>
+
+        {/* Modern Glass Header */}
+        <header className="fixed top-0 w-full z-50 glass-card border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-3">
-              <div className="flex items-center space-x-3">
-                <img src="/logo.png" alt="evalu8 Logo" className="h-8 w-auto navbar-logo" />
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center space-x-3 animate-slide-in-left">
+                <img src="/logo.png" alt="evalu8 Logo" className="h-10 w-auto hover:scale-110 transition-transform duration-300" />
+                <span className="text-2xl font-bold gradient-text">evalu8</span>
               </div>
               <Button
                 onClick={() => navigate('/auth')}
-                className="navbar-button bright-button-primary"
+                className="modern-button px-8 py-2 rounded-full animate-slide-in-right"
               >
-                Login / Register
+                🚀 Get Started
               </Button>
             </div>
           </div>
         </header>
 
-        {/* Animated Hero Section */}
-        <section className="animated-hero-bg py-32 relative">
-          {/* Floating Code Particles */}
+        {/* Hero Section with Advanced Animations */}
+        <section className="min-h-screen flex items-center justify-center relative pt-20">
+          {/* Enhanced Code Particles */}
           <div className="code-particles">
-            <div className="particle">{'<html>'}</div>
-            <div className="particle">{'function()'}</div>
-            <div className="particle">{'{ }'}</div>
-            <div className="particle">{'console.log()'}</div>
-            <div className="particle">{'=> {}'}</div>
-            <div className="particle">{'class'}</div>
-            <div className="particle">{'import'}</div>
-            <div className="particle">{'const'}</div>
-            <div className="particle">{'return'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '0s' }}>{'<html>'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '0.5s' }}>{'function()'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '1s' }}>{'{ }'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '1.5s' }}>{'console.log()'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '2s' }}>{'=> {}'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '2.5s' }}>{'class'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '3s' }}>{'import'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '3.5s' }}>{'const'}</div>
+            <div className="particle animate-fade-in-up" style={{ animationDelay: '4s' }}>{'return'}</div>
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            <h2 className="fahkwang-title text-6xl font-bold bright-text-primary mb-6 drop-shadow-lg">
-              Comprehensive Technical Assessment Platform
-            </h2>
-            <p className="text-xl bright-text-primary mb-8 max-w-4xl mx-auto drop-shadow-md">
-              <Rocket className="inline h-5 w-5 mr-2 text-green-600" />
-              Evaluate your skills across multiple technology domains with interactive coding challenges,
-              detailed reports, and personalized improvement suggestions.
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-4 bright-text-secondary text-lg mb-8">
-              <div className="flex items-center space-x-2 bg-gray-100/60 px-4 py-2 rounded-full font-light">
-                <Target className="h-5 w-5 text-green-600" />
-                <span className="bright-text-accent-green">Interactive Challenges</span>
+            <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <h1 className="text-7xl md:text-8xl font-bold gradient-text mb-8 fahkwang-title">
+                evalu8
+              </h1>
+            </div>
+            
+            <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              <p className="text-2xl md:text-3xl text-white/90 mb-6 font-light">
+                Master Your Technical Skills
+              </p>
+            </div>
+            
+            <div className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+              <p className="text-lg text-white/70 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Comprehensive technical assessment platform with interactive coding challenges, 
+                detailed analytics, and personalized improvement suggestions.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center items-center gap-6 mb-12 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+              <div className="glass-card px-6 py-3 rounded-full interactive-element">
+                <div className="flex items-center space-x-2 text-white">
+                  <Target className="h-5 w-5 text-green-400" />
+                  <span>Interactive Challenges</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2 bg-gray-100/60 px-4 py-2 rounded-full font-light">
-                <BarChart3 className="h-5 w-5 text-gray-600" />
-                <span className="text-gray-600">Detailed Analytics</span>
+              <div className="glass-card px-6 py-3 rounded-full interactive-element">
+                <div className="flex items-center space-x-2 text-white">
+                  <BarChart3 className="h-5 w-5 text-purple-400" />
+                  <span>Detailed Analytics</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2 bg-gray-100/60 px-4 py-2 rounded-full font-light">
-                <Target className="h-5 w-5 text-green-600" />
-                <span className="bright-text-accent-green">Skill Improvement</span>
+              <div className="glass-card px-6 py-3 rounded-full interactive-element">
+                <div className="flex items-center space-x-2 text-white">
+                  <GraduationCap className="h-5 w-5 text-orange-400" />
+                  <span>Skill Growth</span>
+                </div>
               </div>
             </div>
-            <Button
-              size="lg"
-              onClick={() => navigate('/auth')}
-              className="bright-button-primary text-xl px-12 py-4 rounded-full shadow-2xl pulse-animation font-bold"
-            >
-              🚀 Start Your Assessment Journey
-            </Button>
+
+            <div className="animate-fade-in-up" style={{ animationDelay: '1s' }}>
+              <Button
+                size="lg"
+                onClick={() => navigate('/auth')}
+                className="modern-button text-xl px-12 py-6 rounded-full text-white font-bold hover:scale-105 transition-all duration-300"
+              >
+                <Rocket className="h-6 w-6 mr-3" />
+                Start Your Journey
+              </Button>
+            </div>
           </div>
         </section>
 
-        {/* Enhanced Features Section - Bright Green/Orange Theme */}
-        <section className="py-20 bright-bg-secondary">
+        {/* Features Section with Glass Cards */}
+        <section className="py-20 bg-gradient-to-b from-transparent to-black/20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h3 className="fahkwang-title text-4xl font-bold bright-text-primary mb-4">
+            <div className="text-center mb-16 animate-fade-in-up">
+              <h3 className="text-5xl font-bold gradient-text mb-6 fahkwang-title">
                 Platform Features
               </h3>
-              <p className="text-xl bright-text-secondary max-w-2xl mx-auto">
+              <p className="text-xl text-white/80 max-w-2xl mx-auto">
                 Discover powerful tools designed to accelerate your coding journey
               </p>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="bright-card">
-                <CardHeader className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="p-4 bg-gradient-to-br from-green-100 to-gray-100 rounded-full">
-                      <Target className="h-8 w-8 text-green-600" />
+              <div className="glass-card p-8 rounded-3xl interactive-element animate-slide-in-left">
+                <div className="text-center">
+                  <div className="flex justify-center mb-6">
+                    <div className="p-6 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-full backdrop-blur-sm animate-float">
+                      <Target className="h-12 w-12 text-green-400" />
                     </div>
                   </div>
-                  <CardTitle className="text-2xl bright-text-accent-green fahkwang-title">Practice Hub</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-lg text-center bright-text-secondary">
+                  <h4 className="text-3xl font-bold text-white mb-4 fahkwang-title">Practice Hub</h4>
+                  <p className="text-white/80 text-lg mb-6 leading-relaxed">
                     Practice with individual domain assessments. Take unlimited attempts to improve your skills in specific areas.
-                    <div className="mt-4 flex justify-center space-x-4 text-sm font-medium">
-                      <span className="flex items-center space-x-1 text-green-600">
-                        <Target className="h-4 w-4" />
-                        <span>Unlimited attempts</span>
-                      </span>
-                      <span className="flex items-center space-x-1 text-gray-600">
-                        <BarChart3 className="h-4 w-4" />
-                        <span>Multiple domains</span>
-                      </span>
-                      <span className="flex items-center space-x-1 text-green-600">
-                        <GraduationCap className="h-4 w-4" />
-                        <span>Skill building</span>
-                      </span>
+                  </p>
+                  <div className="flex justify-center space-x-6 text-sm">
+                    <div className="flex items-center space-x-2 text-green-400">
+                      <Target className="h-4 w-4" />
+                      <span>Unlimited attempts</span>
                     </div>
-                  </CardDescription>
-                </CardContent>
-              </Card>
-              <Card className="bright-card">
-                <CardHeader className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="p-4 bg-gradient-to-br from-gray-100 to-green-100 rounded-full">
-                      <Trophy className="h-8 w-8 text-gray-600" />
+                    <div className="flex items-center space-x-2 text-purple-400">
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Multiple domains</span>
                     </div>
                   </div>
-                  <CardTitle className="text-2xl text-gray-600 fahkwang-title">Mastery Assessments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-lg text-center bright-text-secondary">
-                    Take comprehensive one-time certification assessments that test multiple domains simultaneously.
-                    <div className="mt-4 flex justify-center space-x-4 text-sm font-medium">
-                      <span className="flex items-center space-x-1 text-gray-600">
-                        <Trophy className="h-4 w-4" />
-                        <span>Certification ready</span>
-                      </span>
-                      <span className="flex items-center space-x-1 text-green-600">
-                        <Target className="h-4 w-4" />
-                        <span>Comprehensive testing</span>
-                      </span>
-                      <span className="flex items-center space-x-1 text-gray-600">
-                        <BarChart3 className="h-4 w-4" />
-                        <span>Detailed reports</span>
-                      </span>
+                </div>
+              </div>
+              
+              <div className="glass-card p-8 rounded-3xl interactive-element animate-slide-in-right">
+                <div className="text-center">
+                  <div className="flex justify-center mb-6">
+                    <div className="p-6 bg-gradient-to-br from-purple-400/20 to-purple-600/20 rounded-full backdrop-blur-sm animate-pulse-glow">
+                      <Trophy className="h-12 w-12 text-purple-400" />
                     </div>
-                  </CardDescription>
-                </CardContent>
-              </Card>
+                  </div>
+                  <h4 className="text-3xl font-bold text-white mb-4 fahkwang-title">Mastery Assessments</h4>
+                  <p className="text-white/80 text-lg mb-6 leading-relaxed">
+                    Take comprehensive one-time certification assessments that test multiple domains simultaneously.
+                  </p>
+                  <div className="flex justify-center space-x-6 text-sm">
+                    <div className="flex items-center space-x-2 text-orange-400">
+                      <Trophy className="h-4 w-4" />
+                      <span>Certification ready</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-green-400">
+                      <Target className="h-4 w-4" />
+                      <span>Comprehensive</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -183,79 +209,100 @@ const Index = () => {
 
   return (
     <AuthenticatedLayout>
-      {/* Animated Hero Section */}
-      <section className="animated-hero-bg py-20 relative">
-        {/* Floating Code Particles */}
+      {/* Modern Dashboard Hero */}
+      <section className="bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 py-20 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="geometric-bg">
+          <div className="orb-bg orb-1"></div>
+          <div className="orb-bg orb-2"></div>
+          <div className="shape shape-circle w-16 h-16 top-[15%] left-[8%] animate-float"></div>
+          <div className="shape shape-square w-12 h-12 top-[60%] right-[10%] animate-drift"></div>
+          <div className="shape shape-circle w-8 h-8 bottom-[25%] left-[15%] animate-spin-slow"></div>
+        </div>
+
+        {/* Enhanced Code Particles */}
         <div className="code-particles">
-          <div className="particle">{'<code>'}</div>
-          <div className="particle">{'function()'}</div>
-          <div className="particle">{'{ }'}</div>
-          <div className="particle">{'console.log()'}</div>
-          <div className="particle">{'=> {}'}</div>
-          <div className="particle">{'class'}</div>
-          <div className="particle">{'import'}</div>
-          <div className="particle">{'const'}</div>
-          <div className="particle">{'return'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '0s' }}>{'<code>'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '0.5s' }}>{'function()'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '1s' }}>{'{ }'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '1.5s' }}>{'console.log()'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '2s' }}>{'=> {}'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '2.5s' }}>{'class'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '3s' }}>{'import'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '3.5s' }}>{'const'}</div>
+          <div className="particle animate-fade-in-up" style={{ animationDelay: '4s' }}>{'return'}</div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="fahkwang-title text-5xl font-bold bright-text-primary mb-6 drop-shadow-lg">
-            Welcome to Your Assessment Dashboard
-          </h2>
-          <div className="text-xl bright-text-primary mb-8 max-w-4xl mx-auto drop-shadow-md">
-            <div className="flex flex-wrap items-center justify-center gap-6 font-light tracking-wide">
-              <div className="flex items-center space-x-2 motivational-text">
-                <Target className="h-5 w-5 text-green-600" />
-                <span>Master your coding skills</span>
+          <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <h2 className="text-6xl font-bold gradient-text mb-8 fahkwang-title">
+              Welcome Back
+            </h2>
+          </div>
+          
+          <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <p className="text-2xl text-white/90 mb-8 font-light">
+              Continue Your Learning Journey
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+            <div className="glass-card px-6 py-3 rounded-full interactive-element">
+              <div className="flex items-center space-x-2 text-white">
+                <Target className="h-5 w-5 text-green-400 animate-pulse" />
+                <span>Master your skills</span>
               </div>
-              <div className="flex items-center space-x-2 motivational-text">
-                <Rocket className="h-5 w-5 text-gray-600" />
-                <span>Boost your confidence</span>
+            </div>
+            <div className="glass-card px-6 py-3 rounded-full interactive-element">
+              <div className="flex items-center space-x-2 text-white">
+                <Rocket className="h-5 w-5 text-purple-400 animate-bounce" />
+                <span>Boost confidence</span>
               </div>
-              <div className="flex items-center space-x-2 motivational-text">
-                <Lightbulb className="h-5 w-5 text-green-600" />
-                <span>Unlock your potential</span>
+            </div>
+            <div className="glass-card px-6 py-3 rounded-full interactive-element">
+              <div className="flex items-center space-x-2 text-white">
+                <Lightbulb className="h-5 w-5 text-orange-400 animate-pulse" />
+                <span>Unlock potential</span>
               </div>
             </div>
           </div>
-          <p className="text-lg bright-text-secondary mb-8 max-w-2xl mx-auto">
-            Choose between practice sessions for specific domains, comprehensive mastery assessments, or check your performance history.
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-4 bright-text-secondary text-sm">
-            <div className="flex items-center space-x-2 bg-gray-100/60 px-3 py-2 rounded-full font-light">
-              <Dumbbell className="h-4 w-4 text-green-600" />
-              <span className="bright-text-accent-green">Challenge Yourself</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-gray-100/60 px-3 py-2 rounded-full font-light">
-              <GraduationCap className="h-4 w-4 text-gray-600" />
-              <span className="text-gray-600">Learn & Grow</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-gray-100/60 px-3 py-2 rounded-full font-light">
-              <Trophy className="h-4 w-4 text-green-600" />
-              <span className="bright-text-accent-green">Achieve Excellence</span>
-            </div>
+          
+          <div className="animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+            <p className="text-lg text-white/70 mb-8 max-w-2xl mx-auto">
+              Choose between practice sessions, comprehensive assessments, or check your performance history.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Enhanced Tabs Section - Bright Green/Orange Theme */}
-      <section className="py-12 bright-bg-secondary">
+      {/* Modern Dashboard Navigation */}
+      <section className="py-12 bg-gradient-to-b from-slate-900 to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h3 className="fahkwang-title text-2xl font-bold bright-text-primary mb-2">Choose Your Path</h3>
-            <p className="bright-text-secondary">Select the learning experience that fits your goals</p>
+          <div className="text-center mb-8 animate-fade-in-up">
+            <h3 className="text-4xl font-bold gradient-text mb-4 fahkwang-title">Choose Your Path</h3>
+            <p className="text-white/80 text-lg">Select the learning experience that fits your goals</p>
           </div>
+          
           <Tabs defaultValue="practice" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto mb-12 bright-bg-primary shadow-lg border border-gray-200/60">
-              <TabsTrigger value="practice" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/80 data-[state=active]:to-gray-400/80 data-[state=active]:text-white bright-text-secondary font-semibold flex items-center space-x-2">
+            <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto mb-12 glass-card border-white/10 bg-white/5">
+              <TabsTrigger 
+                value="practice" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white text-white/70 font-semibold flex items-center space-x-2 transition-all duration-300"
+              >
                 <Target className="h-4 w-4" />
                 <span>Practice Hub</span>
               </TabsTrigger>
-              <TabsTrigger value="mastery" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-500/80 data-[state=active]:to-green-500/80 data-[state=active]:text-white bright-text-secondary font-semibold flex items-center space-x-2">
+              <TabsTrigger 
+                value="mastery" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white text-white/70 font-semibold flex items-center space-x-2 transition-all duration-300"
+              >
                 <Trophy className="h-4 w-4" />
                 <span>Mastery Assessments</span>
               </TabsTrigger>
-              <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/80 data-[state=active]:to-gray-500/80 data-[state=active]:text-white bright-text-secondary font-semibold flex items-center space-x-2">
+              <TabsTrigger 
+                value="performance" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white text-white/70 font-semibold flex items-center space-x-2 transition-all duration-300"
+              >
                 <BarChart3 className="h-4 w-4" />
                 <span>Performance</span>
               </TabsTrigger>
