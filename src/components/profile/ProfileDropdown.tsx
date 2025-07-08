@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Calendar, Settings, Lock, Palette } from 'lucide-react';
+import { User, Mail, Calendar, Settings, Lock, Palette, LogOut } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import AvatarSelector from './AvatarSelector';
 import PasswordChangeForm from './PasswordChangeForm';
 import ActivityCalendar from './ActivityCalendar';
@@ -54,6 +56,31 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       .slice(0, 2);
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast({
+          title: "Logout failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Logged out",
+          description: "You have been successfully logged out",
+        });
+        onClose();
+      }
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getAvatarDisplay = (avatarUrl: string | null) => {
     if (!avatarUrl) return null;
     if (avatarUrl.startsWith('avatar-')) {
@@ -95,12 +122,12 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   return (
     <div 
       ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+      className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-200/60 backdrop-blur-sm z-50"
     >
-      <Card className="border-0 shadow-none">
-        <CardHeader className="pb-3">
+      <Card className="border-0 shadow-none bg-gradient-to-br from-white via-gray-50/50 to-white">
+        <CardHeader className="pb-3 bg-gradient-to-r from-brand-green/5 via-transparent to-brand-green/5 rounded-t-xl">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Profile</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-800">My Profile</CardTitle>
             <div className="flex space-x-1">
               <Button
                 variant={activeTab === 'profile' ? 'default' : 'ghost'}
@@ -135,51 +162,65 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
         
         <CardContent className="pt-0">
           {activeTab === 'profile' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* User Info */}
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={getAvatarDisplay(userProfile.avatar_url) || undefined} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">
-                    {getAvatarDisplay(userProfile.avatar_url) ? (
-                      <span className="text-2xl">{getAvatarDisplay(userProfile.avatar_url)}</span>
-                    ) : userProfile.full_name ? (
-                      getInitials(userProfile.full_name)
-                    ) : (
-                      <User className="h-6 w-6" />
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg" style={{ fontFamily: 'Fahkwang, sans-serif' }}>
-                    {userProfile.full_name || 'Unknown User'}
-                  </h3>
-                  <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
-                    <Mail className="h-3 w-3" />
-                    <span>{userProfile.email}</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-sm text-gray-600">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      Joined {userProfile.created_at 
-                        ? formatDistanceToNow(new Date(userProfile.created_at), { addSuffix: true })
-                        : 'recently'
-                      }
-                    </span>
+              <div className="bg-gradient-to-r from-brand-green/5 to-transparent p-4 rounded-lg border border-brand-green/10">
+                <div className="flex items-center space-x-4 mb-4">
+                  <Avatar className="h-20 w-20 ring-2 ring-brand-green/20 ring-offset-2">
+                    <AvatarImage src={getAvatarDisplay(userProfile.avatar_url) || undefined} />
+                    <AvatarFallback className="bg-brand-green/10 text-brand-green text-xl font-semibold">
+                      {getAvatarDisplay(userProfile.avatar_url) ? (
+                        <span className="text-3xl">{getAvatarDisplay(userProfile.avatar_url)}</span>
+                      ) : userProfile.full_name ? (
+                        getInitials(userProfile.full_name)
+                      ) : (
+                        <User className="h-8 w-8" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-bold text-xl text-gray-800 mb-2" style={{ fontFamily: 'Fahkwang, sans-serif' }}>
+                      {userProfile.full_name || 'Unknown User'}
+                    </h3>
+                    <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
+                      <Mail className="h-4 w-4 text-brand-green" />
+                      <span className="font-medium">{userProfile.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-sm text-gray-600">
+                      <Calendar className="h-4 w-4 text-brand-green" />
+                      <span>
+                        Member since {userProfile.created_at 
+                          ? formatDistanceToNow(new Date(userProfile.created_at), { addSuffix: true })
+                          : 'recently'
+                        }
+                      </span>
+                    </div>
                   </div>
                 </div>
+                
+                {/* Logout Button */}
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  className="w-full bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 transition-all duration-200"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
               </div>
 
-              <Separator />
+              <Separator className="bg-gray-200" />
 
               {/* Activity Calendar */}
               <div>
-                <h4 className="font-medium text-sm mb-3 flex items-center">
-                  <Settings className="h-4 w-4 mr-2" />
+                <h4 className="font-semibold text-base mb-4 flex items-center text-gray-800">
+                  <Settings className="h-5 w-5 mr-2 text-brand-green" />
                   Activity Overview
                 </h4>
-                <ActivityCalendar userId={userProfile.id} />
+                <div className="bg-gray-50/50 p-3 rounded-lg border border-gray-200/60">
+                  <ActivityCalendar userId={userProfile.id} />
+                </div>
               </div>
             </div>
           )}

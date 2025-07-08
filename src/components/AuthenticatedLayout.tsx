@@ -150,20 +150,6 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
                   onProfileUpdate={() => fetchUserProfile(user.id)}
                 />
               )}
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className={`navbar-button flex items-center space-x-2 bright-button-secondary ${
-                  isNavigationRestricted
-                    ? 'cursor-not-allowed opacity-60'
-                    : ''
-                }`}
-                disabled={isNavigationRestricted}
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </Button>
             </div>
           </div>
         </div>
