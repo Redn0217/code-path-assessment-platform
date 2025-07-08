@@ -184,8 +184,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       </div>
 
       {/* Profile Modal */}
-      <Dialog open={activeModal === 'profile'} onOpenChange={() => setActiveModal(null)}>
-        <DialogContent className="max-w-md bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl">
+      <Dialog open={activeModal === 'profile'} onOpenChange={(open) => !open && setActiveModal(null)}>
+        <DialogContent className="max-w-md bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <User className="h-5 w-5 text-blue-600" />
@@ -242,8 +242,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       </Dialog>
 
       {/* Change Password Modal */}
-      <Dialog open={activeModal === 'password'} onOpenChange={() => setActiveModal(null)}>
-        <DialogContent className="max-w-md bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl">
+      <Dialog open={activeModal === 'password'} onOpenChange={(open) => !open && setActiveModal(null)}>
+        <DialogContent className="max-w-md bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Lock className="h-5 w-5 text-purple-600" />
@@ -255,8 +255,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       </Dialog>
 
       {/* Activity Modal */}
-      <Dialog open={activeModal === 'activity'} onOpenChange={() => setActiveModal(null)}>
-        <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl">
+      <Dialog open={activeModal === 'activity'} onOpenChange={(open) => !open && setActiveModal(null)}>
+        <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Settings className="h-5 w-5 text-green-600" />
