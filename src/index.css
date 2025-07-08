@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,53 +8,43 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 220 20% 15%;
+    --foreground: 210 40% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 210 40% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 210 40% 8%;
 
-    --primary: 210 100% 60%;
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 98%;
-    --secondary-foreground: 220 20% 15%;
+    --secondary: 142 76% 95%;
+    --secondary-foreground: 210 40% 8%;
 
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 270 95% 75%;
+    --accent: 142 76% 36%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 210 100% 60%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142 76% 36%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 20% 15%;
-    --sidebar-primary: 210 100% 60%;
+    --sidebar-background: 210 40% 8%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 142 76% 36%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 220 20% 15%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 210 100% 60%;
-
-    /* Light elegant gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(210 100% 60%), hsl(270 95% 75%));
-    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 40% 98%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 97%), hsl(270 100% 97%), hsl(190 100% 97%));
-    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1));
-    
-    /* Glass effect shadows */
-    --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
-    --shadow-glass-hover: 0 12px 40px rgba(31, 38, 135, 0.5);
+    --sidebar-accent: 210 40% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 210 40% 15%;
+    --sidebar-ring: 142 76% 36%;
   }
 
   .dark {
@@ -205,121 +196,6 @@
   .particle:nth-child(8) { left: 80%; animation-delay: 14s; }
   .particle:nth-child(9) { left: 90%; animation-delay: 16s; }
 
-  /* Enhanced Glass Morphism Effects */
-  .glass-card {
-    background: var(--gradient-glass);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: var(--shadow-glass);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .glass-card:hover {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-glass-hover);
-  }
-
-  /* Floating Geometric Shapes */
-  .geometric-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    pointer-events: none;
-  }
-
-  .shape {
-    position: absolute;
-    opacity: 0.1;
-  }
-
-  .shape-circle {
-    border-radius: 50%;
-    background: linear-gradient(45deg, #22c55e, #16a34a);
-  }
-
-  .shape-square {
-    background: linear-gradient(45deg, #f97316, #ea580c);
-  }
-
-  .shape-triangle {
-    width: 0;
-    height: 0;
-    background: transparent;
-    border-style: solid;
-  }
-
-  /* Interactive Hover Effects */
-  .interactive-element {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-  }
-
-  .interactive-element:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  }
-
-  /* Advanced Button Styles */
-  .modern-button {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    border: none;
-    color: white;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
-  }
-
-  .modern-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.5s ease;
-  }
-
-  .modern-button:hover::before {
-    left: 100%;
-  }
-
-  .modern-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
-  }
-
-  /* Gradient Text Effects */
-  .gradient-text {
-    background: linear-gradient(135deg, #22c55e, #f97316, #16a34a, #ea580c);
-    background-size: 400% 400%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientShift 4s ease infinite;
-  }
-
-  /* Pulsing Orb Background */
-  .orb-bg {
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(34, 197, 94, 0.3), transparent);
-    animation: pulse-glow 4s ease-in-out infinite;
-  }
-
-  .orb-1 { top: 10%; left: 15%; animation-delay: 0s; }
-  .orb-2 { top: 60%; right: 20%; animation-delay: 1s; }
-  .orb-3 { bottom: 20%; left: 30%; animation-delay: 2s; }
-  .orb-4 { top: 30%; right: 40%; animation-delay: 3s; }
-
   /* Modern Transparent Navbar Styles */
   .modern-navbar {
     backdrop-filter: blur(20px);
@@ -380,6 +256,11 @@
     animation: sparkle 2s ease-in-out infinite;
   }
 
+  @keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.8) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  }
+
   .inspiring-text {
     background: linear-gradient(45deg, #22c55e, #f97316, #16a34a, #ea580c);
     background-size: 300% 300%;
@@ -388,6 +269,41 @@
     background-clip: text;
     animation: gradientShift 4s ease infinite;
     font-weight: 600;
+  }
+
+  /* Keyframe Animations */
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes floatingOrbs {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(30px, -30px) rotate(120deg); }
+    66% { transform: translate(-20px, 20px) rotate(240deg); }
+  }
+
+  @keyframes floatUp {
+    0% {
+      transform: translateY(100vh) rotate(0deg);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-100px) rotate(360deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
   }
 
   .pulse-animation {
@@ -426,6 +342,20 @@
     animation: shine 0.6s ease-in-out;
   }
 
+  @keyframes shine {
+    0% {
+      transform: translateX(-100%) translateY(-100%) rotate(45deg);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100%) translateY(100%) rotate(45deg);
+      opacity: 0;
+    }
+  }
+
   /* Motivational text effects - Elegant Green/Grey theme */
   .motivational-text {
     background: linear-gradient(45deg, #22c55e, #6b7280, #16a34a, #9ca3af);
@@ -439,12 +369,38 @@
     letter-spacing: 0.025em;
   }
 
+  /* Success celebration animation */
+  @keyframes celebrate {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.1) rotate(5deg); }
+    50% { transform: scale(1.05) rotate(-5deg); }
+    75% { transform: scale(1.1) rotate(3deg); }
+  }
+
+  .celebrate {
+    animation: celebrate 0.6s ease-in-out;
+  }
+
   /* Floating animation for icons */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
   .float-animation {
     animation: float 3s ease-in-out infinite;
   }
 
   /* Typing effect */
+  @keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  @keyframes blink {
+    50% { border-color: transparent; }
+  }
+
   .typing-effect {
     overflow: hidden;
     border-right: 2px solid;
@@ -537,6 +493,16 @@
   }
 
   /* Enhanced particle effects for bright green/orange theme */
+  .particle {
+    position: absolute;
+    color: rgba(34, 197, 94, 0.7);
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    animation: floatUp 16s linear infinite;
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+    font-weight: 600;
+  }
+
   .particle:nth-child(odd) {
     color: rgba(249, 115, 22, 0.7);
     text-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
@@ -545,95 +511,5 @@
   .particle:nth-child(3n) {
     color: rgba(22, 163, 74, 0.6);
     text-shadow: 0 0 6px rgba(22, 163, 74, 0.3);
-  }
-
-  /* Keyframe Animations */
-  @keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  @keyframes floatingOrbs {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    33% { transform: translate(30px, -30px) rotate(120deg); }
-    66% { transform: translate(-20px, 20px) rotate(240deg); }
-  }
-
-  @keyframes floatUp {
-    0% {
-      transform: translateY(100vh) rotate(0deg);
-      opacity: 0;
-    }
-    10% {
-      opacity: 1;
-    }
-    90% {
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-100px) rotate(360deg);
-      opacity: 0;
-    }
-  }
-
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-
-  @keyframes sparkle {
-    0%, 100% { opacity: 0; transform: scale(0.8) rotate(0deg); }
-    50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
-  }
-
-  @keyframes shine {
-    0% {
-      transform: translateX(-100%) translateY(-100%) rotate(45deg);
-      opacity: 0;
-    }
-    50% {
-      opacity: 1;
-    }
-    100% {
-      transform: translateX(100%) translateY(100%) rotate(45deg);
-      opacity: 0;
-    }
-  }
-
-  @keyframes celebrate {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    25% { transform: scale(1.1) rotate(5deg); }
-    50% { transform: scale(1.05) rotate(-5deg); }
-    75% { transform: scale(1.1) rotate(3deg); }
-  }
-
-  .celebrate {
-    animation: celebrate 0.6s ease-in-out;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-  }
-
-  @keyframes typing {
-    from { width: 0; }
-    to { width: 100%; }
-  }
-
-  @keyframes blink {
-    50% { border-color: transparent; }
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% { 
-      transform: scale(1);
-      opacity: 0.3;
-    }
-    50% { 
-      transform: scale(1.2);
-      opacity: 0.6;
-    }
   }
 }
