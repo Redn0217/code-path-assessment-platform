@@ -4,13 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Lock, User as UserIcon, Bell, Shield } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Lock, User as UserIcon, Bell, Shield, ChevronRight } from 'lucide-react';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import PasswordChangeForm from '@/components/profile/PasswordChangeForm';
 import { useTheme } from '@/contexts/ThemeProvider';
 
 const Settings = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -61,14 +63,32 @@ const Settings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-semibold text-lg mb-4">Change Password</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Update your password to keep your account secure. Make sure to use a strong password.
-                    </p>
-                    <PasswordChangeForm onSuccess={() => {}} />
-                  </div>
+                <div className="space-y-4">
+                  <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-between h-12 text-left border border-gray-200 hover:bg-gray-50"
+                      >
+                        <div className="flex items-center">
+                          <Lock className="h-5 w-5 mr-3 text-brand-green" />
+                          <div>
+                            <p className="font-medium">Change Password</p>
+                            <p className="text-sm text-gray-600">Update your account password</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Change Password</DialogTitle>
+                      </DialogHeader>
+                      <div className="mt-4">
+                        <PasswordChangeForm onSuccess={() => setIsPasswordDialogOpen(false)} />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardContent>
             </Card>
