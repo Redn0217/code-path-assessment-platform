@@ -38,7 +38,7 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      <div className="min-h-screen relative overflow-hidden" style={{background: 'var(--gradient-hero)'}}>
         {/* Floating Geometric Shapes */}
         <div className="geometric-bg">
           <div className="orb-bg orb-1"></div>
@@ -210,7 +210,7 @@ const Index = () => {
   return (
     <AuthenticatedLayout>
       {/* Modern Dashboard Hero */}
-      <section className="bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 py-20 relative overflow-hidden">
+      <section className="py-20 relative overflow-hidden" style={{background: 'var(--gradient-hero)'}}>
         {/* Animated Background Elements */}
         <div className="geometric-bg">
           <div className="orb-bg orb-1"></div>

@@ -7,43 +7,53 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 210 40% 8%;
+    --foreground: 220 20% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 40% 8%;
+    --card-foreground: 220 20% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 40% 8%;
+    --popover-foreground: 220 20% 15%;
 
-    --primary: 142 76% 36%;
+    --primary: 210 100% 60%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 142 76% 95%;
-    --secondary-foreground: 210 40% 8%;
+    --secondary: 210 40% 98%;
+    --secondary-foreground: 220 20% 15%;
 
     --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 142 76% 36%;
+    --accent: 270 95% 75%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 76% 36%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 210 100% 60%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 210 40% 8%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 142 76% 36%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 20% 15%;
+    --sidebar-primary: 210 100% 60%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 210 40% 12%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 210 40% 15%;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 220 20% 15%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 210 100% 60%;
+
+    /* Light elegant gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 60%), hsl(270 95% 75%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 40% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 100% 97%), hsl(270 100% 97%), hsl(190 100% 97%));
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1));
+    
+    /* Glass effect shadows */
+    --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
+    --shadow-glass-hover: 0 12px 40px rgba(31, 38, 135, 0.5);
   }
 
   .dark {
@@ -195,19 +205,19 @@
   .particle:nth-child(8) { left: 80%; animation-delay: 14s; }
   .particle:nth-child(9) { left: 90%; animation-delay: 16s; }
 
-  /* Modern Glass Morphism Effects */
+  /* Enhanced Glass Morphism Effects */
   .glass-card {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--gradient-glass);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: var(--shadow-glass);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-card:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-glass-hover);
   }
 
   /* Floating Geometric Shapes */
