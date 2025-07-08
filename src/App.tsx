@@ -10,6 +10,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Assessment from "./pages/Assessment";
 import MasteryAssessment from "./pages/MasteryAssessment";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Activity from "./pages/Activity";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 
@@ -26,6 +29,9 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/activity" element={<Activity />} />
               <Route path="/assessment/:domain" element={<Assessment />} />
               <Route path="/assessment/mastery/:assessmentId" element={<MasteryAssessment />} />
               <Route path="/admin" element={<Admin />} />

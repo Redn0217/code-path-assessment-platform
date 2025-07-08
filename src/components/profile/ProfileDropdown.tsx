@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Calendar, Settings, Lock, Palette, LogOut, ChevronLeft, Activity } from 'lucide-react';
+import { User, Mail, Calendar, Settings, Lock, Palette, LogOut, ChevronRight, Activity } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -31,7 +32,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   onClose, 
   onProfileUpdate 
 }) => {
-  const [activeView, setActiveView] = useState<'menu' | 'profile' | 'settings' | 'activity'>('menu');
+  const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -80,6 +81,11 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       });
     }
   };
+  
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    onClose();
+  };
 
   const getAvatarDisplay = (avatarUrl: string | null) => {
     if (!avatarUrl) return null;
@@ -119,203 +125,62 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
   if (!userProfile) return null;
 
-  const renderMenuView = () => (
-    <div className="p-4">
-      <div className="space-y-2">
-        <Button
-          variant="ghost"
-          className="w-full justify-start h-12 text-left"
-          onClick={() => setActiveView('profile')}
-        >
-          <User className="h-5 w-5 mr-3 text-brand-green" />
-          <span className="font-medium">Profile</span>
-        </Button>
-        
-        <Button
-          variant="ghost"
-          className="w-full justify-start h-12 text-left"
-          onClick={() => setActiveView('settings')}
-        >
-          <Settings className="h-5 w-5 mr-3 text-brand-green" />
-          <span className="font-medium">Settings</span>
-        </Button>
-        
-        <Button
-          variant="ghost"
-          className="w-full justify-start h-12 text-left"
-          onClick={() => setActiveView('activity')}
-        >
-          <Activity className="h-5 w-5 mr-3 text-brand-green" />
-          <span className="font-medium">Activity</span>
-        </Button>
-        
-        <Separator className="my-2" />
-        
-        <Button
-          variant="ghost"
-          className="w-full justify-start h-12 text-left text-red-600 hover:text-red-700 hover:bg-red-50"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-5 w-5 mr-3" />
-          <span className="font-medium">Sign out</span>
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderProfileView = () => (
-    <div className="p-4">
-      <div className="flex items-center mb-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setActiveView('menu')}
-          className="mr-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <h3 className="font-semibold text-lg">Profile</h3>
-      </div>
-      
-      <div className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-16 w-16 ring-2 ring-brand-green/20 ring-offset-2">
-            <AvatarImage src={getAvatarDisplay(userProfile.avatar_url) || undefined} />
-            <AvatarFallback className="bg-brand-green/10 text-brand-green text-lg font-semibold">
-              {getAvatarDisplay(userProfile.avatar_url) ? (
-                <span className="text-2xl">{getAvatarDisplay(userProfile.avatar_url)}</span>
-              ) : userProfile.full_name ? (
-                getInitials(userProfile.full_name)
-              ) : (
-                <User className="h-6 w-6" />
-              )}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1">
-            <h4 className="font-bold text-lg text-gray-800" style={{ fontFamily: 'Fahkwang, sans-serif' }}>
-              {userProfile.full_name || 'Unknown User'}
-            </h4>
-            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-1">
-              <Mail className="h-3 w-3 text-brand-green" />
-              <span>{userProfile.email}</span>
-            </div>
-            <div className="flex items-center space-x-1 text-sm text-gray-600">
-              <Calendar className="h-3 w-3 text-brand-green" />
-              <span>
-                Member since {userProfile.created_at 
-                  ? formatDistanceToNow(new Date(userProfile.created_at), { addSuffix: true })
-                  : 'recently'
-                }
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div>
-          <h5 className="font-medium text-sm text-gray-700 mb-2">Rank & Progress</h5>
-          <div className="bg-gradient-to-r from-brand-green/5 to-transparent p-3 rounded-lg border border-brand-green/10">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Current Rank</span>
-              <Badge variant="secondary" className="bg-brand-green/10 text-brand-green">
-                Intermediate
-              </Badge>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-brand-green h-2 rounded-full" style={{ width: '65%' }}></div>
-            </div>
-            <p className="text-xs text-gray-600 mt-1">65% to next rank</p>
-          </div>
-        </div>
-
-        <div>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setActiveView('settings')}
-          >
-            <Palette className="h-4 w-4 mr-2" />
-            Change Avatar
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderSettingsView = () => (
-    <div className="p-4">
-      <div className="flex items-center mb-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setActiveView('menu')}
-          className="mr-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <h3 className="font-semibold text-lg">Settings</h3>
-      </div>
-      
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-medium text-sm text-gray-700 mb-3">Account Settings</h4>
-          <PasswordChangeForm onSuccess={() => setActiveView('menu')} />
-        </div>
-        
-        <Separator />
-        
-        <div>
-          <h4 className="font-medium text-sm text-gray-700 mb-3">Avatar Settings</h4>
-          <AvatarSelector
-            currentAvatar={userProfile.avatar_url}
-            userId={userProfile.id}
-            onAvatarUpdate={onProfileUpdate}
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderActivityView = () => (
-    <div className="p-4">
-      <div className="flex items-center mb-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setActiveView('menu')}
-          className="mr-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <h3 className="font-semibold text-lg">Activity</h3>
-      </div>
-      
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold text-base mb-3 flex items-center text-gray-800">
-            <Activity className="h-5 w-5 mr-2 text-brand-green" />
-            Recent Activity
-          </h4>
-          <div className="bg-gray-50/50 p-3 rounded-lg border border-gray-200/60">
-            <ActivityCalendar userId={userProfile.id} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div 
       ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200/60 backdrop-blur-sm z-50"
+      className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200/60 backdrop-blur-sm z-50"
     >
       <Card className="border-0 shadow-none bg-gradient-to-br from-white via-gray-50/50 to-white">
-        {activeView === 'menu' && renderMenuView()}
-        {activeView === 'profile' && renderProfileView()}
-        {activeView === 'settings' && renderSettingsView()}
-        {activeView === 'activity' && renderActivityView()}
+        <div className="p-4">
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              className="w-full justify-between h-12 text-left"
+              onClick={() => handleNavigate('/profile')}
+            >
+              <div className="flex items-center">
+                <User className="h-5 w-5 mr-3 text-brand-green" />
+                <span className="font-medium">Profile</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              className="w-full justify-between h-12 text-left"
+              onClick={() => handleNavigate('/settings')}
+            >
+              <div className="flex items-center">
+                <Settings className="h-5 w-5 mr-3 text-brand-green" />
+                <span className="font-medium">Settings</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              className="w-full justify-between h-12 text-left"
+              onClick={() => handleNavigate('/activity')}
+            >
+              <div className="flex items-center">
+                <Activity className="h-5 w-5 mr-3 text-brand-green" />
+                <span className="font-medium">Activity</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            </Button>
+            
+            <div className="pt-2 border-t border-gray-200">
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-12 text-left text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-5 w-5 mr-3" />
+                <span className="font-medium">Sign out</span>
+              </Button>
+            </div>
+          </div>
+        </div>
       </Card>
     </div>
   );
