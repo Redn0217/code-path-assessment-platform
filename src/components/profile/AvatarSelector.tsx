@@ -55,10 +55,15 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
   const handleSaveAvatar = async () => {
     setIsUpdating(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({ avatar_url: selectedAvatar })
-        .eq('id', userId);
+        .eq('id', user.id);
 
       if (error) {
         throw error;

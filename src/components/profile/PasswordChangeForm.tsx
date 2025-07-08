@@ -38,6 +38,15 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
   };
 
   const validateForm = () => {
+    if (!formData.currentPassword) {
+      toast({
+        title: "Error",
+        description: "Please enter your current password.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     if (!formData.newPassword) {
       toast({
         title: "Error",
@@ -75,6 +84,21 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
 
     setIsUpdating(true);
     try {
+      // First verify current password by attempting to sign in
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        throw new Error("User not found");
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: formData.currentPassword,
+      });
+
+      if (signInError) {
+        throw new Error("Current password is incorrect");
+      }
+
       // Update password using Supabase auth
       const { error } = await supabase.auth.updateUser({
         password: formData.newPassword
@@ -117,6 +141,34 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="current-password" className="text-sm">Current Password</Label>
+          <div className="relative">
+            <Input
+              id="current-password"
+              type={showPasswords.current ? 'text' : 'password'}
+              value={formData.currentPassword}
+              onChange={(e) => handleInputChange('currentPassword', e.target.value)}
+              placeholder="Enter current password"
+              className="pr-10"
+              required
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+              onClick={() => togglePasswordVisibility('current')}
+            >
+              {showPasswords.current ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="new-password" className="text-sm">New Password</Label>
           <div className="relative">

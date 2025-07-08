@@ -185,7 +185,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
       {/* Profile Modal */}
       <Dialog open={activeModal === 'profile'} onOpenChange={() => setActiveModal(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <User className="h-5 w-5 text-blue-600" />
@@ -243,7 +243,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
       {/* Change Password Modal */}
       <Dialog open={activeModal === 'password'} onOpenChange={() => setActiveModal(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Lock className="h-5 w-5 text-purple-600" />
@@ -256,7 +256,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
       {/* Activity Modal */}
       <Dialog open={activeModal === 'activity'} onOpenChange={() => setActiveModal(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Settings className="h-5 w-5 text-green-600" />
@@ -265,7 +265,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-gray-600">Track your assessment activity and progress over time.</p>
-            <div className="bg-gray-50/50 p-4 rounded-lg border border-gray-200/60">
+            <div className="bg-white/50 p-4 rounded-lg border border-white/30 backdrop-blur-sm">
               <ActivityCalendar userId={userProfile.id} />
             </div>
           </div>
