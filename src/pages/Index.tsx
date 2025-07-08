@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PracticeHub from '@/components/PracticeHub';
 import MasteryAssessments from '@/components/MasteryAssessments';
 import NewUserPerformance from '@/components/NewUserPerformance';
+import UserPerformance from '@/components/UserPerformance';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -274,7 +275,7 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="performance">
-              <NewUserPerformance />
+              <UserPerformance />
             </TabsContent>
           </Tabs>
         </div>
