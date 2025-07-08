@@ -155,17 +155,27 @@ const MasteryAssessment = () => {
     return questions.map(q => {
       // For mastery assessments, questions come directly from mastery_assessment_questions table
       // No need to check for question_bank property since the data is already flattened
+      // Ensure options is an array
+      const optionsArray = Array.isArray(q.options) ? q.options : 
+                          typeof q.options === 'string' ? JSON.parse(q.options) : 
+                          [];
+
+      // Ensure test_cases is an array
+      const testCasesArray = Array.isArray(q.test_cases) ? q.test_cases : 
+                            typeof q.test_cases === 'string' ? JSON.parse(q.test_cases) : 
+                            [];
+      
       return {
         id: q.id,
         title: q.title,
         question_text: q.question_text,
         question_type: q.question_type,
         difficulty: q.difficulty,
-        options: q.options,
+        options: optionsArray,
         correct_answer: q.correct_answer,
         explanation: q.explanation,
         code_template: q.code_template,
-        test_cases: q.test_cases,
+        test_cases: testCasesArray,
         time_limit: q.time_limit,
         memory_limit: q.memory_limit,
         domain: q.domain,
@@ -220,10 +230,10 @@ const MasteryAssessment = () => {
         const options = question.options;
         if (Array.isArray(options) && options.every(opt => typeof opt === 'string')) {
           const correctIndex = options.indexOf(question.correct_answer);
-          return total + (answer === correctIndex ? 1 : 0);
+          return Number(total) + (Number(answer) === correctIndex ? 1 : 0);
         }
       }
-      return total + (answer.toString() === question?.correct_answer ? 1 : 0);
+      return Number(total) + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
 
     try {
@@ -353,12 +363,12 @@ const MasteryAssessment = () => {
         const options = question.options;
         if (Array.isArray(options) && options.every(opt => typeof opt === 'string')) {
           const correctIndex = options.indexOf(question.correct_answer);
-          return total + (answer === correctIndex ? 1 : 0);
+          return Number(total) + (Number(answer) === correctIndex ? 1 : 0);
         }
       }
-      return total + (answer.toString() === question?.correct_answer ? 1 : 0);
+      return Number(total) + (answer.toString() === question?.correct_answer ? 1 : 0);
     }, 0);
-    const percentage = Math.round((score / questions.length) * 100);
+    const percentage = Math.round((Number(score) / questions.length) * 100);
 
     return (
       <AuthenticatedLayout>
@@ -402,7 +412,7 @@ const MasteryAssessment = () => {
                       <div className="text-sm text-green-700">Correct</div>
                     </div>
                     <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <div className="text-2xl font-bold text-red-600">{questions.length - score}</div>
+                      <div className="text-2xl font-bold text-red-600">{questions.length - Number(score)}</div>
                       <div className="text-sm text-red-700">Incorrect</div>
                     </div>
                   </div>
@@ -427,8 +437,7 @@ const MasteryAssessment = () => {
   const handleAnswerChange = (questionId: string, answer: any) => {
     console.log('handleAnswerChange called:', { questionId, answer });
     const questionIndex = questions.findIndex(q => {
-      const questionData = q.question_bank || q;
-      return questionData.id === questionId;
+      return q.id === questionId;
     });
     console.log('Found question index:', questionIndex, 'for questionId:', questionId);
     if (questionIndex !== -1) {
@@ -444,10 +453,7 @@ const MasteryAssessment = () => {
       });
     } else {
       console.error('Question not found for ID:', questionId);
-      console.error('Available question IDs:', questions.map(q => {
-        const questionData = q.question_bank || q;
-        return questionData.id;
-      }));
+      console.error('Available question IDs:', questions.map(q => q.id));
     }
   };
 
@@ -461,7 +467,7 @@ const MasteryAssessment = () => {
       <AuthenticatedLayout>
         <EnhancedAssessmentView
           questions={transformedQuestions}
-          answers={transformedAnswers}
+          answers={Array.isArray(answers) ? answers : []}
           onAnswerChange={handleAnswerChange}
           onSubmit={handleEnhancedSubmit}
           timeLeft={timeLeft}

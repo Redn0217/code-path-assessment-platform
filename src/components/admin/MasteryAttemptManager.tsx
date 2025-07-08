@@ -155,12 +155,12 @@ const MasteryAttemptManager = () => {
 
       // This would require a custom RPC function in Supabase
       // For now, we'll try a direct SQL approach using the REST API
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/delete_mastery_attempt`, {
+      const response = await fetch(`https://qqugxsihucjvuucgsjmx.supabase.co/rest/v1/rpc/delete_mastery_attempt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
-          'apikey': supabase.supabaseKey
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxdWd4c2lodWNqdnV1Y2dzam14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1NDAwMDQsImV4cCI6MjA2NTExNjAwNH0.OnRMJe7u5_S3CrlWfo_fHmkmHJ1i6lceat85cRMYzB4`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxdWd4c2lodWNqdnV1Y2dzam14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1NDAwMDQsImV4cCI6MjA2NTExNjAwNH0.OnRMJe7u5_S3CrlWfo_fHmkmHJ1i6lceat85cRMYzB4'
         },
         body: JSON.stringify({ attempt_id: attemptId })
       });

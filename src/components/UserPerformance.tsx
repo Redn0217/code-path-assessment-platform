@@ -77,6 +77,16 @@ const UserPerformance = () => {
           answers_is_array: Array.isArray(attempt.answers)
         });
 
+        // Ensure answers is an array
+        const answersArray = Array.isArray(attempt.answers) ? attempt.answers : 
+                            typeof attempt.answers === 'string' ? JSON.parse(attempt.answers) : 
+                            Object.values(attempt.answers || {});
+
+        // Ensure question_ids is an array
+        const questionIdsArray = Array.isArray(attempt.question_ids) ? attempt.question_ids : 
+                                typeof attempt.question_ids === 'string' ? JSON.parse(attempt.question_ids) : 
+                                [];
+
         return {
           id: attempt.id,
           assessment_type: 'practice' as const,
@@ -90,8 +100,8 @@ const UserPerformance = () => {
           domain: attempt.domain,
           strong_areas: attempt.strong_areas,
           weak_areas: attempt.weak_areas,
-          answers: attempt.answers,
-          question_ids: attempt.question_ids
+          answers: answersArray,
+          question_ids: questionIdsArray
         };
       }) || [];
 
@@ -113,6 +123,14 @@ const UserPerformance = () => {
           }
         }
 
+        // Ensure answers is an array
+        const answersArray = Array.isArray(attempt.answers) ? attempt.answers : 
+                            typeof attempt.answers === 'string' ? JSON.parse(attempt.answers) : 
+                            Object.values(attempt.answers || {});
+
+        // For mastery assessments, we need to get question_ids from the mastery assessment questions
+        const questionIdsArray: string[] = [];
+
         return {
           id: attempt.mastery_assessment_id, // Use mastery_assessment_id for question fetching
           attempt_id: attempt.id, // Keep the attempt ID for reference
@@ -125,8 +143,8 @@ const UserPerformance = () => {
           time_taken: attempt.time_taken,
           domains: parsedDomains,
           difficulty: (attempt.mastery_assessments as any)?.difficulty,
-          answers: attempt.answers,
-          question_ids: attempt.question_ids
+          answers: answersArray,
+          question_ids: questionIdsArray
         };
       }) || [];
 

@@ -43,7 +43,7 @@ const ImportQuestionsForm: React.FC<ImportQuestionsFormProps> = ({ onClose, onSu
         const { data: insertedQuestions, error: bankError } = await supabase
           .from('question_bank')
           .insert(questionsToInsert)
-          .select('id');
+          .select('*');
 
         if (bankError) throw bankError;
 
@@ -52,6 +52,19 @@ const ImportQuestionsForm: React.FC<ImportQuestionsFormProps> = ({ onClose, onSu
           const assignments = insertedQuestions.map(qb => ({
             module_id: selectedModule,
             question_bank_id: qb.id,
+            title: qb.title,
+            question_text: qb.question_text,
+            question_type: qb.question_type as 'mcq' | 'coding' | 'scenario',
+            difficulty: qb.difficulty as 'beginner' | 'intermediate' | 'advanced',
+            domain: qb.domain,
+            options: qb.options,
+            correct_answer: qb.correct_answer,
+            explanation: qb.explanation,
+            code_template: qb.code_template,
+            test_cases: qb.test_cases,
+            time_limit: qb.time_limit,
+            memory_limit: qb.memory_limit,
+            tags: qb.tags
           }));
 
           const { error: assignmentError } = await supabase

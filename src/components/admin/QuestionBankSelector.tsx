@@ -134,8 +134,8 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({ selectedMod
         // Copy required fields from question bank
         title: qb.title,
         question_text: qb.question_text,
-        question_type: qb.question_type,
-        difficulty: qb.difficulty,
+        question_type: qb.question_type as 'mcq' | 'coding' | 'scenario',
+        difficulty: qb.difficulty as 'beginner' | 'intermediate' | 'advanced',
         domain: qb.domain,
         options: qb.options,
         correct_answer: qb.correct_answer,
