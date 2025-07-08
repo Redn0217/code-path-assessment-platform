@@ -275,7 +275,20 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="performance">
-              <UserPerformance />
+              <Tabs defaultValue="assessments" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-6">
+                  <TabsTrigger value="assessments">Assessment History</TabsTrigger>
+                  <TabsTrigger value="features">Enhanced Features</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="assessments">
+                  <UserPerformance />
+                </TabsContent>
+                
+                <TabsContent value="features">
+                  <NewUserPerformance />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
           </Tabs>
         </div>
