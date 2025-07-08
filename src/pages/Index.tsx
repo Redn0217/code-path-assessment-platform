@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Target, Rocket, Lightbulb, Dumbbell, GraduationCap, Trophy, BarChart3 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
@@ -11,7 +12,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PracticeHub from '@/components/PracticeHub';
 import MasteryAssessments from '@/components/MasteryAssessments';
-import UserPerformance from '@/components/UserPerformance';
+import NewUserPerformance from '@/components/NewUserPerformance';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -46,12 +47,15 @@ const Index = () => {
               <div className="flex items-center space-x-3">
                 <img src="/logo.png" alt="evalu8 Logo" className="h-8 w-auto navbar-logo" />
               </div>
-              <Button
-                onClick={() => navigate('/auth')}
-                className="navbar-button bright-button-primary"
-              >
-                Login / Register
-              </Button>
+              <div className="flex items-center space-x-3">
+                <ThemeToggle />
+                <Button
+                  onClick={() => navigate('/auth')}
+                  className="navbar-button bright-button-primary"
+                >
+                  Login / Register
+                </Button>
+              </div>
             </div>
           </div>
         </header>
@@ -270,7 +274,7 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="performance">
-              <UserPerformance />
+              <NewUserPerformance />
             </TabsContent>
           </Tabs>
         </div>

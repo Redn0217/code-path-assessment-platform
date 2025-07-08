@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          badge_color: string | null
+          category: string
+          created_at: string
+          criteria: Json
+          description: string
+          icon: string
+          id: string
+          name: string
+          points: number
+          updated_at: string
+        }
+        Insert: {
+          badge_color?: string | null
+          category: string
+          created_at?: string
+          criteria: Json
+          description: string
+          icon: string
+          id?: string
+          name: string
+          points?: number
+          updated_at?: string
+        }
+        Update: {
+          badge_color?: string | null
+          category?: string
+          created_at?: string
+          criteria?: Json
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           created_at: string | null
@@ -189,6 +228,48 @@ export type Database = {
           name?: string
           order_index?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      learning_recommendations: {
+        Row: {
+          created_at: string
+          description: string
+          domain: string
+          expires_at: string | null
+          id: string
+          is_completed: boolean | null
+          priority: number
+          recommendation_type: string
+          resource_links: Json | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          domain: string
+          expires_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          priority?: number
+          recommendation_type: string
+          resource_links?: Json | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          domain?: string
+          expires_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          priority?: number
+          recommendation_type?: string
+          resource_links?: Json | null
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -512,6 +593,71 @@ export type Database = {
             columns: ["question_bank_id"]
             isOneToOne: false
             referencedRelation: "question_bank"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_progress: {
+        Row: {
+          current_level: number
+          domain: string
+          experience_points: number
+          id: string
+          last_updated: string
+          mastery_percentage: number
+          skill_name: string
+          user_id: string
+        }
+        Insert: {
+          current_level?: number
+          domain: string
+          experience_points?: number
+          id?: string
+          last_updated?: string
+          mastery_percentage?: number
+          skill_name: string
+          user_id: string
+        }
+        Update: {
+          current_level?: number
+          domain?: string
+          experience_points?: number
+          id?: string
+          last_updated?: string
+          mastery_percentage?: number
+          skill_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          progress: number | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          progress?: number | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          progress?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
             referencedColumns: ["id"]
           },
         ]
