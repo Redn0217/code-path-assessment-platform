@@ -166,16 +166,16 @@ const Profile = () => {
                     </Avatar>
                     
                     <div className="flex-1">
-                      <h2 className="font-bold text-2xl text-gray-800 mb-2" style={{ fontFamily: 'Fahkwang, sans-serif' }}>
+                      <h2 className="fahkwang-name-elegant text-2xl mb-2">
                         {userProfile.full_name || 'Unknown User'}
                       </h2>
-                      <div className="flex items-center space-x-2 text-gray-600 mb-2">
-                        <Mail className="h-4 w-4 text-brand-green" />
-                        <span>{userProfile.email}</span>
+                      <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                        <Mail className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{userProfile.email}</span>
                       </div>
-                      <div className="flex items-center space-x-2 text-gray-600">
-                        <Calendar className="h-4 w-4 text-brand-green" />
-                        <span>
+                      <div className="flex items-center space-x-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span className="text-sm">
                           Member since {userProfile.created_at 
                             ? formatDistanceToNow(new Date(userProfile.created_at), { addSuffix: true })
                             : 'recently'
