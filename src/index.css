@@ -48,13 +48,13 @@
   }
 
   .dark {
-    --background: 222 12% 8%;
+    --background: 222 14% 10%;
     --foreground: 210 40% 92%;
 
-    --card: 222 12% 12%;
+    --card: 222 14% 12%;
     --card-foreground: 210 40% 92%;
 
-    --popover: 222 12% 12%;
+    --popover: 222 14% 12%;
     --popover-foreground: 210 40% 92%;
 
     --primary: 142 76% 36%;
@@ -75,7 +75,7 @@
     --border: 220 14% 20%;
     --input: 220 14% 20%;
     --ring: 142 76% 36%;
-    --sidebar-background: 222 12% 8%;
+    --sidebar-background: 222 14% 10%;
     --sidebar-foreground: 210 40% 92%;
     --sidebar-primary: 142 76% 36%;
     --sidebar-primary-foreground: 210 40% 95%;
@@ -199,28 +199,28 @@
   /* Modern Transparent Navbar Styles */
   .modern-navbar {
     backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     border-bottom: 2px solid rgba(34, 197, 94, 0.6);
     transition: all 0.3s ease;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 0 20px rgba(34, 197, 94, 0.2);
   }
 
   .dark .modern-navbar {
-    background: rgba(34, 34, 40, 0.15);
+    background: rgba(34, 34, 40, 0.2);
     border-bottom: 2px solid rgba(34, 197, 94, 0.7);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(34, 197, 94, 0.25);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(34, 197, 94, 0.25);
   }
 
   .modern-navbar:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 30px rgba(249, 115, 22, 0.3);
     transform: translateY(-1px);
     border-bottom: 2px solid rgba(249, 115, 22, 0.8);
   }
 
   .dark .modern-navbar:hover {
-    background: rgba(34, 34, 40, 0.25);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(249, 115, 22, 0.35);
+    background: rgba(34, 34, 40, 0.35);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 35px rgba(249, 115, 22, 0.4);
   }
 
   .navbar-logo {
@@ -250,6 +250,10 @@
 
   .navbar-button:hover::before {
     left: 100%;
+  }
+
+  .dark .navbar-button::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
   }
 
   /* Inspiring navbar animations */
@@ -460,7 +464,7 @@
     font-weight: 600;
     letter-spacing: -0.015em;
     line-height: 1.2;
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--foreground) / 0.8));
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--foreground) / 0.85));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -471,7 +475,7 @@
   .fahkwang-username:hover {
     transform: scale(1.05);
     filter: brightness(1.15);
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--foreground)));
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--foreground) / 0.9));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

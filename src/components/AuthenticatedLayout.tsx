@@ -7,6 +7,7 @@ import { LogOut, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useNavigate } from 'react-router-dom';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import ProfileIcon from './profile/ProfileIcon';
 
 interface UserProfile {
@@ -139,6 +140,7 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
               )}
             </div>
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               {user && (
                 <div className="fahkwang-username text-lg bright-text-primary navbar-inspire">
                   {userProfile?.full_name || user.email?.split('@')[0] || 'User'}
