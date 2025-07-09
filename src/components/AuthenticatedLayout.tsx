@@ -140,8 +140,8 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
             </div>
             <div className="flex items-center space-x-4">
               {user && (
-                <div className="fahkwang-name-elegant text-sm bright-text-primary inspiring-text font-medium navbar-inspire">
-                  Welcome, {userProfile?.full_name || user.email}! 🚀
+                <div className="fahkwang-username text-lg bright-text-primary navbar-inspire">
+                  {userProfile?.full_name || user.email?.split('@')[0] || 'User'}
                 </div>
               )}
               {user && userProfile && (
