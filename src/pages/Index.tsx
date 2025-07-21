@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Target, Rocket, Lightbulb, Dumbbell, GraduationCap, Trophy, BarChart3 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { HeroSection } from '@/components/ui/galaxy-interactive-hero-section';
 
 import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
@@ -40,109 +41,43 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bright-bg-primary">
-        {/* Modern Sticky Header */}
-        <header className="modern-navbar sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-3">
-              <div className="flex items-center space-x-3">
-                <img src="/logo.png" alt="evalu8 Logo" className="h-8 w-auto navbar-logo" />
-              </div>
-              <div className="flex items-center space-x-3">
-                <ThemeToggle />
-                <Button
-                  onClick={() => navigate('/auth')}
-                  className="navbar-button bright-button-primary"
-                >
-                  Login / Register
-                </Button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Animated Hero Section */}
-        <section className="animated-hero-bg py-32 relative">
-          {/* Floating Code Particles */}
-          <div className="code-particles">
-            <div className="particle">{'<html>'}</div>
-            <div className="particle">{'function()'}</div>
-            <div className="particle">{'{ }'}</div>
-            <div className="particle">{'console.log()'}</div>
-            <div className="particle">{'=> {}'}</div>
-            <div className="particle">{'class'}</div>
-            <div className="particle">{'import'}</div>
-            <div className="particle">{'const'}</div>
-            <div className="particle">{'return'}</div>
-          </div>
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            <h2 className="fahkwang-title text-6xl font-bold bright-text-primary mb-6 drop-shadow-lg">
-              Comprehensive Technical Assessment Platform
-            </h2>
-            <p className="text-xl bright-text-primary mb-8 max-w-4xl mx-auto drop-shadow-md">
-              <Rocket className="inline h-5 w-5 mr-2 text-green-600" />
-              Evaluate your skills across multiple technology domains with interactive coding challenges,
-              detailed reports, and personalized improvement suggestions.
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-4 bright-text-secondary text-lg mb-8">
-              <div className="flex items-center space-x-2 bg-gray-100/60 px-4 py-2 rounded-full font-light">
-                <Target className="h-5 w-5 text-green-600" />
-                <span className="bright-text-accent-green">Interactive Challenges</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-gray-100/60 px-4 py-2 rounded-full font-light">
-                <BarChart3 className="h-5 w-5 text-gray-600" />
-                <span className="text-gray-600">Detailed Analytics</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-gray-100/60 px-4 py-2 rounded-full font-light">
-                <Target className="h-5 w-5 text-green-600" />
-                <span className="bright-text-accent-green">Skill Improvement</span>
-              </div>
-            </div>
-            <Button
-              size="lg"
-              onClick={() => navigate('/auth')}
-              className="bright-button-primary text-xl px-12 py-4 rounded-full shadow-2xl pulse-animation font-bold"
-            >
-              🚀 Start Your Assessment Journey
-            </Button>
-          </div>
-        </section>
-
-        {/* Enhanced Features Section - Bright Green/Orange Theme */}
-        <section className="py-20 bright-bg-secondary">
+      <div className="min-h-screen">
+        <HeroSection />
+        
+        {/* Enhanced Features Section */}
+        <section className="py-20 bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h3 className="fahkwang-title text-4xl font-bold bright-text-primary mb-4">
+              <h3 className="text-4xl font-bold text-foreground mb-4">
                 Platform Features
               </h3>
-              <p className="text-xl bright-text-secondary max-w-2xl mx-auto">
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 Discover powerful tools designed to accelerate your coding journey
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="bright-card">
+              <Card className="border border-border">
                 <CardHeader className="text-center">
                   <div className="flex justify-center mb-4">
-                    <div className="p-4 bg-gradient-to-br from-green-100 to-gray-100 rounded-full">
-                      <Target className="h-8 w-8 text-green-600" />
+                    <div className="p-4 bg-primary/10 rounded-full">
+                      <Target className="h-8 w-8 text-primary" />
                     </div>
                   </div>
-                  <CardTitle className="text-2xl bright-text-accent-green fahkwang-title">Practice Hub</CardTitle>
+                  <CardTitle className="text-2xl text-primary">Practice Hub</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-lg text-center bright-text-secondary">
+                  <CardDescription className="text-lg text-center text-muted-foreground">
                     Practice with individual domain assessments. Take unlimited attempts to improve your skills in specific areas.
                     <div className="mt-4 flex justify-center space-x-4 text-sm font-medium">
-                      <span className="flex items-center space-x-1 text-green-600">
+                      <span className="flex items-center space-x-1 text-primary">
                         <Target className="h-4 w-4" />
                         <span>Unlimited attempts</span>
                       </span>
-                      <span className="flex items-center space-x-1 text-gray-600">
+                      <span className="flex items-center space-x-1 text-muted-foreground">
                         <BarChart3 className="h-4 w-4" />
                         <span>Multiple domains</span>
                       </span>
-                      <span className="flex items-center space-x-1 text-green-600">
+                      <span className="flex items-center space-x-1 text-primary">
                         <GraduationCap className="h-4 w-4" />
                         <span>Skill building</span>
                       </span>
@@ -150,28 +85,28 @@ const Index = () => {
                   </CardDescription>
                 </CardContent>
               </Card>
-              <Card className="bright-card">
+              <Card className="border border-border">
                 <CardHeader className="text-center">
                   <div className="flex justify-center mb-4">
-                    <div className="p-4 bg-gradient-to-br from-gray-100 to-green-100 rounded-full">
-                      <Trophy className="h-8 w-8 text-gray-600" />
+                    <div className="p-4 bg-secondary/50 rounded-full">
+                      <Trophy className="h-8 w-8 text-foreground" />
                     </div>
                   </div>
-                  <CardTitle className="text-2xl text-gray-600 fahkwang-title">Mastery Assessments</CardTitle>
+                  <CardTitle className="text-2xl text-foreground">Mastery Assessments</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-lg text-center bright-text-secondary">
+                  <CardDescription className="text-lg text-center text-muted-foreground">
                     Take comprehensive one-time certification assessments that test multiple domains simultaneously.
                     <div className="mt-4 flex justify-center space-x-4 text-sm font-medium">
-                      <span className="flex items-center space-x-1 text-gray-600">
+                      <span className="flex items-center space-x-1 text-muted-foreground">
                         <Trophy className="h-4 w-4" />
                         <span>Certification ready</span>
                       </span>
-                      <span className="flex items-center space-x-1 text-green-600">
+                      <span className="flex items-center space-x-1 text-primary">
                         <Target className="h-4 w-4" />
                         <span>Comprehensive testing</span>
                       </span>
-                      <span className="flex items-center space-x-1 text-gray-600">
+                      <span className="flex items-center space-x-1 text-muted-foreground">
                         <BarChart3 className="h-4 w-4" />
                         <span>Detailed reports</span>
                       </span>
