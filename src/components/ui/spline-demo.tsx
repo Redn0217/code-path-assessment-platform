@@ -78,10 +78,12 @@ export function SplineSceneBasic() {
         {/* Right content */}
         <div className="flex-1 relative z-20">
           {shouldLoadSpline ? (
-            <SplineScene
-              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-              className="w-full h-full"
-            />
+            <div className="w-full h-full">
+              <SplineScene
+                scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+                className="w-full h-full"
+              />
+            </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-muted/20 rounded-lg">
               <div className="text-center">
