@@ -37,32 +37,6 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
     }));
   };
 
-  const validatePasswordStrength = (password: string): { valid: boolean; errors: string[] } => {
-    const errors: string[] = [];
-    
-    if (password.length < 12) {
-      errors.push('Password must be at least 12 characters long');
-    }
-    
-    if (!/[A-Z]/.test(password)) {
-      errors.push('Password must contain at least one uppercase letter');
-    }
-    
-    if (!/[a-z]/.test(password)) {
-      errors.push('Password must contain at least one lowercase letter');
-    }
-    
-    if (!/[0-9]/.test(password)) {
-      errors.push('Password must contain at least one number');
-    }
-    
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      errors.push('Password must contain at least one special character');
-    }
-    
-    return { valid: errors.length === 0, errors };
-  };
-
   const validateForm = () => {
     if (!formData.currentPassword) {
       toast({
@@ -82,11 +56,10 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
       return false;
     }
 
-    const passwordValidation = validatePasswordStrength(formData.newPassword);
-    if (!passwordValidation.valid) {
+    if (formData.newPassword.length < 6) {
       toast({
-        title: "Password too weak",
-        description: passwordValidation.errors.join(' '),
+        title: "Error",
+        description: "New password must be at least 6 characters long.",
         variant: "destructive",
       });
       return false;
@@ -111,23 +84,20 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
 
     setIsUpdating(true);
     try {
-      // Get current session to verify user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.email) {
-        throw new Error("User not authenticated");
+      // First, verify current password by attempting to sign in
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.email) {
+        throw new Error("User not found");
       }
 
-      // Verify current password using sign in endpoint (more secure)
       const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: session.user.email,
+        email: user.user.email,
         password: formData.currentPassword,
       });
 
       if (verifyError) {
-        // Rate limiting - add delay after failed attempts
-        await new Promise(resolve => setTimeout(resolve, 1000));
         toast({
-          title: "Authentication failed",
+          title: "Error",
           description: "Current password is incorrect.",
           variant: "destructive",
         });
@@ -157,7 +127,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
 
       onSuccess();
     } catch (error: any) {
-      // Remove sensitive error logging
+      console.error('Error updating password:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update password. Please try again.",
