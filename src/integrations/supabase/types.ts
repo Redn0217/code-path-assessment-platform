@@ -762,6 +762,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      validate_password_strength: {
+        Args: { password_input: string }
+        Returns: Json
+      }
     }
     Enums: {
       difficulty_level: "beginner" | "intermediate" | "advanced"
