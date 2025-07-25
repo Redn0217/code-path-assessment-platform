@@ -15,12 +15,13 @@ import Settings from "./pages/Settings";
 import Activity from "./pages/Activity";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import AIInterviewer from "./pages/AIInterviewer";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="system" storageKey="evalu8-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="evalu8-ui-theme">
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/assessment/:domain" element={<Assessment />} />
               <Route path="/assessment/mastery/:assessmentId" element={<MasteryAssessment />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/ai-interviewer" element={<AIInterviewer />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

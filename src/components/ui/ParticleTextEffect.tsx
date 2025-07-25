@@ -114,8 +114,13 @@ class Particle {
   }
 
   private generateRandomPos(x: number, y: number, mag: number): Vector2D {
-    const randomX = Math.random() * 1000
-    const randomY = Math.random() * 500
+    // Use dynamic canvas dimensions instead of fixed values
+    const canvas = document.querySelector('canvas')
+    const canvasWidth = canvas?.width || 2000
+    const canvasHeight = canvas?.height || 1000
+
+    const randomX = Math.random() * canvasWidth
+    const randomY = Math.random() * canvasHeight
 
     const direction = {
       x: randomX - x,
@@ -147,14 +152,19 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
   const particlesRef = useRef<Particle[]>([])
   const frameCountRef = useRef(0)
   const wordIndexRef = useRef(0)
-  const mouseRef = useRef({ x: 0, y: 0, isPressed: false, isRightClick: false })
+  const mouseRef = useRef({ x: 0, y: 0, isHovering: false })
 
   const pixelSteps = 6
   const drawAsPoints = true
 
   const generateRandomPos = (x: number, y: number, mag: number): Vector2D => {
-    const randomX = Math.random() * 1000
-    const randomY = Math.random() * 500
+    // Use current canvas dimensions
+    const canvas = canvasRef.current
+    const canvasWidth = canvas?.width || 2000
+    const canvasHeight = canvas?.height || 1000
+
+    const randomX = Math.random() * canvasWidth
+    const randomY = Math.random() * canvasHeight
 
     const direction = {
       x: randomX - x,
@@ -180,9 +190,10 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
     offscreenCanvas.height = canvas.height
     const offscreenCtx = offscreenCanvas.getContext("2d")!
 
-    // Draw text
+    // Draw text - make font size responsive to canvas width
     offscreenCtx.fillStyle = "black"
-    offscreenCtx.font = "bold 100px Arial"
+    const fontSize = Math.max(canvas.width * 0.1, 60) // 10% of canvas width, minimum 60px
+    offscreenCtx.font = `bold ${fontSize}px Arial`
     offscreenCtx.textAlign = "center"
     offscreenCtx.textBaseline = "middle"
     offscreenCtx.fillText(word, canvas.width / 2, canvas.height / 2)
@@ -190,12 +201,21 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
     const imageData = offscreenCtx.getImageData(0, 0, canvas.width, canvas.height)
     const pixels = imageData.data
 
-    // Generate new color
-    const newColor = {
-      r: Math.random() * 255,
-      g: Math.random() * 255,
-      b: Math.random() * 255,
-    }
+    // Generate bright, vibrant colors
+    const brightColors = [
+      { r: 34, g: 197, b: 94 },   // Bright Green
+      { r: 249, g: 115, b: 22 },  // Bright Orange
+      { r: 59, g: 130, b: 246 },  // Bright Blue
+      { r: 168, g: 85, b: 247 },  // Bright Purple
+      { r: 236, g: 72, b: 153 },  // Bright Pink
+      { r: 245, g: 158, b: 11 },  // Bright Amber
+      { r: 20, g: 184, b: 166 },  // Bright Teal
+      { r: 239, g: 68, b: 68 },   // Bright Red
+      { r: 132, g: 204, b: 22 },  // Bright Lime
+      { r: 147, g: 51, b: 234 },  // Bright Violet
+    ]
+
+    const newColor = brightColors[Math.floor(Math.random() * brightColors.length)]
 
     const particles = particlesRef.current
     let particleIndex = 0
@@ -268,8 +288,9 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
     const ctx = canvas.getContext("2d")!
     const particles = particlesRef.current
 
-    // Background with motion blur
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)"
+    // Background with motion blur - adapt to theme
+    const isDark = document.documentElement.classList.contains('dark')
+    ctx.fillStyle = isDark ? "rgba(34, 34, 40, 0.1)" : "rgba(255, 255, 255, 0.1)"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Update and draw particles
@@ -291,13 +312,13 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
       }
     }
 
-    // Handle mouse interaction
-    if (mouseRef.current.isPressed && mouseRef.current.isRightClick) {
+    // Handle mouse interaction - destroy particles on hover
+    if (mouseRef.current.isHovering) {
       particles.forEach((particle) => {
         const distance = Math.sqrt(
           Math.pow(particle.pos.x - mouseRef.current.x, 2) + Math.pow(particle.pos.y - mouseRef.current.y, 2),
         )
-        if (distance < 50) {
+        if (distance < 80) { // Increased radius for easier interaction
           particle.kill(canvas.width, canvas.height)
         }
       })
@@ -317,8 +338,33 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
     const canvas = canvasRef.current
     if (!canvas) return
 
-    canvas.width = 1000
-    canvas.height = 500
+    // Make canvas responsive to screen size with consistent margins
+    const updateCanvasSize = () => {
+      const viewportWidth = window.innerWidth
+
+      let canvasWidth: number, canvasHeight: number
+
+      // Responsive sizing based on viewport
+      if (viewportWidth < 640) { // Mobile
+        canvasWidth = Math.min(viewportWidth * 0.9, 600)
+        canvasHeight = canvasWidth * 0.6
+      } else if (viewportWidth < 1024) { // Tablet/Laptop
+        canvasWidth = Math.min(viewportWidth * 0.85, 1000)
+        canvasHeight = canvasWidth * 0.55
+      } else if (viewportWidth < 1440) { // Desktop
+        canvasWidth = Math.min(viewportWidth * 0.8, 1400)
+        canvasHeight = canvasWidth * 0.5
+      } else { // Large screens
+        canvasWidth = Math.min(viewportWidth * 0.75, 1800)
+        canvasHeight = canvasWidth * 0.5
+      }
+
+      canvas.width = canvasWidth
+      canvas.height = canvasHeight
+    }
+
+    updateCanvasSize()
+    window.addEventListener('resize', updateCanvasSize)
 
     // Initialize with first word
     nextWord(words[0], canvas)
@@ -326,59 +372,49 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
     // Start animation
     animate()
 
-    // Mouse event handlers
-    const handleMouseDown = (e: MouseEvent) => {
-      mouseRef.current.isPressed = true
-      mouseRef.current.isRightClick = e.button === 2
-      const rect = canvas.getBoundingClientRect()
-      mouseRef.current.x = e.clientX - rect.left
-      mouseRef.current.y = e.clientY - rect.top
+    // Mouse event handlers for hover-based destruction
+    const handleMouseEnter = () => {
+      mouseRef.current.isHovering = true
     }
 
-    const handleMouseUp = () => {
-      mouseRef.current.isPressed = false
-      mouseRef.current.isRightClick = false
+    const handleMouseLeave = () => {
+      mouseRef.current.isHovering = false
     }
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect()
       mouseRef.current.x = e.clientX - rect.left
       mouseRef.current.y = e.clientY - rect.top
+      mouseRef.current.isHovering = true
     }
 
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault()
-    }
-
-    canvas.addEventListener("mousedown", handleMouseDown)
-    canvas.addEventListener("mouseup", handleMouseUp)
+    canvas.addEventListener("mouseenter", handleMouseEnter)
+    canvas.addEventListener("mouseleave", handleMouseLeave)
     canvas.addEventListener("mousemove", handleMouseMove)
-    canvas.addEventListener("contextmenu", handleContextMenu)
 
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
-      canvas.removeEventListener("mousedown", handleMouseDown)
-      canvas.removeEventListener("mouseup", handleMouseUp)
+      window.removeEventListener('resize', updateCanvasSize)
+      canvas.removeEventListener("mouseenter", handleMouseEnter)
+      canvas.removeEventListener("mouseleave", handleMouseLeave)
       canvas.removeEventListener("mousemove", handleMouseMove)
-      canvas.removeEventListener("contextmenu", handleContextMenu)
     }
   }, [words])
 
   return (
     <div className="w-full bg-background">
-      <div className="flex flex-col items-center justify-center p-4">
+      <div className="flex flex-col items-center justify-center">
         <canvas
           ref={canvasRef}
-          className="border border-border rounded-lg shadow-lg bg-background max-w-full h-auto"
+          className="border border-border rounded-lg shadow-lg bg-background"
+          style={{
+            maxWidth: '100%',
+            height: 'auto',
+            display: 'block'
+          }}
         />
-        <div className="mt-4 text-foreground text-sm text-center max-w-md">
-          <p className="mb-2 font-medium">Interactive Particle Text Effect</p>
-          <p className="text-muted-foreground text-xs">
-            Right-click and hold while moving mouse to destroy particles • Words change automatically every 4 seconds
-          </p>
-        </div>
       </div>
     </div>
   )

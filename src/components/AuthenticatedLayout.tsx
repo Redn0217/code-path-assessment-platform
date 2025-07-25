@@ -9,6 +9,7 @@ import { useNavigation } from '@/contexts/NavigationContext';
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import ProfileIcon from './profile/ProfileIcon';
+import { AnimatedFooter } from '@/components/ui/animated-footer';
 
 interface UserProfile {
   id: string;
@@ -122,7 +123,7 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   return (
     <div className="min-h-screen bright-bg-primary">
       {/* Modern Sticky Header */}
-      <header className="modern-navbar sticky top-0 z-50">
+      <header className="modern-navbar sticky top-0 z-50 rounded-b-3xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-3">
             <div className="flex items-center space-x-4">
@@ -158,6 +159,9 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
       </header>
 
       {children}
+
+      {/* Animated Footer */}
+      <AnimatedFooter />
     </div>
   );
 };
