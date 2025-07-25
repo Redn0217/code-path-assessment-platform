@@ -1,3 +1,4 @@
+
 'use client'
 
 import { Canvas } from '@react-three/fiber'
@@ -7,10 +8,9 @@ import { Spotlight } from "@/components/ui/spotlight"
 
 function AnimatedSphere({ position, color }: { position: [number, number, number]; color: string }) {
   return (
-    <Sphere visible args={[1, 100, 200]} scale={2} position={position}>
+    <Sphere args={[1, 100, 200]} scale={2} position={position}>
       <MeshDistortMaterial
         color={color}
-        attach="material"
         distort={0.3}
         speed={1.5}
         roughness={0}
@@ -25,7 +25,6 @@ function FloatingBox({ position }: { position: [number, number, number] }) {
       <boxGeometry args={[1, 1, 1]} />
       <MeshWobbleMaterial
         color="#8B5CF6"
-        attach="material"
         factor={1}
         speed={2}
       />
