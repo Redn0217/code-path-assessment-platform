@@ -6,7 +6,7 @@ import { Target, Rocket, Lightbulb, Dumbbell, GraduationCap, Trophy, BarChart3, 
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { ParticleTextEffect } from '@/components/ui/ParticleTextEffect';
 import { AnimatedFooter } from '@/components/ui/animated-footer';
-import { SplineSceneBasic } from '@/components/ui/spline-demo';
+import { ThreeSceneBasic } from '@/components/ui/three-demo';
 
 import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
@@ -355,7 +355,7 @@ const Index = () => {
 
           {/* 3D Demo Component - With Larger Edge Gap */}
           <div className="px-8 mb-16">
-            <SplineSceneBasic />
+            <ThreeSceneBasic />
           </div>
 
           {/* Technical Implementation Details - Contained */}
@@ -448,8 +448,8 @@ const Index = () => {
                   <h4 className="text-lg font-semibold mb-4">Dependencies Installed</h4>
                   <div className="bg-background rounded-lg p-4">
                     <code className="text-sm text-muted-foreground">
-                      npm install @splinetool/runtime<br/>
-                      npm install @splinetool/react-spline<br/>
+                      npm install @react-three/fiber<br/>
+                      npm install @react-three/drei<br/>
                       npm install framer-motion
                     </code>
                   </div>
