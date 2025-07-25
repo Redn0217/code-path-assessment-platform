@@ -19,7 +19,6 @@ export function AnimatedFooter() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <img src="/logo.png" alt="evalu8 Logo" className="h-8 w-auto" />
-              <span className="text-xl font-bold">evalu8</span>
             </div>
             <p className="text-neutral-300 text-sm leading-relaxed">
               Empowering developers with AI-powered assessments and personalized learning paths. 
@@ -57,7 +56,7 @@ export function AnimatedFooter() {
               </li>
               <li className="flex items-center space-x-2">
                 <Heart className="h-3 w-3 text-red-400" />
-                <span className="text-neutral-300">Personalized Learning</span>
+                <span className="text-neutral-300">Personalized Interviews</span>
               </li>
             </ul>
           </div>

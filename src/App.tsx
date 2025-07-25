@@ -16,6 +16,7 @@ import Activity from "./pages/Activity";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import AIInterviewer from "./pages/AIInterviewer";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <NavigationProvider>
             <Routes>
               <Route path="/" element={<Index />} />

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { AnimatedFooter } from '@/components/ui/animated-footer';
 import { 
   Brain, 
   Code, 
@@ -135,9 +136,8 @@ const AIInterviewer = () => {
         <header className="modern-navbar sticky top-0 z-50 rounded-b-3xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-3">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center">
                 <img src="/logo.png" alt="evalu8 Logo" className="h-8 w-auto navbar-logo cursor-pointer" onClick={() => navigate('/')} />
-                <span className="text-lg font-semibold text-foreground">AI Interviewer</span>
               </div>
               <div className="flex items-center space-x-3">
                 <ThemeToggle />
@@ -155,11 +155,6 @@ const AIInterviewer = () => {
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="flex justify-center mb-8">
-              <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full">
-                <Users className="h-12 w-12 text-white" />
-              </div>
-            </div>
             <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
               AI Interviewer
             </h1>
@@ -826,7 +821,7 @@ const AIInterviewer = () => {
                 <Play className="h-5 w-5 mr-2" />
                 Start Your AI Interview
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/')} className="px-8 py-4 text-lg border-white text-white hover:bg-white/10">
+              <Button size="lg" variant="outline" onClick={() => navigate('/')} className="px-8 py-4 text-lg border-white text-white hover:bg-white hover:text-blue-600 bg-white/10">
                 Learn More
               </Button>
             </div>
@@ -836,27 +831,8 @@ const AIInterviewer = () => {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="py-12 bg-background border-t">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="flex items-center justify-center space-x-4 mb-6">
-              <img src="/logo.png" alt="evalu8 Logo" className="h-8 w-auto" />
-              <span className="text-xl font-bold text-foreground">evalu8 AI Interviewer</span>
-            </div>
-            <p className="text-muted-foreground mb-4">
-              Revolutionary Interview Experience - Transform Your Interview Process with AI-Powered Intelligence
-            </p>
-            <div className="flex justify-center space-x-6 text-sm text-muted-foreground">
-              <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">
-                Home
-              </button>
-              <button onClick={() => navigate('/auth')} className="hover:text-foreground transition-colors">
-                Get Started
-              </button>
-              <span>© 2024 evalu8. All rights reserved.</span>
-            </div>
-          </div>
-        </footer>
+        {/* Animated Footer */}
+        <AnimatedFooter />
       </div>
     );
   }

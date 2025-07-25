@@ -187,76 +187,6 @@ const Index = () => {
               </Card>
             </div>
 
-            {/* Featured AI Interviews Section - Larger and more prominent */}
-            <div className="mb-8">
-              <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
-                <CardHeader className="pb-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="p-3 bg-blue-500/20 rounded-xl group-hover:bg-blue-500/30 transition-colors duration-300">
-                        <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                          AI Interviews
-                        </CardTitle>
-                        <p className="text-blue-600/70 dark:text-blue-400/70 font-medium mt-1">
-                          Next-Generation Interview Preparation
-                        </p>
-                      </div>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
-                      <Lightbulb className="h-6 w-6 text-yellow-500 animate-pulse" />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                      <CardDescription className="text-lg leading-relaxed text-gray-700 dark:text-gray-300">
-                        Prepare for real interviews with AI-powered mock sessions. Get instant feedback,
-                        improve your performance, and build confidence with our advanced interview simulation platform.
-                      </CardDescription>
-                      <div className="mt-6 flex flex-wrap gap-3">
-                        <span className="px-3 py-2 bg-blue-500/15 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full border border-blue-200 dark:border-blue-700">
-                          Real-time feedback
-                        </span>
-                        <span className="px-3 py-2 bg-green-500/15 text-green-700 dark:text-green-300 text-sm font-medium rounded-full border border-green-200 dark:border-green-700">
-                          Mock sessions
-                        </span>
-                        <span className="px-3 py-2 bg-purple-500/15 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-full border border-purple-200 dark:border-purple-700">
-                          Performance analytics
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col space-y-4">
-                      <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-medium">AI-powered question generation</span>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-medium">Voice and video analysis</span>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-medium">Personalized improvement plans</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-center">
-                    <Button
-                      size="lg"
-                      onClick={() => navigate('/ai-interviewer')}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      <Users className="h-5 w-5 mr-2" />
-                      Explore AI Interviewer
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
 
             {/* Other Features Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -335,6 +265,67 @@ const Index = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Featured AI Interviews Section - Larger and more prominent */}
+            <div className="mt-12 mb-8">
+              <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
+                <CardHeader className="pb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 bg-blue-500/20 rounded-xl group-hover:bg-blue-500/30 transition-colors duration-300">
+                        <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                          AI Interviews
+                        </CardTitle>
+                        <p className="text-blue-600/70 dark:text-blue-400/70 font-medium mt-1">
+                          Next-Generation Interview Preparation
+                        </p>
+                      </div>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
+                      <Lightbulb className="h-6 w-6 text-yellow-500 animate-pulse" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <CardDescription className="text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+                        Prepare for real interviews with AI-powered mock sessions. Get instant feedback,
+                        improve your performance, and build confidence with our advanced interview simulation platform.
+                      </CardDescription>
+                      <div className="mt-6 flex flex-wrap gap-3">
+                        <span className="px-3 py-2 bg-blue-500/15 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full border border-blue-200 dark:border-blue-700">
+                          Real-time feedback
+                        </span>
+                        <span className="px-3 py-2 bg-green-500/15 text-green-700 dark:text-green-300 text-sm font-medium rounded-full border border-green-200 dark:border-green-700">
+                          Mock sessions
+                        </span>
+                        <span className="px-3 py-2 bg-purple-500/15 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-full border border-purple-200 dark:border-purple-700">
+                          Performance analytics
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium">AI-powered question generation</span>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium">Voice and video analysis</span>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium">Personalized improvement plans</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </section>
 
@@ -344,11 +335,11 @@ const Index = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
             <div className="text-center">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Interactive 3D Experience
+                Meet Your AI Interview Coach
               </h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Experience the future of web development with our integrated 3D components.
-                Built with modern technologies including shadcn/ui, Tailwind CSS, and TypeScript.
+                Step into the future of interview preparation with our revolutionary AI-powered interviewer.
+                Experience realistic mock interviews, get instant feedback, and boost your confidence like never before!
               </p>
             </div>
           </div>
@@ -366,16 +357,16 @@ const Index = () => {
                   <CardTitle className="text-lg flex items-center space-x-2">
                     <div className="p-2 bg-blue-500/10 rounded-lg">
                       <svg className="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
-                    <span>shadcn/ui Structure</span>
+                    <span>Smart AI Analysis</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Components organized in <code>/components/ui</code> folder following shadcn conventions.
-                    Proper TypeScript interfaces and reusable component architecture.
+                    Advanced AI algorithms analyze your responses, body language, and speech patterns.
+                    Get personalized insights and actionable feedback to improve your interview performance.
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -385,16 +376,16 @@ const Index = () => {
                   <CardTitle className="text-lg flex items-center space-x-2">
                     <div className="p-2 bg-cyan-500/10 rounded-lg">
                       <svg className="h-5 w-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <span>Tailwind CSS</span>
+                    <span>Real-Time Interaction</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Utility-first CSS framework with custom animations, responsive design,
-                    and consistent design tokens. Dark/light mode support included.
+                    Experience lifelike interview sessions with voice recognition, video analysis,
+                    and instant responses. Practice anytime, anywhere with our immersive platform.
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -404,54 +395,59 @@ const Index = () => {
                   <CardTitle className="text-lg flex items-center space-x-2">
                     <div className="p-2 bg-blue-600/10 rounded-lg">
                       <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     </div>
-                    <span>TypeScript</span>
+                    <span>Performance Tracking</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Full type safety with proper interfaces, props validation,
-                    and IntelliSense support. Enhanced developer experience and code reliability.
+                    Track your progress with detailed analytics, performance metrics,
+                    and improvement suggestions. Watch your confidence grow with every session.
                   </CardDescription>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Implementation Guide */}
+            {/* Getting Started Guide */}
             <div className="bg-muted/30 rounded-lg p-8">
-              <h3 className="text-2xl font-bold text-foreground mb-6">Implementation Guide</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-6">Ready to Ace Your Next Interview?</h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                  <h4 className="text-lg font-semibold mb-4">Project Setup Requirements</h4>
+                  <h4 className="text-lg font-semibold mb-4">What You'll Experience</h4>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>shadcn/ui project structure ✓</span>
+                      <span>Personalized interview questions ✓</span>
                     </li>
                     <li className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Tailwind CSS configured ✓</span>
+                      <span>Real-time feedback and scoring ✓</span>
                     </li>
                     <li className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>TypeScript support ✓</span>
+                      <span>Voice and gesture analysis ✓</span>
                     </li>
                     <li className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>/components/ui folder structure ✓</span>
+                      <span>Detailed performance reports ✓</span>
                     </li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold mb-4">Dependencies Installed</h4>
+                  <h4 className="text-lg font-semibold mb-4">Start Your Journey</h4>
                   <div className="bg-background rounded-lg p-4">
-                    <code className="text-sm text-muted-foreground">
-                      npm install @splinetool/runtime<br/>
-                      npm install @splinetool/react-spline<br/>
-                      npm install framer-motion
-                    </code>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Join thousands of successful candidates who've improved their interview skills with our AI coach.
+                    </p>
+                    <Button
+                      onClick={() => navigate('/ai-interviewer')}
+                      className="w-full bg-gradient-to-r from-green-300 via-white via-white to-green-300 hover:from-green-400 hover:via-gray-50 hover:via-gray-50 hover:to-green-400 text-gray-800 font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Explore AI Interviewer
+                    </Button>
                   </div>
                 </div>
               </div>
