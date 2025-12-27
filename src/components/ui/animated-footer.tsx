@@ -1,10 +1,44 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Boxes } from "@/components/ui/background-boxes";
 import { cn } from "@/lib/utils";
 import { Github, Twitter, Linkedin, Mail, Heart, Code, Zap } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AnimatedFooter() {
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check current auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session?.user);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate('/');
+  };
+
+  const handleProtectedLink = (e: React.MouseEvent, path: string) => {
+    e.preventDefault();
+    if (isAuthenticated) {
+      navigate(path);
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <footer className="relative w-full overflow-hidden bg-slate-900 text-white">
       {/* Background Boxes Animation */}
@@ -21,7 +55,7 @@ export function AnimatedFooter() {
               <img src="/logo.png" alt="evalu8 Logo" className="h-8 w-auto" />
             </div>
             <p className="text-neutral-300 text-sm leading-relaxed">
-              Empowering developers with AI-powered assessments and personalized learning paths. 
+              Empowering developers with AI-powered assessments and personalized learning paths.
               Master your coding skills with confidence.
             </p>
             <div className="flex items-center space-x-2 text-sm text-neutral-400">
@@ -34,11 +68,47 @@ export function AnimatedFooter() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">Quick Links</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="/practice" className="text-neutral-300 hover:text-white transition-colors pointer-events-auto">Practice Hub</a></li>
-              <li><a href="/mastery" className="text-neutral-300 hover:text-white transition-colors pointer-events-auto">Mastery Assessments</a></li>
-              <li><a href="/profile" className="text-neutral-300 hover:text-white transition-colors pointer-events-auto">Profile</a></li>
-              <li><a href="/activity" className="text-neutral-300 hover:text-white transition-colors pointer-events-auto">Activity</a></li>
-              <li><a href="/settings" className="text-neutral-300 hover:text-white transition-colors pointer-events-auto">Settings</a></li>
+              <li>
+                <a
+                  href="/"
+                  onClick={handleHomeClick}
+                  className="text-neutral-300 hover:text-white transition-colors pointer-events-auto cursor-pointer"
+                >
+                  Home
+                </a>
+              </li>
+              <li>
+                <Link to="/ai-interviewer" className="text-neutral-300 hover:text-white transition-colors pointer-events-auto">
+                  AI Interviewer
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="/profile"
+                  onClick={(e) => handleProtectedLink(e, '/profile')}
+                  className="text-neutral-300 hover:text-white transition-colors pointer-events-auto cursor-pointer"
+                >
+                  Profile
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/activity"
+                  onClick={(e) => handleProtectedLink(e, '/activity')}
+                  className="text-neutral-300 hover:text-white transition-colors pointer-events-auto cursor-pointer"
+                >
+                  Activity
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/settings"
+                  onClick={(e) => handleProtectedLink(e, '/settings')}
+                  className="text-neutral-300 hover:text-white transition-colors pointer-events-auto cursor-pointer"
+                >
+                  Settings
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -104,7 +174,7 @@ export function AnimatedFooter() {
         <div className="mt-12 pt-8 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-neutral-400">
-              © 2024 evalu8. All rights reserved.
+              © 2025 evalu8. All rights reserved.
             </div>
             <div className="flex space-x-6 text-sm text-neutral-400">
               <a href="#" className="hover:text-white transition-colors pointer-events-auto">Privacy Policy</a>

@@ -16,6 +16,7 @@ import Activity from "./pages/Activity";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import AIInterviewer from "./pages/AIInterviewer";
+import Aira from "./pages/Aira";
 import { ScrollToTop } from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/assessment/mastery/:assessmentId" element={<MasteryAssessment />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/ai-interviewer" element={<AIInterviewer />} />
+              <Route path="/aira" element={<Aira />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

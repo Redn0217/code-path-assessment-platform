@@ -6,11 +6,31 @@ import { Spotlight } from "@/components/ui/spotlight"
 import { StarBorder } from "@/components/ui/star-border"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect, useRef } from "react"
+import { supabase } from '@/integrations/supabase/client'
+import { User } from '@supabase/supabase-js'
 
 export function SplineSceneBasic() {
   const navigate = useNavigate()
   const [shouldLoadSpline, setShouldLoadSpline] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Set up auth state listener
+  useEffect(() => {
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -35,6 +55,16 @@ export function SplineSceneBasic() {
 
     return () => observer.disconnect()
   }, [shouldLoadSpline])
+
+  const handleStartInterview = () => {
+    if (user) {
+      // User is authenticated, redirect to /aira
+      navigate('/aira');
+    } else {
+      // User is not authenticated, redirect to /auth with redirect parameter
+      navigate('/auth?redirect=aira');
+    }
+  };
 
   return (
     <Card ref={containerRef} className="w-full h-[500px] bg-background dark:bg-black/[0.96] relative overflow-hidden group border">
@@ -65,7 +95,7 @@ export function SplineSceneBasic() {
           <div className="mt-8">
             <StarBorder
               as="button"
-              onClick={() => navigate('/ai-interviewer')}
+              onClick={handleStartInterview}
               className="hover:scale-105 transition-transform duration-200"
               color="hsl(var(--primary))"
               speed="4s"

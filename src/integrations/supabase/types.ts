@@ -53,6 +53,206 @@ export type Database = {
         }
         Relationships: []
       }
+      aira_activities: {
+        Row: {
+          activity_type: string
+          id: string
+          message: string
+          metadata: Json | null
+          session_id: string
+          status: string
+          timestamp: string
+        }
+        Insert: {
+          activity_type: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          session_id: string
+          status: string
+          timestamp?: string
+        }
+        Update: {
+          activity_type?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          session_id?: string
+          status?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aira_activities_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "aira_interview_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aira_analytics: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          max_score: number
+          score: number
+          session_id: string
+          skill_name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          max_score?: number
+          score: number
+          session_id: string
+          skill_name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          max_score?: number
+          score?: number
+          session_id?: string
+          skill_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aira_analytics_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "aira_interview_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aira_code_snippets: {
+        Row: {
+          analysis: Json | null
+          content: string
+          created_at: string
+          filename: string
+          id: string
+          language: string
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          analysis?: Json | null
+          content: string
+          created_at?: string
+          filename?: string
+          id?: string
+          language?: string
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          analysis?: Json | null
+          content?: string
+          created_at?: string
+          filename?: string
+          id?: string
+          language?: string
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aira_code_snippets_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "aira_interview_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aira_conversations: {
+        Row: {
+          id: string
+          message: string
+          metadata: Json | null
+          session_id: string
+          speaker: string
+          stage: number
+          timestamp: string
+        }
+        Insert: {
+          id?: string
+          message: string
+          metadata?: Json | null
+          session_id: string
+          speaker: string
+          stage: number
+          timestamp?: string
+        }
+        Update: {
+          id?: string
+          message?: string
+          metadata?: Json | null
+          session_id?: string
+          speaker?: string
+          stage?: number
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aira_conversations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "aira_interview_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aira_interview_sessions: {
+        Row: {
+          attempt_number: number
+          completed_at: string | null
+          created_at: string
+          current_stage: number
+          id: string
+          resume_data: Json | null
+          role_title: string
+          session_status: string
+          started_at: string
+          total_duration_seconds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempt_number?: number
+          completed_at?: string | null
+          created_at?: string
+          current_stage?: number
+          id?: string
+          resume_data?: Json | null
+          role_title: string
+          session_status?: string
+          started_at?: string
+          total_duration_seconds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempt_number?: number
+          completed_at?: string | null
+          created_at?: string
+          current_stage?: number
+          id?: string
+          resume_data?: Json | null
+          role_title?: string
+          session_status?: string
+          started_at?: string
+          total_duration_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           created_at: string | null

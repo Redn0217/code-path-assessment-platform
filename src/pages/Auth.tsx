@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
 const Auth = () => {
@@ -20,6 +20,7 @@ const Auth = () => {
     confirmPassword: '' 
   });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +43,13 @@ const Auth = () => {
           title: "Login successful",
           description: "Welcome back!",
         });
-        navigate('/');
+        // Check if there's a redirect parameter for AI interview
+        const redirectTo = searchParams.get('redirect');
+        if (redirectTo === 'aira') {
+          navigate('/aira');
+        } else {
+          navigate('/');
+        }
       }
     } catch (error) {
       toast({
